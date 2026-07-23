@@ -11,6 +11,27 @@
   position: relative;
   /* AAA WCAG Contrast Requirements */
   --pb-focus-ring: #005fcc;
+  
+  /* Glyph Mode Tokens */
+  --pb-glyph-bg: #2d2d2d;
+  --pb-glyph-border: #444;
+  --pb-glyph-padding: 0.25rem;
+}
+
+:host([glyph-mode]) {
+  display: inline-flex;
+  background-color: var(--pb-glyph-bg);
+  border-color: var(--pb-glyph-border);
+  font-size: 0.85em;
+  border-radius: 2px;
+}
+
+:host([glyph-mode]) .header {
+  display: none; /* Hide header in tight glyph mode */
+}
+
+:host([glyph-mode]) .code-content {
+  padding: var(--pb-glyph-padding);
 }
 
 :host([split-view="side-by-side"]) .container {
@@ -26,28 +47,108 @@
 .header {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
+  align-items: flex-end;
   background-color: var(--pb-header-bg, #252526);
   border-bottom: 1px solid var(--pb-border, #333);
 }
 
-.controls button {
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem 0;
+}
+.tab {
   background: transparent;
-  border: none;
+  color: var(--pb-fg, #d4d4d4);
+  border: 1px solid transparent;
+  border-bottom: none;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  opacity: 0.7;
+}
+.tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 1;
+}
+.tab.active {
+  background: var(--pb-bg, #1e1e1e);
+  border-color: var(--pb-border, #333);
+  opacity: 1;
+}
+.tab:focus-visible {
+  outline: 2px solid var(--pb-focus-ring);
+  outline-offset: -2px;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+.controls button, .controls select {
+  background: #333;
+  border: 1px solid #444;
   color: inherit;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  border-radius: 2px;
+}
+.controls button:hover, .controls select:hover {
+  background: #444;
+}
+.controls button:focus-visible, .controls select:focus-visible {
+  outline: 2px solid var(--pb-focus-ring);
 }
 
-.controls button:focus-visible {
+/* A2ML Variables Panel */
+.a2ml-panel {
+  background: #2a2a2a;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--pb-border, #333);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+.a2ml-var {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.a2ml-var input {
+  background: #1e1e1e;
+  border: 1px solid #444;
+  color: inherit;
+  padding: 0.2rem 0.4rem;
+  border-radius: 2px;
+}
+.a2ml-var input:focus-visible {
   outline: 2px solid var(--pb-focus-ring);
-  outline-offset: 2px;
 }
 
 .content-area {
   display: flex;
   position: relative;
+}
+
+/* Linter Panel */
+.linter-panel {
+  background: #1e1e1e;
+  border-left: 1px solid var(--pb-border, #333);
+  padding: 1rem;
+  overflow-y: auto;
+  color: #f48771; /* Error color */
+  font-family: inherit;
+  font-size: 0.9em;
+}
+:host([split-view="top-bottom"]) .linter-panel {
+  border-left: none;
+  border-top: 1px solid var(--pb-border, #333);
 }
 
 /* Decoupled line numbers: using a separate container and user-select: none */

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ProgBlocks Interactive UI Test</title>
+  <style>
+    body {
+      background: #121212;
+      color: #eee;
+      font-family: sans-serif;
+      padding: 2rem;
+    }
+    h1 { margin-bottom: 2rem; }
+    .test-case { margin-bottom: 3rem; }
+  </style>
+  <script type="module" src="./src/prog-block.js"></script>
+</head>
+<body>
+  <h1>ProgBlocks UI Validation</h1>
+
+  <div class="test-case">
+    <h2>1. Variant Switching & A2ML Variables</h2>
+    <prog-block line-numbers>
+      <template data-variant="macOS">
+# Install on macOS
+brew install progblocks --font-size {{ size }}
+      </template>
+      <template data-variant="Windows">
+# Install on Windows
+choco install progblocks --font-size {{ size }}
+      </template>
+      <template data-variant="Linux">
+# Install on Linux
+apt-get install progblocks --font-size {{ size }}
+      </template>
+    </prog-block>
+  </div>
+
+  <div class="test-case">
+    <h2>2. Glyph Mode (Dense Layout)</h2>
+    <prog-block glyph-mode>
+      <template data-variant="inline">
+const x = {{ density }} * 2;
+      </template>
+    </prog-block>
+  </div>
+</body>
+</html>

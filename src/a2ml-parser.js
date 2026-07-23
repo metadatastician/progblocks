@@ -31,19 +31,29 @@ export class A2MLState {
   }
 }
 
+// import Parser from 'web-tree-sitter';
+
 /**
  * Parses an A2ML template string and substitutes variables.
- * In a full implementation, this parses the Djot-like surface syntax
- * and base record vocabulary.
+ * In a real environment, this initializes web-tree-sitter with 
+ * our embedded assets/tree-sitter-a2ml.wasm file.
  * 
  * @param {string} template 
  * @param {Map} variables 
  * @returns {string} The interpolated content
  */
-export function parseA2ML(template, variables) {
+export async function parseA2ML(template, variables) {
   if (!template) return '';
   
-  // Basic interpolation stub for A2ML substitution (e.g. {{ var_name }})
+  // async load for Wasm
+  // await Parser.init();
+  // const parser = new Parser();
+  // const A2ML = await Parser.Language.load('./assets/tree-sitter-a2ml.wasm');
+  // parser.setLanguage(A2ML);
+  // const tree = parser.parse(template);
+  // const rootNode = tree.rootNode;
+  
+  // Basic interpolation stub representing the output of the AST traversal
   return template.replace(/\{\{\s*([\w:-]+)\s*\}\}/g, (match, key) => {
     return variables.has(key) ? variables.get(key) : match;
   });

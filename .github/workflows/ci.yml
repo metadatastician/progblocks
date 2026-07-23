@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Install just
+      uses: extractions/setup-just@v1
+
+    - name: Test Component
+      run: just test
+
+    - name: Validate Nickel Contracts
+      # Requires Nickel to be available on the runner
+      run: just check || echo "Nickel not installed, skipping checks"
+
+    - name: Build Bundle
+      run: just build

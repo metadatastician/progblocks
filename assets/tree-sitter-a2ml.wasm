@@ -1,0 +1,2 @@
+// Dummy WASM file placeholder
+// In a real environment, this would be compiled from tree-sitter-a2ml via emscripten.
