@@ -1,0 +1,20 @@
+# package.k9
+# Self-Validating Component for ProgBlocks
+# Utilises the Must-Just-Nickel triad
+
+MUST
+  - require: browser_environment
+    version: ">= es6"
+  - require: custom_elements
+
+JUST
+  - target: build
+    command: "just build"
+  - target: test
+    command: "just test"
+
+NICKEL
+  - validate: "contracts.ncl"
+  - expose: 
+      name: "progblocks-engine"
+      version: "1.0.0"

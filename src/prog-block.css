@@ -1,0 +1,81 @@
+/* src/prog-block.css */
+
+:host {
+  display: block;
+  font-family: var(--pb-font-family, monospace);
+  background-color: var(--pb-bg, #1e1e1e);
+  color: var(--pb-fg, #d4d4d4);
+  border: 1px solid var(--pb-border, #333);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  /* AAA WCAG Contrast Requirements */
+  --pb-focus-ring: #005fcc;
+}
+
+:host([split-view="side-by-side"]) .container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+:host([split-view="top-bottom"]) .container {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background-color: var(--pb-header-bg, #252526);
+  border-bottom: 1px solid var(--pb-border, #333);
+}
+
+.controls button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+.controls button:focus-visible {
+  outline: 2px solid var(--pb-focus-ring);
+  outline-offset: 2px;
+}
+
+.content-area {
+  display: flex;
+  position: relative;
+}
+
+/* Decoupled line numbers: using a separate container and user-select: none */
+.line-numbers {
+  padding: 1rem 0.5rem;
+  text-align: right;
+  color: var(--pb-line-num-color, #858585);
+  background: var(--pb-line-num-bg, #1e1e1e);
+  border-right: 1px solid var(--pb-border, #333);
+  user-select: none;
+  pointer-events: none;
+}
+
+.code-content {
+  padding: 1rem;
+  overflow-x: auto;
+  flex-grow: 1;
+  white-space: pre;
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
