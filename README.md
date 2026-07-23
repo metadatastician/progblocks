@@ -2,7 +2,7 @@
 
 **Standalone Advanced Presentation Component for Rich Code Blocks**
 
-ProgBlocks is an independent, highly-pluggable presentation module designed to revolutionize interactive documentation and wikis. Conceived initially for [BerryWiki](https://github.com/metadatastician/berrywiki), it is decoupled by design so it can be injected into any system (like `ddraig-ssg` outputs, `nextgen-languages` previewers, or standalone Markdown sites).
+ProgBlocks is an independent, highly-pluggable presentation module designed to transform interactive documentation and wikis. Conceived initially for [BerryWiki](https://github.com/metadatastician/berrywiki), it is decoupled by design so it can be injected into any system (like `ddraig-ssg` outputs, `nextgen-languages` previewers, or standalone Markdown sites).
 
 ## Features
 
