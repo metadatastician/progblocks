@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# progblocks.launcher.a2ml — per-app launcher config for ProgBlocks.
+# Compliant with launcher-standard.a2ml v0.3.0
+#
+# ProgBlocks: Standalone Advanced Presentation Component for Rich Code Blocks
+
+[project]
+name         = "progblocks"
+display      = "ProgBlocks"
+description  = "Standalone Advanced Presentation Component for Rich Code Blocks"
+categories   = ["Development", "Utility", "Documentation"]
+version      = "0.1.0"
+license      = "CC-BY-SA-4.0"
+
+[repo]
+# NOTE: repo-dir is resolved at runtime from the launcher script location.
+# Do NOT hardcode absolute paths. Leave empty or use relative paths.
+path = ""
+
+[runtime]
+# ProgBlocks is a web-based component (served via static server)
+kind = "server-url"
+port = 8080
+url  = "http://localhost:8080"
+startup-command-search = [
+    "{repo-dir}/scripts/run.sh",
+    "python3 -m http.server",
+    "http-server",
+]
+# Per launcher-standard.a2ml [runtime] section:
+# PID files MUST use XDG_RUNTIME_DIR or TMPDIR, NEVER /tmp directly
+# Log files MUST use XDG_STATE_HOME, NEVER /tmp directly
+pid-file = "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/progblocks.pid"
+log-file = "${XDG_STATE_HOME:-$HOME/.local/state}/progblocks/progblocks.log"
+wait-for-url-timeout-seconds = 10
+
+[version-output]
+# Per launcher-standard.a2ml [version-output] section
+first-line-format = "progblocks {version} ({build-sha-short}) [{platform}]"
+example = "progblocks 0.1.0 (abc1234) [linux-x86_64]"
+exit-code = 0
+
+[icon]
+source = "{repo-dir}/assets/icon-256.png"
