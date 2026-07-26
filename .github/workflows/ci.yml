@@ -11,15 +11,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version: '20'
 
     - name: Install just
-      uses: extractions/setup-just@v1
+      uses: extractions/setup-just@4a174aa1487e2bcb3f86a8fe24a05361a4f4fff1 # v1
 
     - name: Test Component
       run: just test
