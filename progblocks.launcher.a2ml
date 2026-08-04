@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: CC-BY-SA-4.0
+# SPDX-License-Identifier: MPL-2.0
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # progblocks.launcher.a2ml — per-app launcher config for ProgBlocks.
@@ -12,7 +12,7 @@ display      = "ProgBlocks"
 description  = "Standalone Advanced Presentation Component for Rich Code Blocks"
 categories   = ["Development", "Utility", "Documentation"]
 version      = "0.1.0"
-license      = "CC-BY-SA-4.0"
+license      = "MPL-2.0"
 
 [repo]
 # NOTE: repo-dir is resolved at runtime from the launcher script location.

@@ -11,9 +11,8 @@ ProgBlocks is an independent, highly-pluggable presentation module designed to t
 - **Smart Paste Parsing:** Intelligently map paste buffers into target formats (plain text, arrays, matrices, tuples).
 - **Output & Export:** 1-click export of block data to Nickel, JSON, CSV, or TXT.
 - **Decoupled Line Number Controls:** Visually toggle line numbers without polluting the copy-paste clipboard buffer.
-- **Advanced Editor Tooling:** View side-by-side or top-and-bottom split-modes, integrate live linter side-panels, and utilize "glyph/block mode" layouts.
-- **Templating Wizards:** Save custom forms and templates for recurring structural blocks.
-- **AAA WCAG Accessibility:** Extreme compliance for all interactive elements, powered by `formatrix-docs` principles.
+- **Advanced Editor Tooling:** View side-by-side or top-and-bottom split-modes, and utilize "glyph/block mode" layouts.
+- **Accessibility:** WCAG 2.1 AA target for all interactive elements.
 
 ## Integration
 
