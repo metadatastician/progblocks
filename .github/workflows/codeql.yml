@@ -27,12 +27,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Default to `actions` — scaffolded repos rarely have JS/TS
-          # source; `javascript-typescript` produced "no source files"
-          # failures on every CodeQL run. The `actions` extractor scans
-          # workflow files which every repo has. Override per-repo if
-          # the scaffolded project actually contains JS/TS code.
-          # Per hypatia rule `codeql_language_matrix_mismatch`.
+          # actions = workflow files; javascript-typescript = the component source in src/.
           - language: actions
             build-mode: none
           - language: javascript-typescript

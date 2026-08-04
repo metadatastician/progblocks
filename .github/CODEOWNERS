@@ -8,12 +8,9 @@
 # Security-sensitive files require explicit ownership
 SECURITY.md @hyperpolymath
 .github/workflows/ @hyperpolymath
-.machine_readable/ @hyperpolymath
-contractiles/ @hyperpolymath
 
 # License files
 LICENSE @hyperpolymath
-LICENSES/ @hyperpolymath
 
 # Configuration
 .gitignore @hyperpolymath
@@ -24,11 +21,7 @@ README* @hyperpolymath
 CONTRIBUTING* @hyperpolymath
 CODE_OF_CONDUCT* @hyperpolymath
 GOVERNANCE* @hyperpolymath
-MAINTAINERS* @hyperpolymath
-CHANGELOG* @hyperpolymath
-ROADMAP* @hyperpolymath
 
 # Build and CI
 Justfile @hyperpolymath
-Makefile @hyperpolymath
 *.sh @hyperpolymath

@@ -1,0 +1,3 @@
+node_modules/
+dist/
+validated_contracts.json
