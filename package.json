@@ -1,0 +1,15 @@
+{
+  "name": "progblocks",
+  "version": "0.3.0",
+  "description": "Standalone advanced presentation component for rich code blocks",
+  "license": "MPL-2.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^20.0.0",
+    "happy-dom": "^20.0.0"
+  }
+}

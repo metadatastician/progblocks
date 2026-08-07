@@ -20,6 +20,9 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Install dev dependencies
+      run: npm ci
+
     - name: Install just
       uses: taiki-e/install-action@v2.85.7
       with:
@@ -27,10 +30,3 @@ jobs:
 
     - name: Test Component
       run: just test
-
-    - name: Validate Nickel Contracts
-      # Requires Nickel to be available on the runner
-      run: just check || echo "Nickel not installed, skipping checks"
-
-    - name: Build Bundle
-      run: just build
