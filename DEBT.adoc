@@ -476,6 +476,12 @@ Evidence: check run "SonarCloud Code Analysis" → "Quality Gate failed — C Se
 New Code (required ≥ A)". The specific findings were not retrievable without authentication,
 so the attribution to C1 is inference, not confirmation.
 
+The gate is scoped to *new code*, which sharpens the diagnosis: it **passes** on a
+documentation-only pull request and **fails** on any pull request that touches `src/`. That
+is consistent with the rating being driven by the component source rather than by anything
+in the repository's configuration, and it means the gate will keep blocking code changes —
+correctly — until the injection path is fixed.
+
 Clearing it: fix C1 (escaping) and re-run. If the rating is driven by something else, this
 entry should be corrected once the findings are readable.
 
