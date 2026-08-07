@@ -439,6 +439,62 @@ Clearing it: when the component is worth consuming, add a real bundler step. Del
 deferred — a fake build recipe is worse than none, and nothing downstream consumes this
 component yet.
 
+== Governance debt
+
+The `Optimus-Branch` ruleset protects `main`. Three of its requirements could not be met by
+any pull request, which meant every merge needed an administrator bypass — and a bypass that
+is *always* required stops being a safeguard and becomes a formality.
+
+=== G1 — Code-owner review was structurally impossible *(CLEARED 2026-08-07)*
+
+The ruleset set `required_approving_review_count: 0` but `require_code_owner_review: true`.
+`CODEOWNERS` assigns every path to `@hyperpolymath`, who is also the author of every pull
+request. GitHub refuses self-approval outright ("Can not approve your own pull request"), so
+**no PR could ever satisfy the rule**. Not a misconfiguration of degree — a requirement with
+no satisfying assignment.
+
+`require_code_owner_review` is now `false`. The automated gates are untouched: signatures,
+CodeQL code-scanning, code-quality, coverage, the merge queue and the required status checks
+all still apply. What was removed is a human-review requirement that no human could give.
+
+Evidence: `gh api repos/metadatastician/progblocks/rulesets/19619017` — the rule reads
+`false`; all 11 rules and 11 bypass actors verified intact after the change.
+
+If a second maintainer ever joins, re-enabling this is the right move — the rule is sound,
+it was only unsatisfiable for a solo repository.
+
+=== G2 — Required check `SonarCloud Code Analysis` is failing on a real defect *(OPEN)*
+
+SonarCloud is a required status check and reports *Security Rating C on new code* (required
+≥ A). It was already failing on `main` before this work began.
+
+**Deliberately not removed from the ruleset.** A C security rating on a component with an
+unescaped-innerHTML injection path (C1) is a true signal, and deleting a gate to turn a board
+green is the exact failure this repository is being cured of. The honest route is to fix C1.
+
+Evidence: check run "SonarCloud Code Analysis" → "Quality Gate failed — C Security Rating on
+New Code (required ≥ A)". The specific findings were not retrievable without authentication,
+so the attribution to C1 is inference, not confirmation.
+
+Clearing it: fix C1 (escaping) and re-run. If the rating is driven by something else, this
+entry should be corrected once the findings are readable.
+
+=== G3 — The ruleset demands 95% coverage of a repository with almost none *(OPEN)*
+
+The `code_coverage` rule requires `minimum_coverage: 95` and `max_coverage_drop: 3`. The
+suite is five tests over roughly 660 lines of source (T2). Nothing close to 95% is
+achievable, so this rule also guarantees a bypass on every merge.
+
+**Deliberately not lowered.** Lowering a bar to meet the code is the mirror image of the
+fake-gate problem. The bar is reasonable for a component this small; the coverage is what is
+wrong.
+
+Evidence: ruleset `code_coverage` parameters; `npm test` → 5 tests.
+
+Clearing it: raise real coverage as each defect in the Code debt section lands with a test.
+Until then, every merge legitimately requires a bypass, and that fact should be visible
+rather than normalised.
+
 == Repository hygiene
 
 === H1 — Two GitHub template files lacked an SPDX header on line 1 *(CLEARED 2026-08-07)*
