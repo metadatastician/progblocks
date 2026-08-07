@@ -10,6 +10,7 @@ workflows:
     '.github/workflows/codeql.yml':
         - 'actions/checkout@v7.0.1'
         - 'github/codeql-action@v4.37.4'
+    '.github/workflows/secret-scanner.yml': []
 dependencies:
     'actions/checkout@v7.0.1':
         ref: 'v7.0.1'
@@ -31,4 +32,3 @@ dependencies:
         commit: 'sha1-67729d5c413db75907f0ad1e39bb04b9c868ff60'
         owner_id: 43724913
         repo_id: 442947557
-    '.github/workflows/secret-scanner.yml': []
