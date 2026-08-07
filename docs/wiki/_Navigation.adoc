@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: MPL-2.0
+= Wiki Navigation
+:page-id: WIKI-NAV-001
+:page-title: Wiki Navigation
+:page-audience: All
+:page-maturity: DRAFT
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::_Status-Panel.adoc[]
+
+== Primary navigation
+
+. link:Home.adoc[Home]
+. link:users/Getting-Started.adoc[Getting Started (users and integrators)]
+. link:users/Authoring-Blocks.adoc[Authoring Blocks (users and integrators)]
+. link:users/Feature-Status.adoc[Feature Status — the honesty page]
+. link:developers/Architecture.adoc[Architecture (developers)]
+. link:developers/Testing.adoc[Testing (developers)]
+. link:developers/CI-CD.adoc[CI/CD (developers)]
+. link:developers/Accessibility.adoc[Accessibility (developers)]
+. link:contributors/Contributing-Guide.adoc[Contributing Guide (contributors)]
+
+Read link:users/Feature-Status.adoc[Feature Status] before relying on any
+advertised capability — several flagship features described in `README.md`
+do not exist yet.

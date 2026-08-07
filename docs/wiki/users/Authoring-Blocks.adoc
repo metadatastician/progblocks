@@ -1,0 +1,124 @@
+// SPDX-License-Identifier: MPL-2.0
+= Authoring Blocks
+:page-id: WIKI-USR-002
+:page-title: Authoring Blocks
+:page-audience: Users and integrators
+:page-maturity: DRAFT
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::../_Status-Panel.adoc[]
+
+== The authoring model
+
+Content goes inside `<prog-block>` as one or more light-DOM
+`<template>` children, each carrying a `data-variant` attribute:
+
+[source,html]
+----
+<prog-block line-numbers>
+  <template data-variant="bash">
+echo "Hello, {{ name }}"
+  </template>
+  <template data-variant="nushell">
+echo $"Hello, ($name)"
+  </template>
+</prog-block>
+----
+
+`parseLightDOM()` reads every `template[data-variant]` child, builds one
+tab per template (`{ id, name, content }`), and activates the first one.
+If no `<template>` children are present at all, the element falls back
+to treating its raw `innerHTML` as a single "Default" variant.
+
+Variant tabs are **generic**: there is no OS/shell/language/citation
+semantics baked in, no platform auto-detection, no synchronisation
+between two `<prog-block>` elements on the same page, and no
+persistence of which tab was last selected. The `data-variant` string
+is just a label.
+
+== `{{ variable }}` substitution
+
+Any `{{ key }}` token inside a variant's content is picked up by
+`extractA2MLVariables()` (a plain regex,
+`/\{\{\s*([\w:-]+)\s*\}\}/g`) and given a generated `<input>` in the
+component's variable panel. Typing in that input calls
+`interpolateContent()`, which replaces `{{ key }}` with the current
+value using the same regex, on every render.
+
+This substitution is **not** backed by the A2ML parser
+(`src/a2ml-parser.js`) — that module is a stub with the real
+tree-sitter parse path commented out, and its `parseA2ML()` function is
+never called from `prog-block.js`. What you get is a bare
+find-and-replace, not A2ML-aware evaluation.
+
+=== Bug: falsy values render as the raw placeholder
+
+`interpolateContent()` substitutes with:
+
+[source,javascript]
+----
+return this._state.variables.get(key) || match;
+----
+
+If a variable's current value is an empty string `""` or the literal
+string `"0"`, that value is falsy in JavaScript, so the `||` falls
+through to `match` — the original `{{ key }}` text — instead of
+substituting the (valid, deliberately chosen) empty string or `"0"`.
+
+Practical effect: you cannot author a block where a variable's correct
+value is genuinely empty or `"0"`; the placeholder text leaks into the
+rendered output instead.
+
+=== Bug: variables accumulate across variant switches
+
+`extractA2MLVariables()` merges newly found variables into the existing
+`Map` and never removes entries:
+
+[source,javascript]
+----
+const newVars = new Map(this._state.variables);
+while ((match = regex.exec(content)) !== null) {
+  if (!newVars.has(match[1])) {
+    newVars.set(match[1], '');
+  }
+}
+this._state.variables = newVars;
+----
+
+Switching the active tab (`handleTabClick()`) calls this again for the
+newly active variant's content, but nothing prunes variables that
+belonged only to the previously active variant. Author three variants
+with different variable names and, after clicking through all three,
+the variable panel shows the union of every variable ever seen —
+including ones with no meaning in the currently visible variant.
+
+== Line numbers
+
+Add the `line-numbers` boolean attribute to render a gutter:
+
+[source,html]
+----
+<prog-block line-numbers>...</prog-block>
+----
+
+The gutter is `user-select:none; pointer-events:none;` and
+`aria-hidden="true"`, so copy-pasting the code content does not pull
+line numbers along with it. There is **no UI toggle** for this — no
+button anywhere in the rendered component flips it on or off. It is
+host-attribute-only; you set it (or not) when you author the markup.
+
+== Do not expect while authoring
+
+* No preview toggle — see link:Feature-Status.adoc[Feature Status].
+* No live linting — the linter panel is a hardcoded string.
+* No working split view.
+* No tuple detection in smart paste (arrays, CSV/TSV matrices, and
+  plain text only).
+
+Every content edit — including typing a single character into a
+variable input — triggers a full `shadowRoot.innerHTML` rewrite. See
+link:../developers/Architecture.adoc[Architecture] for why this makes
+multi-character typing in variable inputs and in the editable code area
+unreliable.

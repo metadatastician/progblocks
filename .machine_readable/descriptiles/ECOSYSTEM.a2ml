@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: MPL-2.0
+# ECOSYSTEM.a2ml — progblocks' ecosystem position
+
+[metadata]
+project = "progblocks"
+ecosystem = "metadatastician"
+
+[position]
+type = "web component / library"
+purpose = "Dependency-free web component for rich code blocks in technical documentation and wikis: variant switching (generic tabs, no OS/shell/language semantics), A2ML variable substitution (regex, not a real parse), smart paste parsing, export to file, and clipboard-safe line numbers."
+# IS-NOT — anti-identity (the boundary-erosion guard)
+what-this-is-not = [
+  "a syntax highlighter",
+  "a static site generator",
+  "a Markdown parser",
+  "a full A2ML implementation — the parser (a2ml-parser.js) is a stub; variable substitution is plain regex, not a real parse; the tree-sitter WASM asset is a 118-byte ASCII placeholder",
+  "a code editor with a working live linter — the linter panel is a hardcoded placeholder string, not wired to view-manager.js's real (but unused) WebSocket/linter code",
+  "a released package — nothing has been published to any registry; version numbers disagree across files (1.0.0 in package.k9/contracts.ncl, 0.1.0 in the launcher config, 0.3.0 in package.json)",
+]
+
+[pipeline]
+position = "leaf, embeddable"
+chain = "conceived for metadatastician/berrywiki, decoupled by design -> embeddable in any consumer"
+notes = "Conceived for BerryWiki but built standalone from the start so it can be injected into ddraig-ssg output, nextgen-languages previewers, or plain Markdown sites. It does not itself generate a site or parse Markdown — it is a widget a site embeds."
+coordination = "none observed in this tree — no consumer repo currently imports src/prog-block.js; this is a stated design intent in README.md, not a verified live integration"
+
+[related-projects]
+projects = [
+  { name = "berrywiki", relationship = "originating consumer (intended)", notes = "progblocks was conceived for BerryWiki. No import of src/prog-block.js from berrywiki has been verified in this pass." },
+  { name = "ddraig-ssg", relationship = "candidate consumer", notes = "A static-site generator this component is designed to be injectable into. progblocks is not ddraig-ssg and does not generate sites itself." },
+  { name = "nextgen-languages", relationship = "candidate consumer", notes = "Previewer surfaces named as a target integration in README.md; not verified as wired up in this tree." },
+]

@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: MPL-2.0
+# Clade declaration — part of the gv-clade-index registry
+# See: https://github.com/hyperpolymath/gv-clade-index
+#
+# This file's identity was RECOMPUTED for this repo, not copied from
+# rsr-template-repo or any sibling repo. Copying a CLADE.a2ml verbatim from
+# another repo is a proven estate-wide bug (see gv-clade-index PR #50) — do
+# not repeat it if this repo is ever used as a source for another mint.
+
+[identity]
+# THE UUID IS DERIVED, NOT ALLOCATED (gv-clade-index:
+# docs/SPEC-clade-verisim-portal.adoc §Identity Model):
+#     uuid = UUIDv5(namespace = URL, name = "github.com/<owner>/<name>")
+#     uuidgen --sha1 --namespace @url --name "github.com/metadatastician/progblocks"
+#     -> 74352a71-31d7-5bb3-a792-72ca575231b2
+uuid = "74352a71-31d7-5bb3-a792-72ca575231b2"
+primary-forge = "github"
+primary-owner = "metadatastician"
+canonical-name = "progblocks"
+prefixed-name = "dx-progblocks"
+
+[origin]
+# What progblocks IS, in one place.
+one-sentence = "A dependency-free web component (<prog-block>) for rich code blocks in technical documentation and wikis."
+conceived-for = "metadatastician/berrywiki"
+decoupled-by-design = true
+notes = "progblocks was conceived for BerryWiki but was built as a standalone, dependency-free web component from the start — no BerryWiki import of it has been verified in this tree — so it can be injected into ddraig-ssg output, nextgen-languages previewers, or plain Markdown sites, per README.md and FACTS.md. Nothing has been released; treat the project as pre-alpha (version drift: 1.0.0 in package.k9/contracts.ncl, 0.1.0 in progblocks.launcher.a2ml/progblocks-launcher.sh, 0.3.0 in package.json)."
+
+[clade]
+# The 2 letters abbreviate the CLADE's name below — never the repo's name.
+# All 12 codes: gv-clade-index verisim/seed/clades.a2ml.
+primary = "dx"
+primary-name = "Developer Ecosystem"
+secondary = []
+assigned = "2026-08-07"
+rationale = "Developer Ecosystem (`dx`): progblocks' entire value proposition is a drop-in developer tool — a dependency-free custom element that other sites and documentation generators embed for rich code blocks. It is not itself an end-user application (`ap`), a language implementation (`nl`), or a static-site generator; it is tooling other developers build documentation surfaces on top of."
+
+[forges]
+github = "metadatastician/progblocks"
+
+[lineage]
+type = "standalone"
+parent = ""
+born = "2026-07-23"
+previous-names = []
+
+[status]
+# One of: reserved incubating active dormant | merged superseded archived extinct
+phase = "active"
+since = "2026-07-23"
+present = true
+aliases = []
+merged-into = ""
+superseded-by = ""
+successors = []
+ended = ""
+
+[[status.history]]
+phase = "active"
+since = "2026-07-23"
+note = "Repo created. CI never had a green run from repo creation until the rehabilitation sequence starting PR #12 (see descriptiles/STATE.a2ml and FACTS.md)."

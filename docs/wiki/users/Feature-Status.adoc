@@ -1,0 +1,162 @@
+// SPDX-License-Identifier: MPL-2.0
+= Feature Status
+:page-id: WIKI-USR-003
+:page-title: Feature Status
+:page-audience: All
+:page-maturity: VERIFIED
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::../_Status-Panel.adoc[]
+
+== Why this page exists
+
+`README.md` advertises a list of capabilities. Some of them exist and
+work; several do not exist at all. This page is the single place that
+states, per feature, what is actually true, with a pointer to the
+evidence. It is drawn directly from a source-reading audit of
+`src/` and must be updated whenever the underlying code changes —
+if this table and the code disagree, trust the code and file an issue
+against this page.
+
+[IMPORTANT]
+====
+`src/prog-block.js` previously had a fatal import bug
+(`import { validateK9 }` against a module that exports only
+`K9Validator` and `defaultValidator`) that kept
+`customElements.define('prog-block', …)` from ever running, so none of
+the rows below actually rendered — the element itself never upgraded.
+That import has been fixed (it now imports `defaultValidator`), and
+`tests/registration.test.js` guards against it recurring, so every row
+below now describes real, observable behaviour. Check the live
+`src/prog-block.js` import line before trusting this table if you have
+reason to think the tree has moved since 2026-08-07.
+====
+
+== Status table
+
+[cols="3,1,4",options="header"]
+|===
+|Feature |Status |Evidence
+
+|Variant tabs (`<template data-variant>`)
+|Works
+|`parseLightDOM()` builds one tab per template; generic only — no
+OS/shell/language/citation semantics, no platform detection, no
+cross-block sync, no persistence.
+
+|`{{ variable }}` substitution
+|Partial
+|Plain regex find-and-replace, not backed by the A2ML parser (which is
+a stub). Falsy values (`""`, `"0"`) render as the raw placeholder;
+variables accumulate across variant switches and are never pruned. See
+link:Authoring-Blocks.adoc[Authoring Blocks].
+
+|Smart paste (array / matrix / text detection)
+|Partial
+|Detects JSON arrays and CSV/TSV matrices, falls back to text. No tuple
+support despite being advertised.
+
+|Export to file (JSON / CSV / Nickel / TXT)
+|Partial
+|Download works. "JSON" wraps the whole block in
+`{"block_content": "…"}` rather than parsing and re-serialising
+structured data; "CSV" quotes each whole line as one field and never
+splits on delimiters (`src/modules/exporter.js:36-38`). Neither is a
+faithful format converter.
+
+|Line numbers
+|Partial
+|Renders correctly with `aria-hidden` / `user-select:none` for
+clean copy-paste. No UI toggle exists; host-attribute only.
+
+|Preview toggle (code view vs. live preview view)
+|Absent
+|The README's flagship "toggle between code view and preview view" to
+interactively tweak variables and watch a live preview does not exist
+anywhere in `src/`.
+
+|Templating wizards
+|Absent
+|No storage, no forms, no wizard code anywhere in the repository.
+
+|Live linter
+|Broken
+|The rendered linter panel is the hardcoded string
+`'<i>Linter ready</i>'` (`src/prog-block.js:22`). The real
+WebSocket/LSP integration code exists in
+`src/modules/view-manager.js`, but that module is never imported by
+anything and is entirely dead code.
+
+|Split view (side-by-side / top-bottom)
+|Broken
+|`src/prog-block.css:37-45` styles key off
+`:host([split-view="…"])`, but the JS only ever sets the value on an
+inner `<div>` and never reflects it onto the host element's attribute,
+so the CSS selector never matches. Toggling the linter panel sets an
+internal `splitView` state that has no visible effect.
+
+|A2ML variable parser (tree-sitter)
+|Absent / stub
+|`assets/tree-sitter-a2ml.wasm` is a 118-byte ASCII placeholder file
+(literally reads "// Dummy WASM file placeholder"), not compiled
+WebAssembly. The tree-sitter load path in `src/a2ml-parser.js` is
+commented out and `parseA2ML()` is never called by the component.
+
+|K9 / Nickel validation
+|Absent / stub
+|`validateNickel()` fakes a 50 ms `setTimeout` then unconditionally
+returns `{valid: true, errors: []}`; `executeJustTask()` logs and
+returns `true`. Neither is called by anything. `checkMust()` **is**
+called from `connectedCallback()` but ignores its only parameter.
+
+|"Inject anywhere" embedding
+|Broken for most consumers
+|The shadow root loads `<link href="./src/prog-block.css">`, a
+document-relative path that only resolves for a consumer page sitting
+exactly one level above `src/`. See
+link:Getting-Started.adoc[Getting Started].
+
+|Accessibility — WCAG 2.1 AA target
+|Partial
+|`role=tablist/tab`, `aria-selected`, `aria-pressed`, `aria-label`,
+`aria-hidden` line numbers, `:focus-visible`, and `.sr-only` are
+present. Missing even for AA: roving `tabindex` / arrow-key tablist
+navigation, `tabpanel` + `aria-controls` pairing, `aria-live` for
+variant/export state changes. Inactive tabs render at `opacity:0.7`,
+degrading contrast. See link:../developers/Accessibility.adoc[Accessibility].
+
+|Accessibility — AAA conformance tier
+|Absent
+|The top WCAG conformance tier is not met, despite historic claims
+elsewhere in the estate. See
+link:../developers/Accessibility.adoc[Accessibility] for the explicit
+statement.
+
+|XSS-safe rendering
+|Broken
+|Variant content is read via `t.innerHTML` and re-injected as HTML;
+variable values are interpolated unescaped into `value="${val}"`. No
+escaping exists anywhere in the render path. Scheduled for
+`fix/render-security`, not yet fixed.
+
+|Typing in variable inputs / editable code area
+|Broken
+|Every keystroke triggers a full `shadowRoot.innerHTML` rewrite,
+destroying and recreating the `<input>` (or the editable code area)
+mid-edit. Multi-character values are effectively untypeable in a real
+browser. See link:../developers/Architecture.adoc[Architecture].
+|===
+
+== Legend
+
+* **Works** — behaves as advertised, no known defect blocking normal use.
+* **Partial** — the feature exists and does something, but has a
+  real, demonstrated defect or a materially narrower scope than
+  advertised.
+* **Broken** — code exists for the feature but it does not function
+  (wired incorrectly, hardcoded stub output, or destroyed by another
+  code path).
+* **Absent** — no implementation exists at all, despite being
+  advertised in `README.md` or elsewhere.

@@ -1,0 +1,85 @@
+// SPDX-License-Identifier: MPL-2.0
+= ProgBlocks Wiki
+:page-id: WIKI-HOME-001
+:page-title: ProgBlocks Wiki
+:page-audience: All
+:page-maturity: DRAFT
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+:toc: left
+
+include::_Status-Panel.adoc[]
+
+== Canonical-source rule
+
+`docs/wiki/` is canonical. The GitHub wiki for this repository currently
+holds a single 32-byte stub `Home.md` — it is at most a future mirror of
+this tree and must never be treated as an independent source of truth.
+If the two ever disagree, `docs/wiki/` wins.
+
+== Current state — read this first
+
+[IMPORTANT]
+====
+ProgBlocks is **pre-alpha**. Nothing has been released. Version numbers
+disagree across the repo (`package.k9`/`contracts.ncl` say `1.0.0`;
+`progblocks.launcher.a2ml`/`progblocks-launcher.sh` say `0.1.0`;
+`package.json` says `0.3.0`). Treat every version string as unreliable
+and treat the component itself as experimental.
+
+`src/prog-block.js` previously carried a fatal named-import mismatch
+(`import { validateK9 }` from a module that exports only
+`K9Validator` and `defaultValidator`) — a link-time `SyntaxError` that
+kept the module graph from ever finishing loading, so the
+`prog-block` custom element never registered and every `<prog-block>`
+on a page using the `src/` tree was inert. That import has been fixed
+(it now imports `defaultValidator`), and `tests/registration.test.js`
+asserts `customElements.get('prog-block')` is defined so this class of
+bug cannot regress silently. Re-verify against the checked-out
+`src/prog-block.js` if you have reason to doubt this.
+====
+
+See link:users/Feature-Status.adoc[Feature Status] for a full,
+evidence-based table of what actually works.
+
+== ProgBlocks in one paragraph
+
+ProgBlocks is a dependency-free web component (`<prog-block>`) intended
+for rich, interactive code blocks in technical documentation and wikis:
+variant tabs (e.g. OS or shell flavours of a command), `{{ variable }}`
+substitution over variant content, smart paste detection, and export to
+a handful of file formats. It was conceived for BerryWiki
+(`metadatastician/berrywiki`) and decoupled by design so it can, in
+principle, be dropped into other static sites — see
+link:users/Getting-Started.adoc[Getting Started] for a real limitation
+on that claim.
+
+== Choose your route
+
+* link:users/Getting-Started.adoc[**Users and integrators**] — how to
+  drop `<prog-block>` into a page, and the stylesheet-path limitation
+  that blocks the "inject anywhere" pitch for most consumers.
+* link:users/Authoring-Blocks.adoc[**Authoring blocks**] — the
+  `<template data-variant="…">` model, variable substitution, and two
+  bugs you will hit while authoring content.
+* link:developers/Architecture.adoc[**Developers**] — the module map,
+  which files are dead code, and why the render model is a problem.
+* link:contributors/Contributing-Guide.adoc[**Contributors**] — how to
+  send a change, pointing at the root `CONTRIBUTING.md`.
+
+== Everyone should read this
+
+* link:users/Feature-Status.adoc[Feature Status] — Works / Partial /
+  Broken / Absent for every advertised feature, with evidence.
+* link:developers/Accessibility.adoc[Accessibility] — what ARIA is
+  actually present, and an explicit statement that the top WCAG
+  conformance tier is **not** met despite historic claims.
+
+== Wiki bookkeeping
+
+* link:_Navigation.adoc[Wiki Navigation]
+* link:_Page-Register.adoc[Human Page Register]
+* The machine-readable register is
+  link:../../programme/wiki-page-register.toml[`programme/wiki-page-register.toml`],
+  checked by `tools/check-wiki-health.sh`.

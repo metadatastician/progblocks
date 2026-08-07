@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MPL-2.0
+# ai.txt - AI interaction policy
+# See: https://site.spawning.ai/spawning-ai-txt
+
+User-Agent: *
+Disallow-Training: yes
+Disallow-Summarization: no
+Disallow-Generation: yes
+
+# This project (code, workflows, and documentation) is MPL-2.0. See LICENSE.
+# AI agents may read and analyze this code for assisting contributors.
+# AI agents must NOT use this code for model training without explicit consent.
+#
+# This repository is pre-alpha and several README-advertised features are
+# not yet implemented — see 0-AI-MANIFEST.a2ml and
+# .machine_readable/descriptiles/STATE.a2ml before summarising this project's
+# capabilities.
+#
+# For AI agent integration instructions, see:
+#   0-AI-MANIFEST.a2ml (universal AI entry point)
+#   .machine_readable/ (structured project state)

@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: MPL-2.0
+# Adjustfile — Accessibility drift-tolerance contract for progblocks
+# Author: Jonathan D.A. Jewell (hyperpolymath)
+#
+# Cumulative-drift catchment for accessibility specifically: tolerance
+# bands + corrective actions. Authority: advisory — continue-with-warnings,
+# not a hard gate.
+
+@abstract:
+Accessibility is this repo's stated target (README.md: "WCAG 2.1 AA target
+for all interactive elements") and its most concrete drift risk: it is easy
+to let a claim of AAA, or of AA fully met, creep into documentation that
+the markup does not back up. AAA IS NOT MET. AA is the target, and AA is
+not fully met either — see the gaps below, all sourced from a direct read
+of src/prog-block.js and src/prog-block.css on 2026-08-07.
+@end
+
+## Level Honesty
+
+### wcag-level-honesty
+- description: README states a WCAG 2.1 AA target; nothing in this repo may ASSERT AAA conformance. The pattern matches claim-shaped phrases only, so honest disclaimers ("not the previously-claimed AAA") do not trip it.
+- run: "! grep -qiE '(conform|complian|meets|achiev|certif|level)[a-z]* +(to +|with +)?(wcag +)?2?\.?1? *AAA|WCAG *2?\.?1? *AAA +(conforman|complian)' README.md"
+- severity: critical
+- enforced-by: not yet automated (documentary)
+
+### present-aria-semantics
+- description: The baseline ARIA that IS present must not regress — role=tablist/tab and aria-selected are the floor
+- run: grep -q 'role="tablist"' src/prog-block.js && grep -q 'aria-selected' src/prog-block.js
+- severity: warning
+- enforced-by: not yet automated (documentary)
+
+## Known AA Gaps (tracked, not gated — do not let these silently become "compliant" claims)
+
+### roving-tabindex-missing
+- description: The tablist has no roving tabindex / arrow-key navigation, which real APG tablist semantics require for AA
+- tolerance: known gap, tracked here; 0 tolerance for a documentation claim of "APG-compliant" tablist while this is open
+- corrective: implement roving tabindex plus ArrowLeft/ArrowRight handling on the variant tablist
+- severity: advisory
+
+### tabpanel-pairing-missing
+- description: No tabpanel role + aria-controls/aria-labelledby pairing between tabs and their content
+- tolerance: known gap, tracked here
+- corrective: add role="tabpanel" to variant content containers and wire aria-controls/aria-labelledby to the corresponding tab
+- severity: advisory
+
+### aria-live-missing
+- description: No aria-live region for variant switches or export-state changes — a screen-reader user gets no announcement when content changes
+- tolerance: known gap, tracked here
+- corrective: add a polite aria-live region and update it on variant switch and on export completion
+- severity: advisory
+
+### inactive-tab-contrast
+- description: Inactive tabs render at opacity: 0.7, which degrades text contrast below what AA requires at small sizes
+- run: grep -q 'opacity: 0.7' src/prog-block.css
+- severity: warning
+- enforced-by: not yet automated (documentary)
+
+### focus-destroyed-on-keystroke
+- description: Editing any variable input triggers a full shadowRoot.innerHTML rewrite, destroying and recreating the focused <input> — a WCAG-adjacent failure (2.4.3/3.2.1-adjacent focus stability) as much as a usability one
+- run: "test $(grep -c 'shadowRoot.innerHTML' src/prog-block.js) -gt 0"
+- severity: critical
+- enforced-by: not yet automated (documentary) — same defect tracked in ../bust/Bustfile.a2ml
+
+## Drift Tolerance
+
+### aaa-claim-creep
+- description: No documentation file anywhere in this repo should claim AAA conformance
+- tolerance: 0 occurrences of "AAA" in README.md, 0-AI-MANIFEST.a2ml, or .machine_readable/**
+- corrective: grep -ril 'AAA' README.md 0-AI-MANIFEST.a2ml .machine_readable/ and remove
+- severity: advisory

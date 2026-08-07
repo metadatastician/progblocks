@@ -1,0 +1,102 @@
+# SPDX-License-Identifier: MPL-2.0
+# Mustfile — Physical-state contract for progblocks
+# Author: Jonathan D.A. Jewell (hyperpolymath)
+#
+# What MUST be true about this repository. Hard requirements. Several of
+# these ARE mechanically enforced (by ci.yml / codeql.yml / secret-scanner.yml
+# on every push); others are documentary until something automates them —
+# each entry says which.
+
+@abstract:
+Physical-state invariants for progblocks, a pre-alpha, dependency-free web
+component with no runtime dependencies. Probes target this repository's
+real tree, not a generic template.
+@end
+
+## File Presence
+
+### license-present
+- description: LICENSE file must exist and be the canonical MPL-2.0 text
+- run: test -f LICENSE && grep -q 'Mozilla Public License Version 2.0' LICENSE
+- severity: critical
+- enforced-by: not yet automated (documentary)
+
+### readme-present
+- description: README.md must exist (this repo keeps README as .md, a logged deviation — see ../rsr-profile.a2ml)
+- run: test -f README.md
+- severity: critical
+- enforced-by: not yet automated (documentary)
+
+### security-policy
+- description: SECURITY.md must exist
+- run: test -f SECURITY.md
+- severity: critical
+- enforced-by: not yet automated (documentary)
+
+### governance-docs
+- description: GOVERNANCE.md and .github/CODEOWNERS must exist
+- run: test -f GOVERNANCE.md && test -f .github/CODEOWNERS
+- severity: critical
+- enforced-by: not yet automated (documentary)
+
+### ai-manifest
+- description: 0-AI-MANIFEST.a2ml must exist at the repository root
+- run: test -f 0-AI-MANIFEST.a2ml
+- severity: critical
+- enforced-by: not yet automated (documentary)
+
+## The component itself
+
+### component-source-present
+- description: The <prog-block> custom element source file must exist and define the element
+- run: test -f src/prog-block.js && grep -q "customElements.define('prog-block'" src/prog-block.js
+- severity: critical
+- enforced-by: not yet automated (documentary) — defining the call is necessary but not sufficient; see contractiles/bust/Bustfile.a2ml's component-fails-to-register for why the module can still fail to load
+
+### demo-page-present
+- description: index.html must exist and reference the component
+- run: test -f index.html && grep -q 'prog-block' index.html
+- severity: critical
+- enforced-by: not yet automated (documentary)
+
+### test-suite-present
+- description: At least one node:test file must exist under tests/
+- run: test -n "$(find tests -name '*.test.js' 2>/dev/null)"
+- severity: critical
+- enforced-by: ci.yml `build` job (via `just test`) — though see contractiles/dust/Dustfile.a2ml for why a green run here is not currently trustworthy
+
+## CI / lockfile
+
+### actions-lockfile-present
+- description: The gh actions-lock lockfile must exist
+- run: test -f .github/workflows/actions.lock
+- severity: critical
+- enforced-by: not yet automated (documentary) — do not "fix" uses: lines in the workflow files back to inline SHAs; the lockfile is the pin
+
+## Directory structure
+
+### machine-readable-dir
+- description: .machine_readable/ directory must exist, with descriptiles + contractiles + rsr-profile.a2ml
+- run: test -d .machine_readable/descriptiles && test -d .machine_readable/contractiles && test -f .machine_readable/rsr-profile.a2ml
+- severity: critical
+- enforced-by: not yet automated (documentary)
+
+### well-known-present
+- description: The .well-known trio exists
+- run: test -f .well-known/ai.txt && test -f .well-known/humans.txt && test -f .well-known/security.txt
+- severity: warning
+- enforced-by: not yet automated (documentary)
+
+## Template integrity
+
+### a2ml-spdx-headers
+- description: Every .a2ml file this pass created carries an SPDX identifier on line 1
+- run: test $(find . -name '*.a2ml' -not -path './node_modules/*' -not -path './.git/*' -exec sh -c 'head -1 $1 | grep -q SPDX-License-Identifier: || echo BAD' _ {} ';' | wc -l) -eq 0
+- severity: critical
+- enforced-by: not yet automated (documentary) — as of 2026-08-07 this probe currently FAILS for two pre-existing files outside this sweep's scope, .github/DISCUSSION_TEMPLATE/0.2-AI-MANIFEST.a2ml and .github/ISSUE_TEMPLATE/0.2-AI-MANIFEST.a2ml, neither of which carries an SPDX header at all; fixing those is a separate task, not silently expanded into here
+
+## No verification ledger to check
+
+This repo has no VERIFICATION.md and no src/verify*.mjs scripts, and makes
+no formal proof claims — see ../descriptiles/NEUROSYM.a2ml. contracts.ncl
+and package.k9 describe intent; nothing in this tree consumes them.

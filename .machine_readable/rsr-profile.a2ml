@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# rsr-profile.a2ml — this repo's declared RSR v2.0 capabilities.
+#
+# Declares which capabilities this repository actually HAS, per
+# TEMPLATE-APPLICABILITY-POLICY.adoc. The RSR v2.0 conformance oracle uses
+# `capabilities` to compute the APPLICABLE criteria set: a gated criterion is
+# scored only when its gating capability appears below; everything else is
+# `na` and excluded from the denominator.
+#
+# progblocks is a small, pre-alpha, dependency-free web component
+# (`<prog-block>`) for rich code blocks in technical documentation. It has a
+# demo page (index.html) and a public custom-element interface
+# (src/prog-block.js) — that is the whole of what it HAS. It has none of the
+# server, packaging, proof, or governance-tier machinery a maximal template
+# would score it against, and several of its own README-advertised features
+# (preview toggle, templating wizards, live linter, working split view) do
+# not exist in the code. Declaring more than the two capabilities below
+# would score this repo against modules it does not carry — exactly the
+# over-scaffolding failure RSR v2.0 exists to fix.
+#
+# Every capability below is grounded in a file that really exists. See
+# .superpowers/sdd/progblocks-foamy-puzzle/FACTS.md for the verified source
+# of truth this file was written against (established by direct code
+# reading and live API queries, 2026-08-03..08-07).
+
+[rsr-profile]
+version = "1.0.0"
+spec = "rsr-criteria-v2"
+declares-against = "2.0.0-draft"
+capabilities = [
+  "web-ui",   # index.html — a demo page loading <prog-block> in a browser
+  "library",  # src/prog-block.js — a public custom-element interface other
+              # pages/wikis embed as a drop-in component
+]
+
+[notes]
+# Capabilities intentionally NOT declared (no corresponding code in tree,
+# or the file exists but is not consumed by anything and does not
+# constitute the capability it might appear to imply):
+#   ffi, abi                — no foreign function or ABI seam of any kind
+#   formal-proofs            — this repo makes NO formal design claims.
+#                              contracts.ncl is a 20-line Nickel
+#                              self-description (5 fields), not a proof;
+#                              package.k9's declarations are consumed by
+#                              nothing; k9-validator.js's validateNickel()
+#                              fakes a 50ms setTimeout and always returns
+#                              {valid:true, errors:[]}.
+#   container                 — no container/ or .devcontainer/
+#   cli                       — no command-line surface
+#   api-service                — not a network daemon; no server code, only
+#                                a static demo page
+#   published-package           — not published to any registry; a
+#                                 package.json exists (private: true) but
+#                                 no version has ever been published — see
+#                                 descriptiles/STATE.a2ml
+#   mobile                       — no mobile target
+#   docs-site                     — no Pages workflow; ci.yml, codeql.yml,
+#                                   and secret-scanner.yml only, no deploy
+#                                   step
+#   benchmarks                     — no benches/
+#   governance-tier                 — GOVERNANCE.md exists but the full
+#                                     tier (AUDIT.adoc / AFFIRMATION.adoc /
+#                                     MAINTAINERS.adoc set) does not
+omitted-rationale = "Declaring a capability this repo lacks would make the oracle score it against a module it does not carry. Under-declaring is honest; over-declaring manufactures both false gaps and false credit."
+
+[deliberate-deviations]
+# Where this repo knowingly diverges from the estate default. Full evidence
+# in .superpowers/sdd/progblocks-foamy-puzzle/FACTS.md.
+deviations = [
+  { item = "README.md rather than README.adoc", reason = "AsciiDoc is the estate default for docs, but README as .md is a tolerated deviation for small repos. The file is complete and renders natively on GitHub; there is no parallel README.adoc, so the never-carry-both rule is not violated." },
+]

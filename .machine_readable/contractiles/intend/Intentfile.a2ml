@@ -1,0 +1,103 @@
+# SPDX-License-Identifier: MPL-2.0
+# Intentfile (A2ML Canonical) — north-star contractile for progblocks
+# Author: Jonathan D.A. Jewell (hyperpolymath)
+#
+# Semantics: North-star contractile. Declares BOTH concrete committed
+#            next-actions AND horizon aspirations the project wishes to
+#            become.
+#              intents — "we WILL do this; track progress"
+#              wishes  — "we WISH this were true; revisit later"
+#            Non-gating — this is a report, not a gate. See
+#            contractiles/must/Mustfile.a2ml for hard gates.
+
+@abstract:
+North-star contractile for progblocks, a dependency-free web component for
+rich code blocks in technical documentation. Currently pre-alpha: the
+component now registers reliably (a prior fatal import bug is fixed and
+guarded — see contractiles/bust/Bustfile.a2ml), but several
+README-advertised features do not exist yet.
+@end
+
+## Purpose
+
+Ship a small, honestly-documented, dependency-free web component that can be
+dropped into any documentation site or wiki, matching what FACTS.md
+verifies rather than what README.md aspires to.
+
+## Anti-Purpose
+
+This repository is NOT:
+- A syntax highlighter
+- A static site generator
+- A Markdown parser
+- A full A2ML implementation — the parser is a stub
+- A vehicle for claiming a feature before the code implements it
+
+## If In Doubt
+
+If you are unsure whether a change is in scope, ask. Sensitive areas:
+- The innerHTML / XSS surface (see contractiles/trust/Trustfile.a2ml)
+- Licence, GOVERNANCE.md
+- .machine_readable/descriptiles/CLADE.a2ml (repo identity)
+- progblocks-launcher.sh (generated — never hand-edit)
+
+## Committed Next-Actions
+
+### fatal-import-fixed
+- description: The validateK9 named-import mismatch is fixed (customElements.define runs) and a registration test guards against it recurring
+- run: "! grep -q 'import { validateK9 }' src/prog-block.js"
+- severity: critical
+- enforced-by: tests/registration.test.js (asserts customElements.get('prog-block') is defined), plus this probe
+- status: achieved
+
+### just-test-can-fail
+- description: Justfile's test recipe reports failure honestly; the `|| echo "No tests configured yet"` fallback that swallowed it has been removed
+- run: "! grep -q 'No tests configured yet' Justfile"
+- severity: critical
+- enforced-by: this probe, plus visual confirmation that `Justfile`'s `test:` recipe is a bare `node --test`
+- status: achieved
+
+### package-json-present
+- description: A real package.json (ESM, dev dependencies, lockfile) exists so npm ci has something to install
+- run: test -f package.json
+- severity: warning
+- enforced-by: this probe
+- status: achieved
+
+## Wishes
+
+### Near Horizon
+
+#### xss-remediation
+- description: Escape or otherwise neutralise the unescaped-innerHTML injection surface before this component is used on any real documentation site
+- horizon: near
+- status: declared
+
+#### focus-preserving-render
+- description: Stop rewriting the whole shadow root on every keystroke so variable inputs are actually typeable
+- horizon: near
+- status: declared
+
+### Mid Horizon
+
+#### real-a2ml-parser
+- description: Replace the placeholder tree-sitter-a2ml.wasm and commented-out parse path with a real, working A2ML parser so variable substitution is backed by an actual grammar instead of a bare regex
+- horizon: mid
+- status: declared
+
+#### working-preview-toggle
+- description: Build the code/preview view toggle README.md already advertises but src/prog-block.js does not implement
+- horizon: mid
+- status: declared
+
+### Far Horizon
+
+#### templating-wizards
+- description: Storage-backed templating wizards — currently no storage, no forms, and no wizard code exists anywhere in the tree
+- horizon: far
+- status: declared
+
+#### live-linter
+- description: Wire view-manager.js's real (currently unused) WebSocket/linter code into the rendered linter panel, replacing the hardcoded '<i>Linter ready</i>' string
+- horizon: far
+- status: declared
