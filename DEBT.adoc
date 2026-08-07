@@ -383,6 +383,30 @@ coverage".
 Sweep implication: any repository in this estate that gained a reusable-workflow caller
 *after* adopting a lockfile can carry the same misplacement.
 
+=== CI1b — CodeQL default setup re-enables itself and re-breaks the advanced workflow *(OPEN — recurring)*
+
+Default setup and the advanced `codeql.yml` cannot coexist: with default setup enabled,
+every advanced run is accepted, analysed, and then **rejected at SARIF upload** with
+"CodeQL analyses from advanced configurations cannot be processed when the default setup
+is enabled". The scan burns its full runtime and produces nothing.
+
+This has now happened twice. Default setup was disabled on 2026-08-04; by 2026-08-07 it
+was `configured` again — with an empty `languages` list, which suggests it was re-enabled
+by something other than a deliberate language choice (an organisation-level sweep or a
+platform default). It has been disabled again.
+
+Because the failure appears *late* — after a successful build and analysis — it reads as a
+CodeQL problem rather than a configuration conflict, which is why it took two passes to
+recognise.
+
+Evidence: `gh api repos/metadatastician/progblocks/code-scanning/default-setup --jq .state`
+→ was `configured`, now `not-configured`. Failing run: 31177312549.
+
+Clearing it: keep advanced (it is SHA-pinned via the lockfile and scans both `actions` and
+`javascript-typescript`), and find what re-enables default setup. Until that is known, this
+entry stays open, because a silent re-enable turns the security scan into a no-op that
+still reports green-adjacent noise.
+
 === CI2 — Actions have been intermittently dead from platform-side enforcement *(FLAG-ONLY — external)*
 
 From repository creation on 2026-07-23 this repository **never had a single green run** from
