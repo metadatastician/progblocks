@@ -9,7 +9,8 @@ workflows:
         - 'taiki-e/install-action@v2.85.7'
     '.github/workflows/codeql.yml':
         - 'actions/checkout@v7.0.1'
-        - 'github/codeql-action@v4.37.4'
+        - 'github/codeql-action@v4.37.5'
+    '.github/workflows/secret-scanner.yml': []
 dependencies:
     'actions/checkout@v7.0.1':
         ref: 'v7.0.1'
@@ -21,9 +22,9 @@ dependencies:
         commit: 'sha1-820762786026740c76f36085b0efc47a31fe5020'
         owner_id: 44036562
         repo_id: 189476904
-    'github/codeql-action@v4.37.4':
-        ref: 'v4.37.4'
-        commit: 'sha1-f205ea1c3313d32999d8d6a48b4f6530d4437b38'
+    'github/codeql-action@v4.37.5':
+        ref: 'v4.37.5'
+        commit: 'sha1-d1ba80a13dd99fba24a470575428917156a28b43'
         owner_id: 9919
         repo_id: 259445878
     'taiki-e/install-action@v2.85.7':
@@ -31,4 +32,3 @@ dependencies:
         commit: 'sha1-67729d5c413db75907f0ad1e39bb04b9c868ff60'
         owner_id: 43724913
         repo_id: 442947557
-    '.github/workflows/secret-scanner.yml': []
