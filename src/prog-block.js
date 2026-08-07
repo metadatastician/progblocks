@@ -1,6 +1,5 @@
 // src/prog-block.js
-import { parseA2ML } from './a2ml-parser.js';
-import { validateK9 } from './k9-validator.js';
+import { defaultValidator } from './k9-validator.js';
 import { exportBlockData } from './modules/exporter.js';
 import { parsePaste } from './modules/smart-paste.js';
 
