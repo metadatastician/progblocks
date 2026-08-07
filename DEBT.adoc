@@ -441,9 +441,17 @@ component yet.
 
 == Governance debt
 
-The `Optimus-Branch` ruleset protects `main`. Three of its requirements could not be met by
-any pull request, which meant every merge needed an administrator bypass — and a bypass that
-is *always* required stops being a safeguard and becomes a formality.
+The `Optimus-Branch` ruleset protects `main`. Four of its requirements were failing on every
+pull request, so every merge needed an administrator bypass — and a bypass that is *always*
+required stops being a safeguard and becomes a formality.
+
+The four split cleanly into two kinds, and the distinction decides the treatment:
+
+[cols="1,3"]
+|===
+| *Unmeetable* | No possible pull request could satisfy it, however good the code. Keeping it does not raise quality; it only makes bypass mandatory. **Fixed** — G1, G4.
+| *Unmet* | Satisfiable, but not by this repository yet. Removing it would launder a real deficiency into a green board. **Kept** — G2, G3.
+|===
 
 === G1 — Code-owner review was structurally impossible *(CLEARED 2026-08-07)*
 
@@ -484,6 +492,23 @@ correctly — until the injection path is fixed.
 
 Clearing it: fix C1 (escaping) and re-run. If the rating is driven by something else, this
 entry should be corrected once the findings are readable.
+
+=== G4 — A deployment was required from a pipeline that does not exist *(CLEARED 2026-08-07)*
+
+The ruleset carried `required_deployments: ["github-pages"]`, so every pull request had to
+show a successful deployment to the `github-pages` environment. The environment exists, but
+**no deployment has ever been made to it** and nothing in the repository can make one —
+there is no Pages workflow, and no bundle to publish (the `build` recipe was deleted as
+unbuildable, CI3).
+
+Like G1, this is unmeetable rather than unmet: no improvement to the code could ever satisfy
+it. Removed.
+
+Evidence: `gh api repos/metadatastician/progblocks/deployments` → empty;
+`ls .github/workflows/` → `ci.yml`, `codeql.yml`, `secret-scanner.yml`, `actions.lock`.
+
+Re-add it the day a Pages workflow exists — publishing the demo page is a reasonable thing to
+want, and then the gate would mean something.
 
 === G3 — The ruleset demands 95% coverage of a repository with almost none *(OPEN)*
 
