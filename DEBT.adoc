@@ -354,6 +354,35 @@ Evidence: `ls .github/workflows/`; the suite's own coverage per T2.
 Clearing it: as tests land per T2, the gate strengthens automatically. No workflow change
 is needed — what is needed is tests.
 
+=== CI1a — A malformed lockfile killed every workflow for two days *(CLEARED 2026-08-07, PR #19)*
+
+`.github/workflows/actions.lock` carried the secret scanner's caller entry under the
+`dependencies:` key instead of `workflows:`. The parser expects action mappings there and
+received a sequence, so it rejected the whole file:
+
+----
+line 34: cannot unmarshal !!seq into lockfile.Action
+----
+
+An unparseable lockfile fails workflow startup for the **entire repository**, not merely
+the workflow named in it. Every run was `startup_failure` from 2026-08-05, when PR #16
+added the secret scanner, until this was found.
+
+Two properties make this class of defect expensive, and both are worth carrying forward:
+
+* **It is invisible where you would look for it.** A parse-rejected workflow produces no check run at all, so `gh pr checks` reports nothing wrong. Only `gh run list` shows the `startup_failure`, and the reason appears only on the run's HTML page.
+* **It looks exactly like the platform-side outage** that had been affecting this repository independently (CI2 below). A real defect hid inside an accepted external excuse for two days.
+
+The entry itself was correct and had to stay: `secret-scanner.yml` only calls a reusable
+workflow, which `gh actions-lock` does not scope, so its caller entry must be hand-authored.
+It was moved into the `workflows:` block and confirmed to survive regeneration.
+
+Evidence: `gh actions-lock --verify-local` → now "All 3 workflows have complete lockfile
+coverage".
+
+Sweep implication: any repository in this estate that gained a reusable-workflow caller
+*after* adopting a lockfile can carry the same misplacement.
+
 === CI2 — Actions have been intermittently dead from platform-side enforcement *(FLAG-ONLY — external)*
 
 From repository creation on 2026-07-23 this repository **never had a single green run** from
