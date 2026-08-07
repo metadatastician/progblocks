@@ -6,7 +6,7 @@ let Config = {
   entry_points | Array String | default = ["src/prog-block.js"],
   styles | Array String | default = ["src/prog-block.css"],
   a2ml_dialect_version | String | default = "1.1",
-  accessibility_standard | String | default = "WCAG_AAA",
+  accessibility_standard | String | default = "WCAG_2.1_AA_target",
 } in
 
 {
@@ -15,6 +15,6 @@ let Config = {
     entry_points = ["src/prog-block.js"],
     styles = ["src/prog-block.css"],
     a2ml_dialect_version = "1.1",
-    accessibility_standard = "WCAG_AAA"
+    accessibility_standard = "WCAG_2.1_AA_target"
   }
 }

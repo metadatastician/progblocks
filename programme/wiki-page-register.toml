@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: MPL-2.0
+schema_version = 1
+
+[[page]]
+id = "WIKI-HOME-001"
+path = "docs/wiki/Home.adoc"
+[[page]]
+id = "WIKI-USR-001"
+path = "docs/wiki/users/Getting-Started.adoc"
+[[page]]
+id = "WIKI-USR-002"
+path = "docs/wiki/users/Authoring-Blocks.adoc"
+[[page]]
+id = "WIKI-USR-003"
+path = "docs/wiki/users/Feature-Status.adoc"
+[[page]]
+id = "WIKI-DEV-001"
+path = "docs/wiki/developers/Architecture.adoc"
+[[page]]
+id = "WIKI-DEV-002"
+path = "docs/wiki/developers/Testing.adoc"
+[[page]]
+id = "WIKI-DEV-003"
+path = "docs/wiki/developers/CI-CD.adoc"
+[[page]]
+id = "WIKI-DEV-004"
+path = "docs/wiki/developers/Accessibility.adoc"
+[[page]]
+id = "WIKI-CON-001"
+path = "docs/wiki/contributors/Contributing-Guide.adoc"

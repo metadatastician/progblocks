@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# META.a2ml — Project meta-level information
+# Architecture decisions, design rationale, governance.
+
+[metadata]
+version = "0.1.0"
+last-updated = "2026-08-07"
+
+[project-info]
+type = "web component / library"
+languages = ["javascript"]
+license = "MPL-2.0"
+author = "Jonathan D.A. Jewell (hyperpolymath)"
+
+[architecture-decisions]
+# No ADRs exist yet for this repository — there is no docs/adr/ directory
+# and no DECISIONS.md. None of the design choices visible in the tree
+# (ESM-only, no bundler, Shadow DOM, no framework) have been formally
+# recorded anywhere except commit messages (PR #12, #15, #16, and the
+# fatal-import-fix commit on branch fix/honest-gates-v2). This array is intentionally empty rather
+# than backfilled with invented ADRs — under-declaring is honest.
+decisions = []
+
+[development-practices]
+build-tool = "none"     # The Justfile used to have a `build` recipe that
+                         # cat-concatenated ES modules into one file without
+                         # stripping import/export syntax, producing a file
+                         # that could not run as a script. Rather than fix
+                         # it, the recipe was deleted.
+ci-platform = "github-actions"
+package-manager = "npm"  # package.json exists (private: true); npm ci/npm
+                          # test both work
+
+[design-rationale]
+notes = "There is no ARCHITECTURE.md or equivalent design document in this repo. What exists is README.md (aspirational feature list) and .superpowers/sdd/progblocks-foamy-puzzle/FACTS.md (verified source-read inventory) — see descriptiles/ANCHOR.a2ml for which one is authoritative when they disagree. If an ADR process starts, the first entry worth writing is why prog-block.js ships as ESM with no build step, and why a2ml-parser.js's tree-sitter path is commented out rather than wired up."

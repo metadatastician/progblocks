@@ -1,0 +1,461 @@
+= ProgBlocks — Debt Register
+:toc: macro
+:toclevels: 2
+:sectanchors:
+
+Known debt, by kind, with evidence. Every entry says what is wrong, how it is known,
+and what would clear it. Nothing here is a bare TODO: if an entry cannot cite the
+command or file:line that establishes it, it does not belong in this file.
+
+Companion document: `AUDIT.adoc` is authoritative on what has been *verified*.
+This file is authoritative on what is *owed*.
+
+Last compiled: 2026-08-07, against `main` plus the stacked branches for PR #18
+(honest gates) and this documentation set.
+
+toc::[]
+
+== How to read this
+
+[cols="1,4"]
+|===
+| *OPEN* | Confirmed by evidence recorded here. Needs doing.
+| *FLAG-ONLY* | Confirmed, but may not be fixed unilaterally (licence changes, upstream-owned files). Recorded, not actioned.
+| *ACCEPTED* | A real limitation, deliberately not being fixed for now. Not a TODO.
+|===
+
+Severity reflects consequence, not effort.
+
+== Licence debt
+
+=== L1 — Version metadata disagrees across four files *(OPEN)*
+
+`package.k9` and `contracts.ncl` declare `1.0.0`; `progblocks.launcher.a2ml` and
+`progblocks-launcher.sh` declare `0.1.0`; `package.json` declares `0.3.0`. Nothing has
+ever been released, so `1.0.0` is the most misleading of the three.
+
+Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" package.k9 contracts.ncl progblocks.launcher.a2ml package.json`
+
+Clearing it: pick one pre-release version (`0.1.0` is the honest floor) and align all
+four, or delete the version field from the files that do not need one. Blocked on
+nothing; deferred only because a release process does not exist yet.
+
+=== L2 — `progblocks.launcher.a2ml` licence was changed without upstream coordination *(FLAG-ONLY)*
+
+The file previously declared `CC-BY-SA-4.0` while the rest of the repo was MPL-2.0. PR #15
+aligned it to MPL-2.0 on the reasoning that a launcher config is code, not content. If
+`launch-scaffolder` generates these files from a template that assumes CC-BY-SA, the
+change will be reverted on the next regeneration.
+
+Evidence: `head -20 progblocks.launcher.a2ml`; the file's own header names
+`launcher-standard.a2ml v0.3.0` as its governing spec.
+
+Clearing it: confirm the licence expectation with the `launch-scaffolder` standard, then
+either keep MPL-2.0 or restore CC-BY-SA-4.0 with a documented rationale.
+
+== Documentation debt
+
+=== D1 — README format deviates from the estate AsciiDoc default *(ACCEPTED)*
+
+Estate house rule is `.adoc` for documentation including README; this repo uses
+`README.md`. Small repos carrying `.md` is a tolerated deviation, but it must be logged
+rather than silent.
+
+Evidence: `ls README.*` returns `README.md` only. Logged in
+`.machine_readable/rsr-profile.a2ml`.
+
+Clearing it: convert to `README.adoc`, or leave as-is with the deviation logged (current
+choice). Do not carry both.
+
+=== D2 — The GitHub wiki is a 32-byte stub that contradicts the canonical wiki *(OPEN)*
+
+`docs/wiki/` is canonical per estate convention. The repository's GitHub wiki contains a
+single `Home.md` reading "Welcome to the progblocks wiki!" — a reader who finds it first
+learns nothing and does not know a real wiki exists.
+
+Evidence: `git clone https://github.com/metadatastician/progblocks.wiki.git` → one file,
+one commit (`4d59839 Initial Home page`), 32 bytes.
+
+Clearing it: replace the GitHub wiki `Home.md` with a pointer to `docs/wiki/Home.adoc`,
+or disable the wiki feature on the repository.
+
+=== D3 — No architecture decision records *(OPEN)*
+
+Several load-bearing decisions have no written rationale: shadow DOM over light DOM,
+`<template data-variant>` as the authoring surface, regex substitution instead of the
+tree-sitter A2ML parser, and MPL-2.0 over the estate's more common AGPL.
+
+Evidence: `ls docs/decisions/ 2>/dev/null` → no such directory.
+`.machine_readable/descriptiles/META.a2ml` records that the ADR set is empty.
+
+Clearing it: write ADRs for at least the A2ML-parser deferral and the licence choice,
+since both are questions a contributor will otherwise re-litigate.
+
+=== D4 — `package.k9` documents an interface nothing consumes *(OPEN)*
+
+The manifest declares `MUST require: browser_environment / custom_elements`, points `JUST`
+targets at `just build` / `just test`, and points `NICKEL` at `contracts.ncl`. No code,
+script, or workflow reads it — and its `just build` target now names a recipe that was
+deleted as unbuildable.
+
+Evidence: `grep -rn "package.k9" --include="*.js" --include="*.yml" --include="Justfile" .`
+returns nothing outside documentation. `grep -n build package.k9` names a deleted recipe.
+
+Clearing it: either wire a K9 validation step into CI, or mark the file explicitly as a
+declaration-only artefact, or delete it. A manifest that documents a non-existent recipe
+is worse than no manifest.
+
+== Code debt
+
+=== C1 — Cross-site scripting via unescaped re-injection *(OPEN, highest severity in this file)*
+
+Variant content is read with `t.innerHTML` (`src/prog-block.js:60`) and re-injected as
+HTML (`:199`); variable values are interpolated unescaped into an attribute,
+`value="${val}"` (`:165`). There is no escaping anywhere in the component. A variable
+value of `" onfocus="…` performs attribute injection, and markup inside a code block is
+executed as markup instead of displayed as code.
+
+This matters more than its line count suggests: the component's stated purpose is
+rendering code snippets in documentation and wikis — that is, content authored by people
+other than the page owner.
+
+Evidence: `grep -n "innerHTML\|value=\"\${" src/prog-block.js`
+
+Clearing it: escape on the way in (an `escapeHtml()` helper) or build the DOM with
+`createElement` + `textContent` / `.value` instead of string concatenation. Scheduled for
+the `fix/render-security` change.
+
+=== C2 — Every keystroke destroys the focused input *(OPEN)*
+
+Editing a variable calls `updateState`, which rewrites `shadowRoot.innerHTML` wholesale
+(`src/prog-block.js:95-99` → `:49-52` → `:177`). The `<input>` being typed into is
+destroyed and recreated on each character, so focus and caret are lost. Multi-character
+variable values are effectively untypeable — the headline interactive feature does not
+survive contact with a user.
+
+Evidence: `sed -n '95,99p;49,52p;177p' src/prog-block.js`
+
+Clearing it: targeted DOM updates — variable input events update only the rendered
+output node; inputs are rebuilt only when the variant changes.
+
+=== C3 — The editor destroys the variant template *(OPEN)*
+
+Typing in the editor overwrites the variant source with post-interpolation text,
+permanently losing `{{ variables }}`. The code says so itself: *"Careful: if A2ML vars
+exist, typing over them destroys the template tag!"*
+
+Evidence: `sed -n '234,242p' src/prog-block.js`
+
+Clearing it: keep the raw variant template as the source of truth; the editor edits raw
+source and the preview re-interpolates.
+
+=== C4 — Falsy variable values render as raw placeholders *(OPEN)*
+
+`this._state.variables.get(key) || match` (`src/prog-block.js:91`) falls back to the
+literal `{{ key }}` whenever the value is falsy, so a variable deliberately set to `""`
+or `"0"` displays as its own placeholder.
+
+Evidence: `sed -n '91p' src/prog-block.js`
+
+Clearing it: `variables.has(key) ? variables.get(key) : match`.
+
+=== C5 — Variables accumulate across variant switches *(OPEN)*
+
+`extractA2MLVariables` (`src/prog-block.js:76-86`) merges into the existing map and never
+prunes. Switching variants leaves every variable from every previously visited variant in
+the state map and in the rendered controls.
+
+Evidence: `sed -n '76,86p' src/prog-block.js`
+
+Clearing it: rebuild the variable map per variant, preserving values only for keys the
+new variant actually declares.
+
+=== C6 — Shadow stylesheet path breaks the component's core promise *(OPEN)*
+
+The shadow root loads `<link rel="stylesheet" href="./src/prog-block.css">`
+(`src/prog-block.js:178`), which resolves against the *document* URL, not the module URL.
+The component is therefore styled correctly only when the consuming page sits exactly one
+directory above `src/`. The README promises injection into arbitrary static-site
+generators and wikis; this line makes that false for almost all of them.
+
+Evidence: `sed -n '178p' src/prog-block.js`
+
+Clearing it: `new URL('./prog-block.css', import.meta.url)`, or adopt a constructable
+stylesheet, or inline the CSS into the shadow root.
+
+=== C7 — Split view is wired to nothing *(OPEN)*
+
+`src/prog-block.css:37-45` selects on `:host([split-view="…"])`, but `toggleLinter`
+(`src/prog-block.js:116-121`) only mutates internal state and stamps the value on an inner
+`<div>`. The host attribute is never set, so the CSS never matches and the feature is
+invisible unless a consumer sets the attribute by hand.
+
+Evidence: `sed -n '37,45p' src/prog-block.css; sed -n '116,121p' src/prog-block.js`
+
+Clearing it: reflect the state to the host attribute.
+
+=== C8 — The exporter's CSV is not CSV and its JSON is not structured *(OPEN)*
+
+The CSV path quotes each whole line as a single field and never splits on delimiters
+(`src/modules/exporter.js:36-38`), so the output is not a CSV representation of the
+block's data. The JSON path wraps the entire blob in `{"block_content": "…"}` (`:18`)
+while the comment above it describes parse-and-re-stringify behaviour that was never
+written. A dead `try/catch` wraps a `JSON.stringify` of a string, which cannot throw
+(`:15-23`).
+
+Evidence: `sed -n '15,23p;36,38p' src/modules/exporter.js`
+
+Clearing it: real field-level CSV quoting and escaping; structured JSON; delete the dead
+handler.
+
+=== C9 — `view-manager.js` is dead code holding the only real linter implementation *(OPEN)*
+
+The 55-line module is imported by nothing. It contains the actual WebSocket/LSP linter
+code and a `toggleLineNumbers` implementation. Meanwhile the component renders the
+hardcoded string `'<i>Linter ready</i>'` (`src/prog-block.js:22`) as its "linter panel".
+
+Evidence: `grep -rn "view-manager" src/ tests/ index.html` returns only the file itself.
+
+Clearing it: delete the module (the estate rule is remove-don't-wire for aspirational
+code), and remove the fake linter string from the render. If the linter is ever wanted,
+it returns as a real change with tests.
+
+=== C10 — `k9-validator.js` contains two methods that fake success *(OPEN)*
+
+`validateNickel()` fakes a 50 ms `setTimeout` "WASM call" and then returns
+`{valid: true, errors: []}` unconditionally; `executeJustTask()` logs and returns `true`.
+Neither is called by anything. `checkMust(environmentDetails)` ignores its only parameter.
+
+Evidence: `sed -n '17,24p;31,42p;48,51p' src/k9-validator.js`
+
+Clearing it: delete both fake methods. A validator that cannot fail is worse than no
+validator, because it launders unverified claims into apparent verification.
+
+=== C11 — `defaultValidator` is imported but never used *(OPEN)*
+
+`src/prog-block.js:2` imports `defaultValidator`. Nothing in the file calls it.
+
+This is the residue of a real bug: the file previously imported `{ validateK9 }`, an
+export that does not exist, which is a link-time `SyntaxError` — the module graph never
+loaded and `customElements.define('prog-block', …)` never ran, so every `<prog-block>` on
+the page was inert. PR #18 corrected the name and added
+`tests/registration.test.js` to prove the element now registers. But the import was never
+*used*, so correcting it left a dead import behind.
+
+Evidence: `grep -n "defaultValidator\|checkMust" src/prog-block.js` → one hit, the import
+line, no call site.
+
+Clearing it: drop the import (naturally handled by C10's deletion of the fake validator).
+
+=== C12 — A2ML parsing is a stub with a placeholder binary *(ACCEPTED, for now)*
+
+`src/a2ml-parser.js` has its tree-sitter path commented out and its own comment calls the
+remaining code a "Basic interpolation stub"; the function is never called. The `A2MLState`
+class (`:9-32`) is entirely dead. `assets/tree-sitter-a2ml.wasm` is a **118-byte ASCII
+text file** reading "// Dummy WASM file placeholder", not WebAssembly.
+
+Evidence: `file assets/tree-sitter-a2ml.wasm; wc -c assets/tree-sitter-a2ml.wasm`;
+`grep -rn "a2ml-parser" src/ | grep -v "^src/a2ml-parser.js"` returns nothing.
+
+Clearing it: either build the real `tree-sitter-a2ml` grammar and wire it in, or delete
+the module and the placeholder and describe the regex substitution as what it is. Accepted
+for now because the regex path genuinely works for the substitution the component
+performs; the debt is the *pretence* of a parser, not the missing parser.
+
+=== C13 — The generated launcher cannot start the server *(FLAG-ONLY — upstream)*
+
+`progblocks-launcher.sh` is generated by `launch-scaffolder` and marked "do not edit". As
+generated it cannot work:
+
+* a blank line precedes the `#!/usr/bin/env bash` shebang, so the kernel will not exec it directly;
+* `REPO_DIR=""` is never populated, so `cd "$REPO_DIR"` silently no-ops;
+* `ICON_SOURCE="/assets/icon-256.png"` is an absolute path at the filesystem root, and the file does not exist anywhere;
+* the startup-command search requires `[ -x "$candidate" ]`, which is false for strings such as `"python3 -m http.server"`, so `START_COMMAND` is **always empty** and `start_server` always dies with "No startup command found";
+* absolute paths from the author's machine (`/home/hyperpolymath/…`, `/var/mnt/eclipse/…`) are baked into every generated `.desktop` entry.
+
+The source config `progblocks.launcher.a2ml` is *correct* on every one of these points —
+it uses `{repo-dir}` tokens and XDG paths. The generator lost them.
+
+Evidence: `head -1 progblocks-launcher.sh | cat -A` (blank first line);
+`grep -n 'REPO_DIR=\|ICON_SOURCE=\|-x "$candidate"' progblocks-launcher.sh`
+
+Clearing it: file the defect against `launch-scaffolder` and regenerate. **Do not
+hand-edit the generated file** — it affects every generated launcher in the estate, so
+fixing it here would hide an estate-wide bug behind one repo's patch.
+
+== Test and proof debt
+
+=== T1 — No formal proofs, and none claimed *(ACCEPTED)*
+
+This repository makes no formal correctness claims and carries no proof assistant, proof
+obligations, or `formal-proofs` capability. Recorded here so the absence is a stated
+position rather than an oversight, and so nothing later claims proof-backed rigour.
+
+Evidence: `.machine_readable/rsr-profile.a2ml` does not declare `formal-proofs`;
+`.machine_readable/descriptiles/NEUROSYM.a2ml` states the position explicitly.
+
+=== T2 — The test suite covers 4 of ~660 source lines' worth of behaviour *(OPEN)*
+
+Five tests exist: three assert `parsePaste` behaviour including parsed content, one
+asserts the custom element registers and constructs, one smoke-checks the validator. That
+is the whole suite.
+
+Not covered at all: rendering, variant switching, variable substitution and its falsy-value
+bug, the exporter (all four formats), the A2ML parser, accessibility semantics, the XSS
+surface, focus behaviour, and split view.
+
+Evidence: `npm test` → `tests 5`. `ls tests/` → two files.
+
+Clearing it: each defect in the Code debt section above should land with a failing test
+first. The registration test is the model: it is 19 lines and it is the only test that
+would have caught the bug that made the entire component inert.
+
+=== T3 — No accessibility testing of any kind *(OPEN)*
+
+The repository claims a WCAG 2.1 AA *target* and carries real ARIA attributes, but nothing
+tests them. Known gaps against AA/APG for a tablist: no roving `tabindex` or arrow-key
+navigation, no `tabpanel` + `aria-controls` pairing, no `aria-live` announcement for
+variant or export state changes, and inactive tabs at `opacity: 0.7` degrade contrast.
+Focus destruction (C2) is itself an accessibility defect, not merely a usability one.
+
+Evidence: `grep -rn "aria-\|role=" src/prog-block.js` shows the attributes present;
+`grep -rln "axe\|pa11y\|aria" tests/` returns nothing.
+
+Clearing it: add an automated accessibility check (axe-core under happy-dom is enough to
+catch the structural gaps), and fix the tablist keyboard model.
+
+=== T4 — `contracts.ncl` validates a self-description, not the repository *(OPEN, partially cleared)*
+
+`just check` runs `nickel export contracts.ncl`, which type-checks a 20-line record. It
+does not check that the files it names exist, so it cannot fail for any reason that would
+matter. Asserting a standard in a contract is a *declaration*, not a test.
+
+Partially cleared in this pass: the record asserted `accessibility_standard = "WCAG_AAA"`,
+which was simply false (see T3). It now reads `"WCAG_2.1_AA_target"`. The structural
+problem — a contract that validates only its own text — remains.
+
+Evidence: `nickel export contracts.ncl --format json`; `cat contracts.ncl`
+
+Clearing it: make the contract assert something falsifiable (for example, that every path
+in `entry_points` and `styles` exists on disk), or retire it. Note that the version field
+it carries is part of L1.
+
+== CI/CD debt
+
+=== CI1 — The three green workflows do not gate the known defects *(OPEN)*
+
+`ci.yml` runs the 5-test suite; `codeql.yml` scans `actions` and `javascript-typescript`;
+`secret-scanner.yml` runs gitleaks. None of them would fail on any Code debt entry above —
+CodeQL's default query suite does not flag this XSS pattern in a non-server context, and
+the test suite does not exercise rendering.
+
+Evidence: `ls .github/workflows/`; the suite's own coverage per T2.
+
+Clearing it: as tests land per T2, the gate strengthens automatically. No workflow change
+is needed — what is needed is tests.
+
+=== CI2 — Actions have been intermittently dead from platform-side enforcement *(FLAG-ONLY — external)*
+
+From repository creation on 2026-07-23 this repository **never had a single green run** from
+a checked-in workflow until the rehabilitation. Three distinct causes, all now fixed here:
+
+. `extractions/setup-just` was not in the organisation's Actions allowlist → 24 consecutive `startup_failure` runs;
+. GitHub's per-repository workflow-lockfile enforcement arrived 2026-08-01 and killed every run, including GitHub's own default-setup CodeQL;
+. CodeQL default setup was enabled alongside the advanced `codeql.yml` for the same language, so every advanced run's SARIF upload was rejected.
+
+Since then `startup_failure` has flapped on and off from platform-side cohort enforcement
+that no repository-side setting controls.
+
+Evidence: `gh run list --limit 30`; the error text is visible **only** on a run's HTML
+page, not through the API.
+
+Clearing it: nothing to clear here — recorded so that a future reader does not
+re-diagnose a platform outage as a repository defect. **Diagnostic note: `gh pr checks`
+hides `startup_failure` entirely; use `gh run list`.**
+
+=== CI3 — No release, packaging, or publish path *(ACCEPTED)*
+
+`just build` was deleted because it could not succeed (it `cat`-concatenated ES modules,
+which would produce duplicate declarations, into a `dist/` that was never created). There
+is now no bundle step, no `dist/`, no package publication, and `package.json` is marked
+`private`.
+
+Evidence: `git log --oneline -- Justfile`; `grep -n private package.json`
+
+Clearing it: when the component is worth consuming, add a real bundler step. Deliberately
+deferred — a fake build recipe is worse than none, and nothing downstream consumes this
+component yet.
+
+== Repository hygiene
+
+=== H1 — Two GitHub template files lacked an SPDX header on line 1 *(CLEARED 2026-08-07)*
+
+The estate lint reads only the first line, so a header lower in the file reads as missing.
+Two `.a2ml` files under `.github/` carried none at all. Both were checked for an existing
+identifier elsewhere in the file first — there was none, so adding MPL-2.0 could not
+shadow or mis-licence a different declaration. (That check is not optional: imposing a
+header blindly has mis-licensed files elsewhere in this estate.)
+
+Evidence, now passing: `just probes` → the `Mustfile.a2ml` SPDX probe passes, and was
+confirmed non-vacuous by planting an `.a2ml` file without a header and observing the
+probe fail.
+
+=== H2 — The accessibility contractile's probe was naive *(CLEARED 2026-08-07)*
+
+`.machine_readable/contractiles/adjust/Adjustfile.a2ml` grepped for the bare string `AAA`,
+so it fired on this repository's own honest disclaimers — the ones stating that AAA is
+*not* met. A tripwire that cannot tell an assertion from a denial trains people to ignore it.
+
+The pattern now matches claim-shaped phrasing only. Verified against three inputs: the
+real README (no claim → passes), a planted `"conforms to WCAG 2.1 AAA"` (caught), and a
+planted disclaimer `"not the previously-claimed AAA"` (correctly ignored).
+
+=== H4 — Several contractile probes were unrunnable as written *(CLEARED 2026-08-07)*
+
+The probes were authored with Justfile-style escaping (`\\(`, `\"$f\"`) which is invalid
+in the plain shell that evaluates them, so four of them could never execute and were
+silently reported as failures. Separately, the probe runner itself used `set -o pipefail`,
+which turns any probe ending in `| grep -q …` into a false failure: `grep -q` exits on
+first match and SIGPIPEs the command upstream, and pipefail then reports that death as the
+pipeline's status.
+
+Recorded rather than silently fixed because the failure mode is instructive: a *reporting*
+tool that invents failures is the same class of defect as a *gate* that cannot fail. Both
+decouple the signal from the truth.
+
+Evidence: `just probes` → 36 pass, 0 fail; each security probe confirmed non-vacuous by
+planting a violation (a fake token in `src/`, a `.pem` file at the root) and observing the
+corresponding probe fail, then clear on removal.
+
+=== H3 — Historic template contamination, now removed but worth recording *(ACCEPTED — closed)*
+
+This repository was scaffolded by copying files from sibling repositories and was never
+fully instantiated. Removed in PR #15: `squisher-corpus` text throughout the community
+health files including a "TEMPLATE INSTRUCTIONS (delete this block before publishing)"
+banner; a `.github/settings.yml` that was **entirely the configuration of a different
+repository** (`paint-type`) and would have renamed this repository had the probot settings
+app ever been installed; a live security-advisory link pointing at the wrong repository;
+five Dependabot ecosystems for package managers this repository does not use; and a
+lowercase `funding.yml` that GitHub silently ignores.
+
+Recorded because the class of defect recurs across the estate whenever a repository is
+minted by copying, and because "no LICENCE file while three files claimed three different
+licences" is the kind of thing that is only obvious once someone looks.
+
+== What was checked to produce this
+
+* Every file in `src/`, `tests/`, and the repository root read in full.
+* `npm test` executed (5 pass); the test gate proven capable of failing by breaking an assertion and observing exit 1.
+* `nickel export contracts.ncl` executed.
+* `gh run list`, `gh api repos/…/actions/permissions`, `gh api repos/…/code-scanning/default-setup`, and run HTML pages inspected for the CI history.
+* `gh actions-lock --verify-local` executed against the workflow lockfile.
+* The GitHub wiki cloned and inspected.
+* Every `- run:` probe in `.machine_readable/contractiles/` executed against the live tree via `just probes` (36 pass, 0 fail), and each security probe additionally proven non-vacuous by planting a violation and observing it fail.
+* `./tools/check-wiki-health.sh` executed, and proven capable of failing by injecting a register/page mismatch.
+
+**Not checked:** the component has not been exercised in a real browser during this pass —
+every rendering, focus, and accessibility finding above is derived from reading the source
+and is marked as such. Cross-browser behaviour, performance, and the exported files'
+acceptance by downstream tools are all unverified. The XSS finding (C1) has not been
+demonstrated with a live payload; it is asserted from the absence of any escaping on a
+path that concatenates untrusted content into HTML.

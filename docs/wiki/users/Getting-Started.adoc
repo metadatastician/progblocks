@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: MPL-2.0
+= Getting Started
+:page-id: WIKI-USR-001
+:page-title: Getting Started
+:page-audience: Users and integrators
+:page-maturity: DRAFT
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::../_Status-Panel.adoc[]
+
+== Before you start
+
+[IMPORTANT]
+====
+Read link:Feature-Status.adoc[Feature Status] first. This page describes
+how to use `<prog-block>` as it actually behaves, not as the README's
+marketing copy describes it. There is currently no build step and no
+package publish. A fatal import bug in `src/prog-block.js` used to stop
+the custom element from registering at all; that has been fixed and is
+guarded by `tests/registration.test.js`. Verify against the checked-out
+source before you rely on any of this.
+====
+
+== Minimal usage
+
+Load the module and drop the element into your page:
+
+[source,html]
+----
+<script type="module" src="./src/prog-block.js"></script>
+
+<prog-block line-numbers>
+  <template data-variant="macOS">
+brew install progblocks
+  </template>
+  <template data-variant="Linux">
+apt-get install progblocks
+  </template>
+</prog-block>
+----
+
+`customElements.define('prog-block', ProgBlock)` runs at the bottom of
+`src/prog-block.js` when the module loads successfully — which it now
+does (see the note above; `tests/registration.test.js` verifies this).
+If the module ever fails to load, no `<prog-block>` element on the page
+would upgrade; each would stay inert, unstyled, plain HTML.
+
+== The stylesheet-path limitation (read this before embedding anywhere)
+
+ProgBlocks is pitched as decoupled and ready to "inject into any
+system" — other static site generators, wiki engines, previewers. That
+claim does **not** hold for the current implementation.
+
+`ProgBlock.render()` in `src/prog-block.js` writes this into the
+shadow root on every render:
+
+[source,html]
+----
+<link rel="stylesheet" href="./src/prog-block.css">
+----
+
+That `href` is a **document-relative** path — it is resolved against
+the URL of the *consuming page*, not against the location of
+`prog-block.js` or the component's own module. Browsers do not give
+shadow-DOM `<link>` elements any special resolution behaviour; a
+relative `href` inside a shadow root resolves exactly like a relative
+`href` in the light DOM.
+
+The practical consequence: the stylesheet only loads if the consumer
+page happens to sit in a directory that has `src/prog-block.css` one
+level below it — i.e. the consumer page is one level *above* `src/` in
+the same tree the component ships in. This is true of the repo's own
+`index.html` (which sits at the repo root, directly above `src/`) and
+false for almost any real integration:
+
+* Drop `<prog-block>` into a `ddraig-ssg` page rendered at a different
+  URL depth and the stylesheet 404s silently — the element still
+  renders (unstyled) because the browser does not throw on a missing
+  stylesheet, it just never applies.
+* Drop it into BerryWiki, a Markdown site, or any consumer that vendors
+  `src/prog-block.js` into its own asset pipeline and the path breaks
+  the same way.
+
+**There is no workaround shipped today.** Options a future fix could
+take — none of these are implemented — include inlining the CSS as a
+`<style>` tag built from an import, using `import.meta.url` to resolve
+the stylesheet relative to the module rather than the document, or
+publishing a bundled single-file component. Until one of those lands,
+treat "inject anywhere" as aspirational, not real, and expect to
+manually vendor and re-point the stylesheet path for any deployment
+that is not a copy of this repo's own `index.html` layout.
+
+== What actually renders
+
+See link:Authoring-Blocks.adoc[Authoring Blocks] for the variant/template
+model and its bugs, and link:Feature-Status.adoc[Feature Status] for the
+full works/broken/absent table (preview toggle, live linter, split view,
+and the A2ML parser are all absent or non-functional despite being
+advertised).

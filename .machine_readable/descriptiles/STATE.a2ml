@@ -1,0 +1,105 @@
+# SPDX-License-Identifier: MPL-2.0
+# STATE.a2ml — ProgBlocks
+#
+# Current project state, phase, and route to the next milestone.
+# Machine-readable snapshot; keep in sync with README.md and FACTS.md.
+
+[metadata]
+project = "ProgBlocks"
+version = "0.1.0"   # per progblocks.launcher.a2ml; see [notes] on version drift below
+last-updated = "2026-08-07"
+status = "active"
+
+[project-context]
+name = "progblocks"
+purpose = "Dependency-free web component for rich code blocks in technical documentation and wikis: variant switching, A2ML variable substitution, smart paste parsing, and clipboard-safe line numbers."
+language = "javascript (ESM, no build)"
+runtime = "any modern browser"
+dependencies = "none at runtime; dev dependencies happy-dom and @happy-dom/global-registrator (see package.json)"
+distribution = "no build artefact; consumers import src/prog-block.js directly"
+completion-percentage = 35   # of the 8 features README.md advertises (switchable
+                              # blocks, A2ML substitution + live preview, smart
+                              # paste, export, line numbers, split/glyph editor
+                              # modes, AA accessibility, drop-in integration),
+                              # roughly 3 work as described: variant tabs (generic
+                              # only), smart paste, and export-to-file. A2ML
+                              # substitution works but is not "backed by the A2ML
+                              # parser" as implied; line numbers work but have no
+                              # UI toggle. Preview toggle, templating wizards, live
+                              # linter, and split view are absent, absent, faked,
+                              # and wired wrong respectively (FACTS.md). This ratio
+                              # is unchanged by the B1 fix below: B1 previously
+                              # blocked the component from registering in a browser
+                              # AT ALL, so fixing it makes these same features
+                              # actually reachable live rather than changing which
+                              # ones work.
+
+[position]
+phase = "implementation"   # design | implementation | testing | maintenance | archived
+maturity = "experimental"  # experimental | alpha | beta | production | lts
+                            # NOT beta: the component's flagship advertised
+                            # features (preview toggle, templating wizards, a
+                            # real live linter) are entirely absent. The
+                            # component previously had a link-time load
+                            # failure (every <prog-block> on the demo page
+                            # inert) — that has been fixed (see
+                            # [blockers-and-issues] B1 below) — but the
+                            # missing/faked flagship features alone keep this
+                            # below beta.
+
+[route-to-mvp]
+milestones = [
+  { name = "Repo scaffolded, MPL-2.0 licensing, estate hygiene pass (PR #15)", completion = 100 },
+  { name = "CI unblocked — just installer allowlisted, JS CodeQL coverage, workflow lockfile (PR #12)", completion = 100 },
+  { name = "gitleaks secret scanning added (PR #16) — this repo previously had none", completion = 100 },
+  { name = "Fatal import bug fixed + registration test + package.json (branch fix/honest-gates-v2)", completion = 100 },
+  { name = "just test able to fail honestly (remove the || echo fallback in Justfile)", completion = 100 },
+  { name = "XSS remediation — escape variant content and interpolated variable values (scheduled: fix/render-security, not started)", completion = 0 },
+  { name = "Fix focus-destroying re-render on every keystroke in variable inputs", completion = 0 },
+  { name = "Preview toggle (README's flagship claim) implemented", completion = 0 },
+  { name = "Real A2ML parser wired up (currently a stub; tree-sitter WASM asset is a 118-byte placeholder)", completion = 0 },
+  { name = "Live linter wired to real code (view-manager.js exists but is never imported; the rendered panel is a hardcoded string)", completion = 0 },
+  { name = "Split-view CSS/JS mismatch fixed (:host attribute is never reflected)", completion = 0 },
+  { name = "Templating wizards (no storage, no forms, no wizard code exists anywhere in the tree)", completion = 0 },
+]
+
+[blockers-and-issues]
+# Full register with evidence: FACTS.md (.superpowers/sdd/progblocks-foamy-puzzle/FACTS.md).
+blockers = [
+  { id = "B1", kind = "code", state = "fixed", detail = "src/prog-block.js used to import { validateK9 } from k9-validator.js, which exports only K9Validator and defaultValidator — a link-time SyntaxError that stopped customElements.define('prog-block', ...) from ever running, leaving every <prog-block> on the demo page inert. Fixed by importing { defaultValidator } instead; guarded by tests/registration.test.js." },
+  { id = "B2", kind = "code", state = "open", detail = "XSS — variant content is read via innerHTML and re-injected as HTML with no escaping; variable values are interpolated unescaped into value=\"${val}\" (src/prog-block.js:61, 68, 165, 177). Scheduled for a fix/render-security PR that has not started." },
+  { id = "B3", kind = "code", state = "open", detail = "Editing any variable input triggers a full shadowRoot.innerHTML rewrite, destroying and recreating the focused <input> — multi-character values are effectively untypeable" },
+  { id = "B4", kind = "code", state = "open", detail = "The editor overwrites variant source with post-interpolation text, permanently losing {{ vars }} — self-confessed in a code comment" },
+  { id = "B5", kind = "code", state = "open", detail = "Split view is wired wrong: prog-block.css keys off :host([split-view=\"…\"]) but the JS only stamps the value on an inner <div>, never reflecting it to the host attribute, so the CSS never matches" },
+  { id = "B6", kind = "code", state = "open", detail = "The live linter is fake: the rendered panel is the hardcoded string '<i>Linter ready</i>'. The real WebSocket/linter code lives in view-manager.js, which nothing imports." },
+  { id = "B7", kind = "test", state = "fixed", detail = "Justfile's test recipe used to be `node --test tests/ || echo \"No tests configured yet\"` — a real failure was swallowed and the recipe always exited 0. The `|| echo` fallback has been removed; the recipe is now `node --test` and propagates failure." },
+  { id = "B8", kind = "cicd", state = "fixed", detail = "package.json now exists in this tree at HEAD, so `npm ci`/`npm test` have something to install and run" },
+  { id = "B9", kind = "docs", state = "flag-only", detail = "README.md advertises a code/preview toggle, templating wizards, and 'Advanced Editor Tooling' split/glyph modes that do not exist in the code — do not repeat these claims without checking FACTS.md first" },
+]
+
+[critical-next-actions]
+actions = [
+  "Start the fix/render-security PR for the unescaped-innerHTML XSS surface — this is the highest-severity defect not yet scheduled with an open branch.",
+  "Fix the focus-destroying full-shadowRoot re-render so variable inputs are typeable.",
+  "Either correct README.md to match FACTS.md reality (remove preview-toggle / templating-wizard / live-linter claims until built) or build the features — do not leave both drifting apart.",
+  "Resolve the version-string drift (1.0.0 / 0.1.0 / 0.3.0 across three files) before any tag is cut.",
+]
+
+[maintenance-status]
+last-run-utc = "unknown"   # this pass did not query live GitHub Actions state;
+                            # see descriptiles/PLAYBOOK.a2ml's diagnostic note —
+                            # use `gh run list --repo metadatastician/progblocks`,
+                            # not `gh pr checks`, to check
+last-result = "unknown"     # unknown | pass | warn | fail
+open-warnings = 6           # count of [blockers-and-issues] entries still open
+                             # (B2/B3/B4/B5/B6/B9); B1/B7/B8 are now state=fixed
+open-failures = 0           # no failure has been mechanically confirmed by this pass;
+                             # B2/B3/B4/B5/B6 are code-read defects, not CI failures
+
+[ecosystem]
+part-of = ["metadatastician"]
+depends-on = []
+sibling-projects = []   # no verified sibling relationship established in this pass;
+                         # see descriptiles/ECOSYSTEM.a2ml for candidate/intended
+                         # consumers (berrywiki, ddraig-ssg, nextgen-languages),
+                         # none of which is a confirmed live integration

@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: MPL-2.0
+= Contributing Guide
+:page-id: WIKI-CON-001
+:page-title: Contributing Guide
+:page-audience: Contributors
+:page-maturity: DRAFT
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::../_Status-Panel.adoc[]
+
+== Start with the root guide
+
+The authoritative contribution process — reporting bugs, suggesting
+features, branch naming, commit message conventions — lives in
+link:../../../CONTRIBUTING.md[`CONTRIBUTING.md`] at the repository
+root. This page does not duplicate it; it adds the handful of
+repo-specific things that guide does not cover.
+
+== Repo-specific notes
+
+SPDX header placement::
+Every `.a2ml` file in this repository must carry
+`# SPDX-License-Identifier: MPL-2.0` on **line 1**, exactly. A linter
+that checks for the header greps only the first line, so a correct
+header placed on line 2 or later reads as *missing* and can trigger a
+duplicate header being added on top of it. If you are adding or fixing
+a header, grep the whole file first and move an existing identifier
+rather than blindly prepending a new one.
+
+Never hand-edit `progblocks-launcher.sh`::
+That file is **generated** by `launch-scaffolder` from
+`progblocks.launcher.a2ml` and is marked "do not edit" in its own
+header. It currently does not work — see
+link:../developers/CI-CD.adoc[CI/CD] for the concrete defects — but the
+fix belongs upstream, in `launch-scaffolder` itself, followed by
+regenerating this file. Hand-patching the generated script only masks
+the generator bug and will be silently overwritten the next time it
+runs.
+
+Draft-PR workflow::
+Substantial changes — including CI and quality-gate work — go up as
+draft pull requests first. See the rehabilitation history in
+link:../developers/CI-CD.adoc[CI/CD] for a live example (PR #18): it
+stays in draft while gates are made honest (a fake-passing `just test`
+is worse than no gate at all), and only comes out of draft once the
+owner has live-tested it. Do not merge your own draft PR early to
+"unblock" something; let it run its course in draft.
+
+Read before you touch source::
+link:../users/Feature-Status.adoc[Feature Status] lists what is
+actually broken. If you are fixing one of those rows, update that page
+in the same change — a fix that lands without updating the honesty
+page just re-creates documentation drift.

@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: MPL-2.0
+# Dustfile — Cleanup and hygiene contract for progblocks
+# Author: Jonathan D.A. Jewell (hyperpolymath)
+#
+# What should be cleaned up (exnovated) or clearly re-labelled. Housekeeping,
+# not blockers — see ../bust/Bustfile.a2ml for what's actually broken.
+
+@abstract:
+Cleanup and hygiene items for progblocks. Two dead-code items dominate:
+view-manager.js (never imported by anything) and the tree-sitter-a2ml.wasm
+placeholder (not real WebAssembly). Neither is a runtime bug on its own —
+both are exnovation candidates that currently mislead a reader of the
+source tree into thinking more is wired up than actually is.
+@end
+
+## Dead Code
+
+### view-manager-unreferenced
+- description: src/modules/view-manager.js (55 lines) is never imported by anything in this tree, yet contains the only real linter/WebSocket code — the rendered linter panel in prog-block.js is instead a hardcoded '<i>Linter ready</i>' string
+- run: "! grep -rl 'view-manager' src/prog-block.js src/modules/exporter.js src/modules/smart-paste.js src/a2ml-parser.js src/k9-validator.js 2>/dev/null | grep -q ."
+- severity: warning
+- enforced-by: not yet automated (documentary)
+- notes: Two honest paths forward — wire it in and make the linter real, or delete it and stop implying live-linting exists. Doing neither is the current state.
+
+### a2ml-parser-stub
+- description: src/a2ml-parser.js (60 lines) has its tree-sitter path commented out; the A2MLState class is dead code; the parse function is never called by the component
+- run: grep -q 'tree-sitter' src/a2ml-parser.js
+- severity: warning
+- enforced-by: not yet automated (documentary)
+
+### wasm-placeholder
+- description: assets/tree-sitter-a2ml.wasm is a 118-byte ASCII text placeholder ("// Dummy WASM file placeholder"), not real WebAssembly
+- run: test "$(stat -c%s assets/tree-sitter-a2ml.wasm 2>/dev/null || stat -f%z assets/tree-sitter-a2ml.wasm)" -lt 1000
+- severity: warning
+- enforced-by: not yet automated (documentary)
+- notes: Either vendor a real compiled artefact or remove the file — a fake .wasm sitting in assets/ implies a working parser that does not exist.
+
+### fake-validator-methods
+- description: k9-validator.js's validateNickel() fakes a 50ms setTimeout then unconditionally returns {valid:true, errors:[]}; executeJustTask() console.logs and returns true. Neither is called by anything.
+- run: grep -q 'setTimeout' src/k9-validator.js
+- severity: warning
+- enforced-by: not yet automated (documentary)
+
+## Version Drift
+
+### version-string-disagreement
+- description: package.k9 and contracts.ncl say 1.0.0; progblocks.launcher.a2ml and progblocks-launcher.sh say 0.1.0; package.json says 0.3.0 — nothing has actually been released under any of these
+- run: grep -q '"1.0.0"' contracts.ncl && grep -q '0.1.0' progblocks.launcher.a2ml
+- severity: warning
+- enforced-by: not yet automated (documentary)
+- notes: Resolve to one version before any tag is cut — see ../descriptiles/PLAYBOOK.a2ml release-process.
+
+## Build Recipe Honesty
+
+### fake-build-recipe (RESOLVED — recipe removed)
+- description: Justfile's build recipe used to cat-concatenate ES modules into one file without stripping import/export syntax, producing a file that could not run as a script. Rather than fix it, the recipe was deleted; there is no `build:` recipe in the Justfile at all now.
+- run: "! grep -q '^build:' Justfile"
+- severity: info
+- enforced-by: this probe
+- notes: If a real bundle step is ever needed, use a real bundler (esbuild) — do not re-add a recipe that only implies one exists.

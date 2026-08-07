@@ -1,0 +1,104 @@
+// SPDX-License-Identifier: MPL-2.0
+= Testing
+:page-id: WIKI-DEV-002
+:page-title: Testing
+:page-audience: Developers
+:page-maturity: VERIFIED
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::../_Status-Panel.adoc[]
+
+== Running the suite
+
+[source,bash]
+----
+just test
+# or, equivalently:
+npm test
+# or, directly:
+node --test
+----
+
+The `Justfile`'s `test` recipe is:
+
+[source,make]
+----
+test:
+	node --test
+----
+
+**This gate can now fail honestly.** The recipe used to be `node --test
+tests/ || echo "No tests configured yet"`, whose `||` clause made the
+exit code always `0` regardless of whether the tests underneath passed
+or failed. That fallback has been removed — `just test` now exits
+non-zero on a real failure, and `npm test` (via `package.json`) runs
+the same command.
+
+== What the suite covers
+
+There are two test files, five tests total, all passing:
+
+* `tests/prog-block.test.js` exercises `src/modules/smart-paste.js`
+  (`parsePaste()`) with three cases: detecting a JSON array, falling
+  back to text on malformed JSON, and detecting a CSV/TSV matrix.
+* `tests/registration.test.js` imports `src/prog-block.js` in a
+  `happy-dom`-backed environment and asserts
+  `customElements.get('prog-block')` is defined and that a constructed
+  `<prog-block>` is a real `HTMLElement` instance. This is the test
+  that guards against the fatal import bug described below.
+
+== A bug this suite used to miss — and how that was fixed
+
+Until recently, nothing imported `src/prog-block.js`, so the module
+graph was never exercised by tests. `src/prog-block.js` carried a
+named-import mismatch (`import { validateK9 }` against
+`k9-validator.js`, which exports only `K9Validator` and
+`defaultValidator`) — a link-time `SyntaxError` that kept
+`customElements.define('prog-block', …)` from ever running. The
+component was completely inert on every page that loaded it, and the
+(then single-file) test suite still passed, because it never touched
+`prog-block.js` at all.
+
+The import was fixed (`prog-block.js` now imports `{ defaultValidator
+}`), and `tests/registration.test.js` was added specifically to catch
+this class of regression. A broken import in `prog-block.js` can no
+longer reach `main` undetected by this suite.
+
+== What the suite does NOT cover — and why that matters
+
+The registration test only proves the element *registers and
+constructs*. It says nothing about what the element does once
+instantiated. With no test anywhere for:
+
+* Variant tab rendering and switching (`parseLightDOM()`,
+  `handleTabClick()`), or `{{ variable }}` substitution — including the
+  falsy-value bug and the variable-accumulation-across-variants bug
+  documented in link:../users/Authoring-Blocks.adoc[Authoring Blocks].
+* The XSS surface — `innerHTML` re-injection of variant content and
+  unescaped variable interpolation into `value="${val}"` — has no
+  regression test despite being the highest-severity open defect
+  (`DEBT.adoc`).
+* Export formatting (`src/modules/exporter.js`) — the CSV and JSON
+  format defects documented in
+  link:../users/Feature-Status.adoc[Feature Status] have no regression
+  test.
+* Any accessibility behaviour (tab roles, focus management, or the
+  focus-loss-on-keystroke defect documented in
+  link:Architecture.adoc[Architecture]).
+* The A2ML parser (`src/a2ml-parser.js`, a stub whose tree-sitter path
+  is commented out) and `k9-validator.js`'s stub methods
+  (`validateNickel`, `executeJustTask`), neither of which has a call
+  site anywhere in `src/`.
+* The split-view CSS/JS mismatch.
+
+A passing `npm test` means the component registers and that
+smart-paste parsing works — nothing more.
+
+== Package manifest state
+
+`package.json` and a lockfile now exist in the repository root, so
+`npm ci` installs the two dev dependencies in use (`happy-dom` and
+`@happy-dom/global-registrator`, used by `tests/registration.test.js`)
+from a clean checkout.

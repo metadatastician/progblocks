@@ -1,0 +1,258 @@
+= EXPLAINME — claim ↔ evidence traceability
+:toc:
+
+This document exists to be checked, not believed. For every substantive claim ProgBlocks makes about
+itself, it gives the claim, the exact file/line that implements it, and the automated test or check
+that evidences it — or states plainly "no automated evidence" where none exists. Line references are
+against this checkout (2026-08-07); if the source has moved, re-verify rather than trust this table.
+
+Overall automated-test coverage: **two** test files. `tests/prog-block.test.js` exercises **one**
+module, `src/modules/smart-paste.js`. `tests/registration.test.js` imports `src/prog-block.js` and
+asserts `customElements.get('prog-block')` is defined. Nothing else in `src/` has a test that imports
+it.
+
+== The component registers as a custom element
+
+*Claim:* `<prog-block>` is a working custom element.
+
+*Implementation:* `customElements.define('prog-block', ProgBlock)` — `src/prog-block.js:247`.
+
+*Evidence:* **Automated: `tests/registration.test.js`, passing.** The claim used to be false: until this
+fix, `src/prog-block.js:3` imported `{ validateK9 }` from `src/k9-validator.js`, which exports only
+`K9Validator` and `defaultValidator` (`src/k9-validator.js:9,54`) — a link-time ES module error that
+kept the module graph from ever finishing loading, so `customElements.define()` at line 247 never
+executed and no `<prog-block>` element registered in a browser. The import was corrected to
+`{ defaultValidator }`, and `tests/registration.test.js` now imports the module and asserts
+`customElements.get('prog-block')` is truthy — this is the test that would have caught the original bug
+(the old suite never imported the component, so it was invisible to CI). Verify with `npm test`.
+
+== Variant switching (OS/shell/language tabs)
+
+*Claim:* code blocks can offer multiple variants, switchable via a tab UI.
+
+*Implementation:* `parseLightDOM()` (`src/prog-block.js:55-73`) reads `<template data-variant="…">`
+children into `_state.variants`; `handleTabClick()` (`:101-107`) switches the active one; `render()`'s
+`tabsHtml` (`:147-158`) draws the `role="tablist"`/`role="tab"` markup.
+
+*Evidence:* No automated evidence. The tabs themselves are generic containers — there is no
+OS/shell/language/citation-style semantics, no platform detection, no cross-block synchronisation, and
+no persistence of the selected variant across page loads or between multiple `<prog-block>` instances.
+
+== A2ML variable substitution
+
+*Claim:* `{{ variable }}` placeholders in variant content can be bound to user-editable values.
+
+*Implementation:* `extractA2MLVariables()` (`:76-86`) regex-scans content with
+`/\{\{\s*([\w:-]+)\s*\}\}/g` and seeds `_state.variables`; `interpolateContent()` (`:89-93`) substitutes
+values back in at render time; `render()`'s `varsHtml` (`:160-169`) draws one `<input>` per variable.
+
+*Evidence:* No automated evidence. Two defects affect correctness even if it were tested:
+
+* `interpolateContent()`'s substitution is `variables.get(key) || match` (`:91`) — a value of `""` or
+  `"0"` is falsy in JavaScript, so the raw `{{ placeholder }}` is shown instead of the actual value.
+* `extractA2MLVariables()` merges new keys into the existing map and never removes old ones (`:76-86`),
+  so switching variant tabs accumulates every variable name ever seen, for the life of the element.
+
+Not backed by the A2ML parser (`src/a2ml-parser.js`) — see that section below.
+
+== Editing a variable value updates the preview live
+
+*Claim:* typing into a variable's `<input>` updates the rendered code in place.
+
+*Implementation:* `handleVarChange()` (`:95-99`) → `updateState()` (`:49-52`) → a full
+`this.shadowRoot.innerHTML = ...` rewrite (`:177`) → `bindEvents()` (`:210-244`) re-attaches listeners.
+
+*Evidence:* No automated evidence, and the claim fails in practice. Every keystroke in the `<input>`
+fires an `input` event, which triggers the full shadow-tree rewrite at line 177. That destroys and
+recreates the very `<input>` node the user is typing into; focus does not survive an `innerHTML` swap.
+Multi-character values are effectively untypeable through the UI. See `ARCHITECTURE.md`'s render-model
+section for the full mechanism.
+
+== Editing code inline
+
+*Claim:* the code area is directly editable (`contenteditable="true"`, `:199`).
+
+*Implementation:* the `.code-content` `input` listener (`:234-242`) writes
+`e.target.textContent` back into `_state.variants[i].content`.
+
+*Evidence:* No automated evidence, and the claim is false as a template-preserving editor: the listener
+stores the *post-interpolation* text (variables already substituted), permanently losing the
+`{{ var }}` placeholders from the source. Self-confessed in a code comment at line 238: "Careful: if
+A2ML vars exist, typing over them destroys the template tag!"
+
+== Preview toggle (code view / preview view)
+
+*Claim (removed from this README, listed here because earlier revisions made it):* users can toggle
+between a code view and a live preview view.
+
+*Implementation:* none found anywhere in `src/`.
+
+*Evidence:* No automated evidence, because there is nothing to evidence — grep for "preview" across
+`src/` returns no view-toggling code. Absent, not broken.
+
+== Templating wizards
+
+*Claim (removed):* guided wizards for building templates.
+
+*Implementation:* none. No storage, no forms, no wizard code anywhere in `src/`.
+
+*Evidence:* No automated evidence — absent, not broken.
+
+== Live linter
+
+*Claim (removed):* a live, LSP-backed linter panel.
+
+*Implementation:* `_state.linterHtml` is hardcoded to `'<i>Linter ready</i>'` at construction
+(`:22`) and rendered verbatim by `render()`'s `linterHtml` block (`:171-175`). The real WebSocket/LSP
+logic exists in `ViewManager.attachLinterPanel()` (`src/modules/view-manager.js:30-54`), including a
+real `new WebSocket(serverUrl)` call — but `view-manager.js` is never imported by `prog-block.js` or
+`index.html` (verified by grep across `src/` and `index.html`). It is unreachable code.
+
+*Evidence:* No automated evidence. The claim is false as shipped: no linting, live or otherwise, ever
+occurs.
+
+== Split view (side-by-side / top-bottom)
+
+*Claim:* the block can render in a side-by-side or top-and-bottom split layout.
+
+*Implementation:* CSS selectors `:host([split-view="side-by-side"])` and
+`:host([split-view="top-bottom"])` (`src/prog-block.css:37-45`, `:149-151`) key off a `split-view`
+*host* attribute. `toggleLinter()` (`src/prog-block.js:116-121`) sets `_state.splitView`, and
+`render()` stamps that value only onto an inner `<div class="container" split-view="…">` (`:179`) — it
+is never reflected onto `this` (the host element) via `setAttribute`.
+
+*Evidence:* No automated evidence, and the wiring is provably broken by inspection: the CSS selector is
+`:host([split-view=…])`, the JS sets the attribute on a *child* `<div>`, and CSS host selectors do not
+match attributes on descendants. The split-view CSS rules never apply, regardless of state.
+
+== Smart paste
+
+*Claim:* pasted content is auto-detected as a JSON array, a CSV/TSV matrix, or falls back to plain
+text.
+
+*Implementation:* `parsePaste()` (`src/modules/smart-paste.js:8-53`), wired via `handlePaste()`
+(`src/prog-block.js:123-135`).
+
+*Evidence:* **The one claim in this document with real automated evidence.**
+`tests/prog-block.test.js` (4 assertions, all passing as of this checkout, run directly with
+`node --test tests/prog-block.test.js`):
+
+* detects a well-formed JSON array (`[1, 2, 3]`) → `type: 'array'`
+* falls back to `type: 'text'` for a malformed array (`[1, 2, 3`)
+* detects CSV/matrix data (multi-line, comma-separated) → `type: 'matrix'`
+
+Not covered by any test: TSV detection, the "no tuple support" gap noted in the README, and the
+integration path through `handlePaste()` in `prog-block.js` itself (the test only exercises
+`parsePaste()` in isolation with a mock clipboard event).
+
+== Export to file (JSON / CSV / Nickel / TXT)
+
+*Claim:* one-click export of block content to JSON, CSV, Nickel, or plain text.
+
+*Implementation:* `exportBlockData()` (`src/modules/exporter.js:8-52`), wired via `handleExport()`
+(`src/prog-block.js:109-114`). The function is called and does produce a file download — this path is
+wired in, unlike the linter or split-view.
+
+*Evidence:* No automated evidence. The output is not what "export to JSON/CSV" implies:
+
+* The `json` case (`exporter.js:14-23`) does not parse and re-stringify structured data; it wraps the
+  entire raw content string in `{"block_content": "…"}"`. The surrounding `try/catch` guards a
+  `JSON.stringify` call that cannot throw on a string input, so the `catch` branch is dead code.
+* The `csv` case (`:34-41`) quotes each *entire line* as a single CSV field
+  (`` `"${line.replace(/"/g, '""')}"` ``) and never splits on commas or tabs — it is not a real
+  CSV transform, just a line-per-row wrapper.
+
+== Clipboard-safe line numbers
+
+*Claim:* line numbers are visible but excluded from copy-paste.
+
+*Implementation:* `render()`'s `lineNumbersHtml` (`:142-145`) sets `aria-hidden="true"` on the
+container; `src/prog-block.css:154-163` sets `user-select: none; pointer-events: none;` on
+`.line-numbers`.
+
+*Evidence:* No automated evidence (no test asserts computed style or clipboard content), but the
+mechanism is standard and directly readable — `user-select: none` reliably excludes an element from a
+text selection in all evergreen browsers. The one accurate gap: there is no toggle control in the UI;
+line numbers are controlled only via the `line-numbers` host attribute.
+
+== Accessibility
+
+*Claim (as rewritten):* WCAG 2.1 AA-target for interactive elements. (The pre-rewrite README claimed
+AAA; `contracts.ncl:9,18` still asserts `accessibility_standard = "WCAG_AAA"` — that field is stale and
+tracked in `DEBT.adoc`.)
+
+*Implementation present:* `role="tablist"`/`role="tab"` (`:148,151`), `aria-selected` (`:152`),
+`aria-pressed` on the linter button (`:184`), `aria-label` on the code editor/export button/line
+numbers (`:185,191,199,143`), `:focus-visible` rules (`src/prog-block.css:80-83,103-105,130-132`), and
+a `.sr-only` utility class (`:173-182`).
+
+*Evidence:* No automated accessibility check (no axe or equivalent in `tests/` or CI). Direct reading
+finds the claim only partially true even at AA:
+
+* No roving `tabindex` or arrow-key navigation on the tablist.
+* No `tabpanel` element paired with `aria-controls`.
+* No `aria-live` region announcing variant switches or export completion.
+* Inactive tabs render at `opacity: 0.7` (`src/prog-block.css:69`), which degrades their text contrast.
+* The `.sr-only` class is defined in CSS but never referenced by any element in `prog-block.js`'s
+  markup (verified by grep) — dead CSS.
+* Focus is destroyed on every keystroke in a variable input (see above) — a functional accessibility
+  failure independent of ARIA markup.
+
+== A2ML parser (tree-sitter / WASM)
+
+*Claim:* variable interpolation is backed by a real A2ML grammar parsed via tree-sitter/WASM.
+
+*Implementation:* `src/a2ml-parser.js:45-59` (`parseA2ML`). The tree-sitter/WASM body (loading
+`Parser`, `Parser.Language.load('./assets/tree-sitter-a2ml.wasm')`, building a parse tree) is entirely
+commented out (`:48-54`); the function falls through to the same `{{ key }}` regex substitution
+`prog-block.js` already does inline. `assets/tree-sitter-a2ml.wasm` is a 118-byte ASCII text file
+reading `// Dummy WASM file placeholder`, not a compiled WebAssembly binary (confirmed by reading the
+file directly). `prog-block.js:2` imports `parseA2ML` but never calls it anywhere (confirmed by grep
+for `parseA2ML` across `src/` — only the import line matches).
+
+*Evidence:* No automated evidence. The claim is false: there is no tree-sitter parser, no WASM, and the
+stub function isn't even wired into the component.
+
+== K9 / Nickel validation triad
+
+*Claim:* the block's state is validated against Nickel contracts via a "Must-Just-Nickel" triad
+(`src/k9-validator.js:4-7`'s own docstring).
+
+*Implementation:* `K9Validator.checkMust()` (`:17-24`) does a real, if trivial, feature check
+(`'customElements' in window`). `validateNickel()` (`:31-42`) awaits a `setTimeout(resolve, 50)` then
+unconditionally returns `{ valid: true, errors: [] }` regardless of input — a stub, not a bridge to any
+Nickel evaluator. `executeJustTask()` (`:48-51`) `console.log`s and returns `true` unconditionally.
+
+*Evidence:* No automated evidence. Grep across `src/` finds no call site for any of `checkMust`,
+`validateNickel`, or `executeJustTask`. `prog-block.js:2` now imports `{ defaultValidator }` from
+`k9-validator.js` (the earlier broken `{ validateK9 }` import — see the top of this document — has been
+fixed), but that import is unused: nothing in `prog-block.js` calls `defaultValidator.checkMust()` or
+any other method on it. The validation triad the docstring describes still does not run — the reason
+changed from a link-time `SyntaxError` to a dead import, but the practical effect (no validation
+happens) is unchanged.
+
+== Escaping / sanitising untrusted content
+
+*Claim (implicit — never stated, but necessary for a component rendering pasted documentation
+snippets):* content is safe to render.
+
+*Implementation:* none. Variant `<template>` content is read via `t.innerHTML` (`:60`) and later
+re-injected as raw HTML inside `.code-content` (`:199`, part of the `shadowRoot.innerHTML` rewrite at
+`:177`); variable values interpolate unescaped into the `value="${val}"` attribute of generated
+`<input>`s (`:165`). Grep for `escape`/`sanitize`/`DOMPurify` across `src/` returns no matches.
+
+*Evidence:* No automated evidence, and none would pass if written honestly — this is a real, unfixed
+XSS surface. Tracked in `DEBT.adoc`, scheduled for a `fix/render-security` branch not yet started.
+
+== Stylesheet loads correctly wherever the component is embedded
+
+*Claim (implicit in "decoupled by design... injected into any system"):* the component's styling works
+regardless of where the host page lives.
+
+*Implementation:* `<link rel="stylesheet" href="./src/prog-block.css">` injected into
+`shadowRoot.innerHTML` on every render (`:178`).
+
+*Evidence:* No automated evidence. By the relative-URL resolution rules for shadow-DOM `<link>`
+elements, this only resolves when the host page sits exactly one directory above a sibling `src/` —
+i.e. laid out like this repository's own `index.html`. Any other embedding depth breaks the stylesheet
+silently. See `ARCHITECTURE.md` for the full mechanism.

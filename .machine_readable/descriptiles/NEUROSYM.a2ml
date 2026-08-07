@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# NEUROSYM.a2ml — Neurosymbolic integration metadata
+# Configuration for Hypatia scanning and symbolic reasoning.
+
+[metadata]
+version = "0.1.0"
+last-updated = "2026-08-07"
+
+[proof-obligations]
+# This repo makes NO formal proof claims. contracts.ncl is a 20-line
+# Nickel self-description (5 fields), not a proof; package.k9's
+# declarative manifest is consumed by nothing in this tree;
+# k9-validator.js's validateNickel() fakes a 50ms setTimeout and always
+# returns {valid:true, errors:[]} regardless of input, and
+# executeJustTask() console.logs and returns true unconditionally.
+# defaultValidator.checkMust() IS called (from connectedCallback) but
+# ignores its only parameter. None of this constitutes verification. Do
+# not describe any of it as a proof, a formal check, or a gate.
+formal-proof-claims = false
+evidence-sources = [
+  { kind = "test", tool = "node:test", location = "tests/", notes = "Two files: tests/prog-block.test.js (smart-paste parsing) and tests/registration.test.js (asserts customElements.get('prog-block') is defined). Both pass; 5 tests total." },
+  { kind = "static-analysis", tool = "CodeQL", location = ".github/workflows/codeql.yml", notes = "Matrix scan: 'actions' and 'javascript-typescript'." },
+  { kind = "secret-scan", tool = "gitleaks", location = ".github/workflows/secret-scanner.yml", notes = "Added PR #16; this repo previously had no secret scanning at all." },
+]
+
+[hypatia-config]
+scan-enabled = true
+scan-depth = "standard"  # quick | standard | deep — standard: a small src/
+                          # tree with several stub/dead modules worth
+                          # linting, but no service or infra to go deeper on
+report-format = "logtalk"
+
+[symbolic-rules]
+rules = [
+  { name = "no-unescaped-innerhtml", pattern = "\\.innerHTML\\s*=", severity = "critical", notes = "prog-block.js reads variant content via t.innerHTML/this.innerHTML (lines 61, 68) and re-injects it as HTML at shadowRoot.innerHTML (line 177) with no escaping anywhere; variable values are interpolated unescaped into value=\"${val}\" (line 165). A live XSS surface for a component whose job is rendering untrusted documentation snippets." },
+  { name = "dead-module-import-guard", pattern = "from ['\"]\\./modules/view-manager\\.js['\"]", severity = "info", notes = "view-manager.js is never imported by anything in this tree. If this pattern starts matching, the dead-code status recorded in contractiles/dust/Dustfile.a2ml has changed and should be re-verified, not assumed." },
+]
+
+[neural-config]
+# No neural pattern detection configured — the src/ tree is seven small
+# files; confidence-threshold tuning would not add value at this size.

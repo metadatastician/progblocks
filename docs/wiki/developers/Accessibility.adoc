@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: MPL-2.0
+= Accessibility
+:page-id: WIKI-DEV-004
+:page-title: Accessibility
+:page-audience: Developers and users/integrators
+:page-maturity: VERIFIED
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::../_Status-Panel.adoc[]
+
+[IMPORTANT]
+====
+`README.md` states an "WCAG 2.1 AA target for all interactive
+elements." Read this as a target, not an achieved conformance level.
+**The AAA conformance tier of WCAG is not met** by this component,
+despite historic claims made about it elsewhere in the estate. Do not
+repeat an AAA conformance claim for ProgBlocks anywhere — this
+repository's `tools/check-wiki-health.sh` enforces exactly that by
+grepping this wiki tree for the literal string that names WCAG's top
+tier and failing if it finds one.
+====
+
+== What is actually present
+
+Read directly from `src/prog-block.js`'s `render()` output:
+
+* `role="tablist"` on the tab container, `role="tab"` on each tab
+  button, with `aria-selected` reflecting the active variant.
+* `aria-pressed` on the linter toggle button.
+* `aria-label` on the export button, the export-format `<select>`, and
+  the editable code area.
+* The line-number gutter is `aria-hidden="true"` and
+  `user-select:none; pointer-events:none;`, so it never enters the
+  accessibility tree and never pollutes copy-paste.
+* `:focus-visible` and a `.sr-only` utility class exist in
+  `src/prog-block.css`.
+
+== What is missing, even for AA / APG conformance
+
+* **No roving `tabindex` or arrow-key navigation** on the tablist. The
+  ARIA Authoring Practices Guide tab pattern requires arrow-key
+  movement between tabs with a single tab-stop into the tablist as a
+  whole; the current tabs are plain buttons, each independently
+  focusable via Tab, with no `keydown` handling for arrow keys at all.
+* **No `tabpanel` role, and no `aria-controls` pairing** between each
+  tab button and the content it controls. A screen-reader user
+  activating a tab has no programmatic association telling them which
+  region of the page just changed.
+* **No `aria-live` region** for state changes — switching variants,
+  completing an export, or toggling the (non-functional) linter panel
+  all change visible content with nothing announced to assistive
+  technology.
+* **Contrast on inactive tabs.** Inactive tabs render at `opacity:0.7`
+  in `src/prog-block.css`, which reduces effective contrast against
+  the background rather than using a colour with guaranteed contrast
+  at full opacity. This has not been checked against a contrast ratio
+  target.
+
+== The accessibility-relevant defect that outweighs the ARIA gaps
+
+**Focus is destroyed on every keystroke.** Because `render()` replaces
+`shadowRoot.innerHTML` wholesale on each state update (see
+link:Architecture.adoc[Architecture]), typing into a variable `<input>`
+tears down and recreates that same input element mid-edit. The new
+element does not receive focus. For a keyboard or screen-reader user —
+who cannot simply "click back into the box" with the same fluency a
+sighted mouse user might — this makes the variable-editing feature
+effectively unusable, independent of any ARIA attribute correctness.
+No amount of correct ARIA labelling compensates for an interactive
+element that loses focus on every input event.
+
+== Net assessment
+
+Present markup gives ProgBlocks a reasonable *starting point* toward
+WCAG 2.1 AA for static, non-interactive reading of a rendered block
+(tab roles, labels, hidden line numbers). It does not meet AA once you
+account for keyboard tab navigation, live-region announcements, and —
+most severely — the focus-loss defect on the one genuinely interactive
+surface (variable editing). AAA is not attempted and is not met.

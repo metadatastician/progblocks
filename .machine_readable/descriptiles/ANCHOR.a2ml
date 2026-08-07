@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# ANCHOR.a2ml — authoritative anchor for this repository
+
+[metadata]
+version = "1.0.0"
+last-updated = "2026-08-07"
+
+[anchor]
+schema = "hyperpolymath.anchor/1"
+repo = "metadatastician/progblocks"
+authority = "upstream-canonical"
+
+purpose = [
+  "Define canonical semantics and policy boundaries for this repository.",
+  "Provide a stable golden path and invariant contract for release readiness.",
+  "Say plainly which document wins when the aspirational README and the verified facts disagree.",
+]
+
+[identity]
+project = "ProgBlocks"
+kind = "web component / library"
+one-sentence = "A dependency-free custom element (<prog-block>) for rich code blocks in technical documentation, pre-alpha, with roughly three of eight README-advertised features actually working."
+domain = "developer-tooling"
+
+[semantic-authority]
+policy = "facts-over-aspiration"
+
+owns = [
+  "What the component actually does — src/prog-block.js and its modules, as read line-by-line, are authoritative, not the README feature list",
+  "What is and isn't verified about this repo",
+]
+
+# On drift between README.md's feature list and the verified source-read
+# inventory, the FACTS file wins, every time, without exception. README.md
+# currently advertises a code/preview toggle, templating wizards, a live
+# linter, and a working split view; the verified inventory records these as
+# absent, absent, faked, and wired wrong respectively. Do not resolve that
+# conflict by weakening the facts to match the README — resolve it by
+# fixing the code, or by fixing the README.
+[drift-resolution]
+supersedes = [
+  { lower = "README.md feature list", higher = ".superpowers/sdd/progblocks-foamy-puzzle/FACTS.md source-read inventory", note = "README describes the aspirational component; FACTS.md describes what src/*.js actually does, read directly on 2026-08-03..08-07." },
+  { lower = "contracts.ncl / package.k9 declarations", higher = "actual runtime behaviour", note = "Neither file is consumed by any tool in this tree; they describe intent, not an enforced contract." },
+  { lower = "progblocks.launcher.a2ml (source config)", higher = "n/a — the config itself is correct", note = "progblocks-launcher.sh (generated) is what's broken, not its source config; see descriptiles/PLAYBOOK.a2ml and descriptiles/STATE.a2ml." },
+]
+
+[implementation-policy]
+allowed = ["JavaScript (ESM, no bundler)", "CSS (Shadow DOM)", "HTML", "Shell", "Nickel (self-description only)", "AsciiDoc", "Markdown"]
+forbidden = ["re-inlining action SHAs that .github/workflows/actions.lock owns", "hand-editing progblocks-launcher.sh", "claiming a feature the code does not implement"]
+
+[golden-path]
+smoke-test-command = [
+  "node --test tests/",
+  "python3 -m http.server 8080   # then open index.html in a browser",
+]
+
+success-criteria = [
+  "customElements.get('prog-block') is defined after the module graph loads, with no console errors",
+  "node --test tests/ exits non-zero on a real failure (Justfile's `just test` recipe no longer masks this with `|| echo` — see STATE.a2ml)",
+  "ci.yml's build job passes: checkout -> setup-node -> just test",
+]
+
+golden-path-status = "PASSING as of 2026-08-07: src/prog-block.js was fixed to import { defaultValidator } from k9-validator.js instead of the non-existent { validateK9 }. The named-import mismatch was a link-time SyntaxError that kept the module graph from finishing loading and customElements.define('prog-block', ...) from ever running, so every <prog-block> on index.html was inert. tests/registration.test.js now exists and asserts customElements.get('prog-block') is defined; npm test passes 5/5. Re-verify against the live tree before trusting this if it has moved since 2026-08-07."
+
+[satellite-policy]
+must-pin-upstream = false
+must-declare-authority = false
+must-have-anchor = false
+must-have-golden-path = false
+notes = "This repo has no satellites — it is a standalone leaf project. It is designed to be consumed by other projects (BerryWiki, ddraig-ssg output) as a drop-in component, but no such consumer import has been verified in this tree, and it does not track or pin any consumer."

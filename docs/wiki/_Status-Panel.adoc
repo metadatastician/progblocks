@@ -1,0 +1,11 @@
+[cols="1,3",options="header"]
+|===
+|Field |Value
+|Page ID |{page-id}
+|Title |{page-title}
+|Audience |{page-audience}
+|Maturity |{page-maturity}
+|Owner |{page-owner}
+|Last reviewed |{page-last-reviewed}
+|Next review |{page-next-review}
+|===

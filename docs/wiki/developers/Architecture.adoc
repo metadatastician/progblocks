@@ -1,0 +1,161 @@
+// SPDX-License-Identifier: MPL-2.0
+= Architecture
+:page-id: WIKI-DEV-001
+:page-title: Architecture
+:page-audience: Developers
+:page-maturity: VERIFIED
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::../_Status-Panel.adoc[]
+
+== Module map
+
+There are no runtime dependencies. Two dev dependencies, `happy-dom` and
+`@happy-dom/global-registrator` (see `package.json`), are used by
+`tests/registration.test.js`. Node ≥ 20, ESM throughout.
+
+[cols="3,1,4",options="header"]
+|===
+|File |Lines |Role
+
+|`src/prog-block.js`
+|247
+|The `<prog-block>` custom element. This is the whole component: state,
+render, and event binding all live in one class.
+
+|`src/prog-block.css`
+|182
+|Shadow-DOM stylesheet, loaded via a document-relative `<link>` — see
+the embedding limitation in
+link:../users/Getting-Started.adoc[Getting Started].
+
+|`src/modules/exporter.js`
+|65
+|Export block content to JSON / CSV / Nickel / TXT. Imported and used.
+
+|`src/a2ml-parser.js`
+|60
+|**Stub.** The tree-sitter load path is commented out; the
+`A2MLState` class is dead code (constructed nowhere); `parseA2ML()` is
+never called by `prog-block.js`.
+
+|`src/modules/view-manager.js`
+|55
+|**Entirely dead.** Never imported by anything. Contains the only real
+linter/WebSocket integration code in the repository — none of it runs.
+
+|`src/k9-validator.js`
+|54
+|`K9Validator` class + a `defaultValidator` instance. `prog-block.js`
+imports `defaultValidator` (previously imported the non-existent
+`validateK9`, a fatal link-time bug that has been fixed) but calls no
+method on it — `checkMust()`, `validateNickel()`, and
+`executeJustTask()` all have zero call sites anywhere in `src/`.
+
+|`src/modules/smart-paste.js`
+|53
+|Paste → array / matrix / text detection. Imported and used; the one
+module with direct test coverage.
+
+|`index.html`
+|48
+|Demo page. Two `<prog-block>` elements. Sits at the repo root, one
+level above `src/` — the one layout where the stylesheet path
+actually resolves.
+
+|`contracts.ncl`
+|20
+|Nickel self-description (5 fields). Not consumed by any build or CI
+step beyond an optional, failure-tolerant `just check`.
+
+|`package.k9`
+|20
+|Declarative K9 manifest. Nothing in the repository consumes it.
+
+|`progblocks-launcher.sh`
+|467
+|**Generated** by `launch-scaffolder` from `progblocks.launcher.a2ml`;
+marked "do not edit". Currently non-functional — see
+link:CI-CD.adoc[CI/CD] for the launcher defects; this is an upstream
+generator bug, not something to hand-fix here.
+
+|`assets/tree-sitter-a2ml.wasm`
+|—
+|**118-byte ASCII placeholder**, not WebAssembly. Its content is the
+literal text `// Dummy WASM file placeholder`.
+|===
+
+== Render model, and why it is a problem
+
+`ProgBlock` keeps a single `_state` object (variants, active variant
+id, a `Map` of A2ML variables, language, line-number flag, split-view
+mode, linter state). Every mutation goes through `updateState()`:
+
+[source,javascript]
+----
+updateState(newState) {
+  this._state = { ...this._state, ...newState };
+  this.render();
+}
+----
+
+`render()` does not do incremental DOM updates or diffing of any kind.
+It builds one large template string covering the tabs, the variable
+panel, the line-number gutter, the editable code area, and the linter
+panel, then assigns the whole thing in one shot:
+
+[source,javascript]
+----
+this.shadowRoot.innerHTML = `...`;
+this.bindEvents();
+----
+
+This is a full shadow-root teardown and rebuild on **every** state
+change, including a single keystroke in a variable `<input>` (via
+`handleVarChange()` → `updateState()`) or in the `contenteditable`
+code area (via the `input` listener → direct state mutation, which
+does not even call `render()` for that path, but does for others that
+share the same underlying DOM).
+
+Consequences, in order of severity:
+
+1. **Focus loss.** Editing a variable input triggers
+   `updateState()` → `render()` → a fresh `shadowRoot.innerHTML`
+   assignment. The `<input>` the user was typing into is destroyed and
+   a new one created in its place. The new element is not focused, so
+   in a real browser, typing more than one character into a variable
+   value is not reliably possible — each keystroke loses focus.
+2. **No event-listener lifecycle management.** `bindEvents()` is
+   called after every render and re-attaches listeners to the freshly
+   created nodes; the old nodes (and their listeners) are simply
+   discarded along with the rest of the shadow root. This works, but
+   only because the rebuild is total — there is no partial-update path
+   to get subtly wrong, because there is no partial update at all.
+3. **XSS surface.** Because rendering is template-string
+   interpolation into `innerHTML`, and variant content is read via
+   `t.innerHTML` in `parseLightDOM()` and variable values are
+   interpolated unescaped into `value="${val}"` in `render()`, there is
+   no HTML-escaping anywhere in the pipeline. For a component whose job
+   is rendering documentation snippets — plausibly containing HTML
+   examples, or variable values that came from a query string or CMS
+   field — this is a live injection surface, not a theoretical one.
+   Tracked for a `fix/render-security` pull request; not fixed at the
+   time of this review.
+
+A structural fix (virtual-DOM diffing, or at minimum re-rendering only
+the changed sub-tree and never re-creating a focused element) is not
+present in any branch as of this review.
+
+== Dead code
+
+`src/modules/view-manager.js` (`ViewManager` class: `setSplitView()`,
+`toggleLineNumbers()`, `attachLinterPanel()` with real WebSocket
+handling) is never imported by `prog-block.js` or anything else in the
+repository. It represents the intended real implementation of the
+linter panel and split-view control, neither of which the shipped
+component actually uses.
+
+`src/a2ml-parser.js`'s `A2MLState` class (a pub/sub variable store) is
+likewise never instantiated anywhere.

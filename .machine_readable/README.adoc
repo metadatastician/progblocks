@@ -1,0 +1,29 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= .machine_readable Pillar
+
+Agent-facing metadata for ProgBlocks.
+
+== Contents
+
+* `rsr-profile.a2ml` — this repo's declared RSR v2.0 capability profile
+  (deliberately minimal: `web-ui` and `library` only — see the file
+  itself and `.superpowers/sdd/progblocks-foamy-puzzle/FACTS.md`).
+* `descriptiles/` — the eight core A2ML files: `CLADE`, `ANCHOR`, `META`,
+  `AGENTIC`, `ECOSYSTEM`, `NEUROSYM`, `PLAYBOOK`, `STATE`.
+* `contractiles/` — Must / Trust / Intend / Adjust / Dust / Bust probes.
+  Every `- run:` line is a plain shell one-liner, executable from the
+  repository root.
+
+== Canonical Read Order
+
+1. `/0-AI-MANIFEST.a2ml` (repository root) — the universal entry point.
+2. `descriptiles/STATE.a2ml` — where things ARE now, brutally honestly.
+3. `descriptiles/ANCHOR.a2ml` — what supersedes what when README.md and
+   the verified facts disagree.
+4. `descriptiles/AGENTIC.a2ml` — what an agent may and may not do here.
+5. Everything else in `descriptiles/` and `contractiles/`, as needed.
+
+This repository is pre-alpha and several README-advertised features do
+not exist in the code yet. Read `STATE.a2ml` before repeating any claim
+from `README.md`.

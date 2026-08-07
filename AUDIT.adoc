@@ -1,0 +1,115 @@
+= ProgBlocks — Audit
+:toc: macro
+:toclevels: 2
+:sectanchors:
+
+What is actually true about this repository, split by *how strongly it is known*.
+
+This document exists because claims are cheap and evidence is not. Its companion
+`DEBT.adoc` records what is owed; this one records what is established, what is merely
+asserted, and what is deliberately not claimed at all.
+
+Last audited: 2026-08-07, against `main` plus the stacked branches for PR #18 and this
+documentation set.
+
+toc::[]
+
+== Hard rules (estate-wide)
+
+These bind this repository and every sibling:
+
+* Papers, whitepapers, release notes, and READMEs **must not outrun** the proofs, tests, or artefacts that support their claims.
+* Nothing may be called `stable`, `production`, or `v1.0.0` without a gate that passes and can fail.
+* A gate that cannot fail is not a gate. `|| true`, `|| echo …`, and unconditional `return true` are defects, not conveniences.
+* Absence of evidence is recorded as such, never quietly upgraded to presence of evidence.
+
+== Verified — checked mechanically, and the check can fail
+
+[cols="2,3"]
+|===
+| Claim | How it is enforced
+
+| The custom element registers
+| `tests/registration.test.js` imports `src/prog-block.js` under happy-dom and asserts `customElements.get('prog-block')` is defined and that `document.createElement('prog-block')` is an instance of it. Runs in CI via `just test`.
+
+| Paste parsing detects arrays, CSV/TSV matrices, and falls back to text
+| `tests/prog-block.test.js`, three cases, asserting parsed **content** (values, rows, verbatim fallback), not merely the result shape.
+
+| The test gate can fail
+| Demonstrated by breaking one assertion and observing `just test` exit 1, then restoring it and observing exit 0. `Justfile`'s `test` recipe is a bare `node --test` with no error swallow.
+
+| Actions are pinned, transitively and rename-immune
+| `.github/workflows/actions.lock` holds the SHAs; `gh actions-lock --verify-local` passes. Note the inversion this creates: the `uses:` lines legitimately carry *tag* refs, and re-inlining SHAs would **remove** those actions from the lockfile's coverage.
+
+| No secrets are committed
+| `.github/workflows/secret-scanner.yml` runs gitleaks over the tree on every push and pull request.
+
+| Workflow files and the CodeQL configuration are scanned
+| `.github/workflows/codeql.yml` runs the `actions` and `javascript-typescript` extractors. CodeQL default setup is disabled, so the advanced workflow is the sole authority and its SARIF uploads are accepted.
+
+| Every wiki page is registered and carries its metadata
+| `./tools/check-wiki-health.sh` reads `programme/wiki-page-register.toml`, asserts each registered page exists, carries all required `:page-*:` attributes, has a unique id, and matches `_Page-Register.adoc`. It exits non-zero on any failure, and this was confirmed by injecting failures.
+
+| No document claims WCAG AAA
+| The same script greps the wiki for the claim and fails if it reappears. This is the repository's honesty tripwire (see `DEBT.adoc` H2 for its current over-sensitivity).
+
+| The Nickel contract type-checks
+| `just check` runs `nickel export contracts.ncl` and fails honestly if Nickel is absent or the contract is invalid. Note what this does *not* establish — see below.
+
+| The contractile probes are executable and non-vacuous
+| `just probes` (`tools/run-probes.sh`) evaluates all 36 `- run:` probes declared under `.machine_readable/contractiles/`; all pass. Non-vacuity was demonstrated per probe class by planting violations — a fake credential in `src/`, a `.pem` at the root, and an `.a2ml` file missing its SPDX header — and observing the corresponding probe fail, then clear on removal. `just probes-strict` exits non-zero on a failing `critical` probe.
+|===
+
+The last row deserves emphasis, because it is the one this repository most recently got
+wrong. A check that passes proves nothing until you have watched it fail for the right
+reason. Every gate listed above has been made to fail deliberately at least once.
+
+== Asserted, not mechanically checked
+
+Each of these is believed true on the basis of reading the source. None is enforced, so
+each can rot silently.
+
+* **Variant switching, variable substitution, line-number clipboard safety, and file export work.** Established by reading `src/prog-block.js` and `src/modules/exporter.js`, and by the demo page's construction. There is no test for any of them, and the component has not been exercised in a real browser during this audit.
+
+* **The component has no runtime dependencies.** True by inspection — no imports outside `src/`. Not enforced by any check; a future `import` from a CDN would pass CI.
+
+* **The XSS surface described in `DEBT.adoc` C1 is real.** Asserted from the *absence* of escaping on a path that concatenates untrusted content into HTML (`src/prog-block.js:60,165,199`). It has **not** been demonstrated with a live payload.
+
+* **Focus is destroyed on every keystroke (`DEBT.adoc` C2).** Derived from the render path — `updateState` rewrites `shadowRoot.innerHTML` wholesale — not from an observed session.
+
+* **The generated launcher cannot start the server (`DEBT.adoc` C13).** Derived from reading the generated script; the failure mode was traced through the `[ -x "$candidate" ]` test that rejects every multi-word command in the search list. Not reproduced by running it.
+
+* **The A2ML regex substitution is adequate for what the component actually does.** A judgement, not a measurement. The tree-sitter parser it stands in for was never built.
+
+== Explicitly NOT claimed
+
+Recorded so that nothing later mistakes silence for modesty.
+
+* **No formal proofs.** This repository carries no proof assistant, no proof obligations, and does not declare the `formal-proofs` capability. Unlike some sibling repositories in this estate, there is no proof ledger here and none is planned.
+
+* **No WCAG conformance at any level.** WCAG 2.1 AA is a *target*, not an achievement. The repository historically claimed "AAA … Extreme compliance"; that claim was false and has been removed. Known gaps are listed in `DEBT.adoc` T3.
+
+* **No release.** Nothing has been published to any registry. `package.json` is `private`. Version numbers appearing in the tree disagree with each other (`DEBT.adoc` L1) and none of them denotes a release.
+
+* **No browser compatibility claim.** The component has not been tested in any browser. It uses custom elements and shadow DOM, so it requires a modern engine, but no support matrix has been established.
+
+* **No security review.** gitleaks proves no *secrets* are committed. It says nothing about the component's behaviour, and the known injection surface (C1) is unfixed.
+
+* **`contracts.ncl` does not validate the repository.** It type-checks a 20-line self-description. It does not verify that the files it names exist, and one of its own assertions (`accessibility_standard = "WCAG_AAA"`) is false.
+
+* **`package.k9` is not consumed by anything.** Its declarations are documentary. One of its `JUST` targets names a recipe that no longer exists.
+
+* **`k9-validator.js` validates nothing.** Two of its three methods return success unconditionally without inspecting anything, and none of the three is called. See `DEBT.adoc` C10.
+
+== Provenance of this audit
+
+Compiled 2026-08-07 by reading every file in `src/`, `tests/`, and the repository root;
+executing `npm test`, `just test`, `just check`, `gh actions-lock --verify-local`, every
+`- run:` probe under `.machine_readable/contractiles/`, and `./tools/check-wiki-health.sh`;
+querying the GitHub API for Actions permissions, code-scanning configuration, and run
+history; and cloning the GitHub wiki.
+
+The audit's own weakness, stated plainly: **no finding here was established in a browser.**
+Every rendering, focus, and accessibility statement is source-derived. A single afternoon
+with the demo page open would move several rows of this table from "asserted" to
+"verified" — or refute them.

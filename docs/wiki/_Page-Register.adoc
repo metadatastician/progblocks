@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: MPL-2.0
+= Human Page Register
+:page-id: WIKI-REG-001
+:page-title: Human Page Register
+:page-audience: Contributors and auditors
+:page-maturity: DRAFT
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::_Status-Panel.adoc[]
+
+The machine-readable authority for page metadata is
+link:../../programme/wiki-page-register.toml[`programme/wiki-page-register.toml`].
+`tools/check-wiki-health.sh` cross-checks every row below against that
+file and against each page's own `:page-id:` attribute.
+
+[cols="2,3,2,2",options="header"]
+|===
+|Page ID |Page |Audience |Current maturity
+|WIKI-HOME-001 |link:Home.adoc[Home] |All |DRAFT
+|WIKI-USR-001 |link:users/Getting-Started.adoc[Getting Started] |Users and integrators |DRAFT
+|WIKI-USR-002 |link:users/Authoring-Blocks.adoc[Authoring Blocks] |Users and integrators |DRAFT
+|WIKI-USR-003 |link:users/Feature-Status.adoc[Feature Status] |All |VERIFIED
+|WIKI-DEV-001 |link:developers/Architecture.adoc[Architecture] |Developers |VERIFIED
+|WIKI-DEV-002 |link:developers/Testing.adoc[Testing] |Developers |VERIFIED
+|WIKI-DEV-003 |link:developers/CI-CD.adoc[CI/CD] |Developers and maintainers |VERIFIED
+|WIKI-DEV-004 |link:developers/Accessibility.adoc[Accessibility] |Developers and users/integrators |VERIFIED
+|WIKI-CON-001 |link:contributors/Contributing-Guide.adoc[Contributing Guide] |Contributors |DRAFT
+|===

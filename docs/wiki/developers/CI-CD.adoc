@@ -1,0 +1,125 @@
+// SPDX-License-Identifier: MPL-2.0
+= CI/CD
+:page-id: WIKI-DEV-003
+:page-title: CI/CD
+:page-audience: Developers and maintainers
+:page-maturity: VERIFIED
+:page-owner: Documentation workstream
+:page-last-reviewed: 2026-08-07
+:page-next-review: 2026-11-07
+
+include::../_Status-Panel.adoc[]
+
+== The three workflows
+
+[cols="2,4",options="header"]
+|===
+|Workflow |What it does
+
+|`.github/workflows/ci.yml`
+|checkout → `actions/setup-node@v7.0.0` (Node 20) → `npm ci` → install
+`just` via `taiki-e/install-action` → `just test`. Does not run `just
+check` or `just build` — see the note below.
+
+|`.github/workflows/codeql.yml`
+|Matrix CodeQL scan over `actions` (the workflow files themselves) and
+`javascript-typescript` (the component source in `src/`). Runs on
+push/PR to `main`/`master` and monthly on a schedule.
+
+|`.github/workflows/secret-scanner.yml`
+|Calls the estate's shared reusable
+`hyperpolymath/standards/.github/workflows/secret-scanner-reusable.yml`
+(gitleaks + rust-secrets + shell-secrets) with `secrets: inherit`.
+Added because this repository had no leak scanning at all before it.
+|===
+
+The `Justfile` no longer has a `build` recipe. It used to
+`cat`-concatenate ES modules into a file that could not run as a
+script (import/export syntax was never stripped); rather than fix it,
+it was deleted. `ci.yml` never called `just build` as a separate step
+in the first place — `just`'s `default: test` recipe means `just test`
+is the only recipe this workflow invokes.
+
+== The lockfile pinning model — never re-inline SHAs
+
+All three workflows are pinned through
+`.github/workflows/actions.lock`, produced by `gh actions-lock`. The
+`uses:` lines in the workflow YAML carry ordinary tag refs (e.g.
+`actions/checkout@v7.0.1`); the lockfile is what actually pins those
+refs to commit SHAs at execution time. **This is the sanctioned form
+for this repo and across the estate.** Do not "fix" a `uses:` line by
+hand-inlining a SHA in the YAML — doing so removes that action from the
+lockfile's management and has caused startup failures elsewhere in the
+estate when the two pinning mechanisms fought each other. If a pin
+needs to move, regenerate the lockfile with `gh actions-lock`; do not
+hand-edit either file to route around it.
+
+== Diagnosing failed runs: `gh run list`, not `gh pr checks`
+
+`gh pr checks` does not surface a `startup_failure` — a run that GitHub
+rejected before any job began (e.g. because of workflow-lockfile
+enforcement, an unresolvable action pin, or an Actions allowlist
+rejection) produces no check run for `gh pr checks` to show, so the PR
+can look silent or green when a workflow actually never ran at all.
+Use `gh run list` (which shows every run attempt, including
+`startup_failure` ones) to get the real picture before concluding CI is
+passing or simply hasn't reported yet.
+
+== Why CI was never green, and what fixed it
+
+CI on this repository had **no green run** from repo creation
+(2026-07-23) until a deliberate rehabilitation pass. Three separate,
+now-fixed root causes stacked on top of each other:
+
+1. `extractions/setup-just` was not on the org's Actions allowlist,
+   producing `startup_failure` on all 24 of the earliest run attempts.
+2. GitHub's per-repo workflow-lockfile enforcement (rolled out
+   estate-wide from 2026-08-01) killed every run that predated the
+   lockfile being introduced here.
+3. CodeQL's default setup was enabled at the same time as the
+   repository's own advanced `codeql.yml`, so every advanced run's
+   SARIF upload was rejected by GitHub as a conflict with the default
+   scan. Default setup has since been disabled; the advanced workflow
+   is authoritative.
+
+`startup_failure` has continued to flap on and off since, driven by
+GitHub-side cohort enforcement changes rather than anything wrong in
+this repository's own configuration — that is an external condition to
+watch for, not a regression to chase here.
+
+== Rehabilitation history
+
+[cols="1,4",options="header"]
+|===
+|PR |What it did
+
+|#12
+|CI unblock: allowlisted the `just` installer, added JavaScript CodeQL
+coverage, introduced the workflow lockfile.
+
+|#13
+|Fixed `FUNDING.yml` casing (GitHub only honours the exact filename
+case).
+
+|#15
+|Estate hygiene: removed template leaks from `squisher-corpus` and
+`paint-type` (including a live security-advisory link pointing at the
+wrong repository), deleted a `settings.yml` that would have renamed
+this repository to `paint-type`, pruned Dependabot to the one
+ecosystem that actually exists, added `.gitignore` and the MPL-2.0
+`LICENSE`, and did a README honesty pass.
+
+|#16
+|Added gitleaks secret scanning (`secret-scanner.yml`) — this
+repository had none before.
+
+|(branch fix/honest-gates-v2)
+|Fixed the fatal `validateK9` import, added `package.json` and a
+lockfile, made `just test` able to fail honestly, deleted the
+previously-impossible `build` recipe, and added the registration test
+described in link:Testing.adoc[Testing].
+|===
+
+Verify against the live tree before relying on any of this if it has
+moved since 2026-08-07 — check `src/prog-block.js`'s imports,
+`package.json`'s existence, and the `Justfile`'s `test` recipe.

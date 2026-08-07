@@ -1,0 +1,79 @@
+# SPDX-License-Identifier: MPL-2.0
+# Bustfile — failure mode contractile for progblocks
+# Author: Jonathan D.A. Jewell (hyperpolymath)
+#
+# Every declared failure mode should have a recovery path. Status moves:
+#   declared -> drilled (probe run) -> verified (recovery confirmed)
+#   or -> failing (recovery broken)
+#
+# Most entries below are `declared`, not `verified` — these are read
+# directly from the source on 2026-08-07, not from a lived incident, except
+# where a root-cause chain in FACTS.md's "Rehabilitation history" already
+# confirms occurrence, or where a fix has landed and the probe now confirms
+# the regression guard holds (noted per entry).
+
+@abstract:
+Failure modes specific to progblocks: a pre-alpha, dependency-free web
+component with a real XSS surface and a launcher that cannot start the
+demo server. A previous fatal link-time load failure (component-fails-to-
+register, below) has been fixed and is kept here only as a regression
+guard. This is a shorter list than a mature repo's Bustfile because the
+project is young — but every entry here is grounded in a specific line of
+code, not a hypothetical.
+@end
+
+## Failure Modes
+
+### component-fails-to-register (RESOLVED)
+- description: src/prog-block.js used to import { validateK9 } from k9-validator.js, which exports only K9Validator and defaultValidator; the named-import mismatch was a link-time SyntaxError, so customElements.define('prog-block', ...) never ran and every <prog-block> on index.html was inert. Fixed by importing { defaultValidator } instead. This entry is kept as a regression guard, not a live failure mode.
+- run: "! grep -q 'import { validateK9 }' src/prog-block.js"
+- severity: critical
+- enforced-by: tests/registration.test.js (asserts customElements.get('prog-block') is defined) plus this probe
+- recovery: N/A — fixed on branch fix/honest-gates-v2. If this probe ever fails again, re-apply the { defaultValidator } import and re-run `npm test`.
+- expected_recovery_time_seconds: 60
+- status: verified
+
+### launcher-cannot-start-server
+- description: progblocks-launcher.sh cannot start the demo server — REPO_DIR is never populated (so cd "$REPO_DIR" silently no-ops) and the startup-command search requires [ -x "$candidate" ], which is false for a string like "python3 -m http.server", so START_COMMAND is always empty
+- run: grep -q 'REPO_DIR=""' progblocks-launcher.sh
+- severity: critical
+- enforced-by: not yet automated (documentary) — see ../descriptiles/AGENTIC.a2ml / PLAYBOOK.a2ml
+- recovery: Run the demo manually — python3 -m http.server 8080, then open index.html. File the {repo-dir}-token-loss bug upstream in launch-scaffolder; do not hand-edit the generated .sh.
+- expected_recovery_time_seconds: 30
+- status: declared
+
+### xss-injection-surface
+- description: Variant content is read via innerHTML (lines 61, 68) and re-injected as HTML (line 177) with no escaping anywhere; variable values are interpolated unescaped into value="${val}" (line 165) — a live injection surface for a component whose job is rendering untrusted documentation snippets
+- run: grep -n '\.innerHTML' src/prog-block.js
+- severity: critical
+- enforced-by: not yet automated (documentary) — scheduled for a fix/render-security PR that has not started
+- recovery: Escape all interpolated values before writing to innerHTML/attribute strings, or move to textContent plus DOM API construction
+- expected_recovery_time_seconds: 3600
+- status: declared
+
+### editing-destroys-focus-and-templates
+- description: Editing any variable input triggers a full shadowRoot.innerHTML rewrite, destroying and recreating the <input> being typed into (multi-character values are effectively untypeable); separately, the editor overwrites variant source with post-interpolation text, permanently losing {{ vars }}
+- run: grep -c 'shadowRoot.innerHTML' src/prog-block.js
+- severity: critical
+- enforced-by: not yet automated (documentary)
+- recovery: Re-render only the changed DOM nodes instead of the whole shadow root; keep the raw {{ var }} template separate from the interpolated display text
+- expected_recovery_time_seconds: 3600
+- status: declared
+
+### wasm-placeholder-not-webassembly
+- description: assets/tree-sitter-a2ml.wasm is a 118-byte ASCII placeholder, not real WebAssembly; the tree-sitter path in a2ml-parser.js is commented out and its parse function is never called
+- run: "file assets/tree-sitter-a2ml.wasm | grep -qv 'WebAssembly'"
+- severity: warning
+- enforced-by: not yet automated (documentary)
+- recovery: Either vendor a real compiled tree-sitter-a2ml.wasm and un-comment the parse path, or remove the file and stop implying a parser exists
+- expected_recovery_time_seconds: 7200
+- status: declared
+
+### ci-red-since-repo-creation
+- description: CI never had a green run from repo creation (2026-07-23) until PR #12 — root causes were the just installer not being on the org's Actions allowlist, missing JS CodeQL coverage, and later a CodeQL default-vs-advanced conflict and workflow-lockfile enforcement
+- run: git log --oneline | grep -q 'fix(ci): unblock Actions'
+- severity: info
+- enforced-by: not yet automated (documentary)
+- recovery: Already recovered — see FACTS.md Rehabilitation history table (PR #12, #13, #15, #16). Kept here because startup_failure has flapped on and off since from GitHub-side cohort enforcement, which is external, not a repo defect.
+- expected_recovery_time_seconds: 0
+- status: verified
