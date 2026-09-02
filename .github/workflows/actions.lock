@@ -6,10 +6,10 @@ workflows:
     '.github/workflows/ci.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-node@v7.0.0'
-        - 'taiki-e/install-action@v2.86.2'
+        - 'taiki-e/install-action@v2.86.7'
     '.github/workflows/codeql.yml':
         - 'actions/checkout@v7.0.1'
-        - 'github/codeql-action@v4.37.7'
+        - 'github/codeql-action@v4.37.8'
     '.github/workflows/label-triage.yml': []
     '.github/workflows/labels.yml': []
     '.github/workflows/secret-scanner.yml': []
@@ -24,13 +24,13 @@ dependencies:
         commit: 'sha1-820762786026740c76f36085b0efc47a31fe5020'
         owner_id: 44036562
         repo_id: 189476904
-    'github/codeql-action@v4.37.7':
-        ref: 'v4.37.7'
-        commit: 'sha1-ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd'
+    'github/codeql-action@v4.37.8':
+        ref: 'v4.37.8'
+        commit: 'sha1-db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28'
         owner_id: 9919
         repo_id: 259445878
-    'taiki-e/install-action@v2.86.2':
-        ref: 'v2.86.2'
-        commit: 'sha1-b6b84cf49ebfe0176417bdce007c624f0db37f20'
+    'taiki-e/install-action@v2.86.7':
+        ref: 'v2.86.7'
+        commit: 'sha1-b6ff580856c41316412a0b9b60540fbc6f8c82cc'
         owner_id: 43724913
         repo_id: 442947557
