@@ -19,6 +19,9 @@
 *.ncl   text eol=lf
 *.nix   text eol=lf
 *.zig   text eol=lf
+*.js    text eol=lf
+*.css   text eol=lf diff=css
+*.html  text eol=lf diff=html
 # Docs
 *.md    text eol=lf diff=markdown
 *.adoc  text eol=lf
@@ -44,8 +47,11 @@ Containerfile  text eol=lf
 *.gif   binary
 *.pdf   binary
 *.woff2 binary
+*.wasm  binary
 *.zip   binary
 *.gz    binary
 # Lock files
 Cargo.lock  text eol=lf -diff
 flake.lock  text eol=lf -diff
+bun.lock          text eol=lf -diff linguist-generated=true
+package-lock.json text eol=lf -diff linguist-generated=true
