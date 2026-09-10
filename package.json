@@ -6,7 +6,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "node --test"
+    "test": "bun test"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.0.0",

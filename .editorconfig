@@ -12,6 +12,13 @@ trim_trailing_whitespace = true
 [*.md]
 trim_trailing_whitespace = false
 [*.adoc]
+trim_trailing_whitespace = false
+[*.js]
+indent_size = 2
+[*.css]
+indent_size = 2
+[*.html]
+indent_size = 2
 [*.rs]
 indent_size = 4
 [*.zig]
