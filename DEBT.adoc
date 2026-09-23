@@ -48,7 +48,7 @@ aligned it to MPL-2.0 on the reasoning that a launcher config is code, not conte
 change will be reverted on the next regeneration.
 
 Evidence: `head -20 progblocks.launcher.a2ml`; the file's own header names
-`launcher-standard.a2ml v0.3.0` as its governing spec.
+`launcher-standard_praxis.deed v0.4.0` as its governing spec.
 
 Clearing it: confirm the licence expectation with the `launch-scaffolder` standard, then
 either keep MPL-2.0 or restore CC-BY-SA-4.0 with a documented rationale.
