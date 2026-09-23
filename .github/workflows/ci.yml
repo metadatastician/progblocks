@@ -16,18 +16,13 @@ jobs:
     steps:
     - uses: actions/checkout@v7.0.1
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v7.0.0
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@v2.2.0
       with:
-        node-version: '20'
+        bun-version: '1.3.14'
 
     - name: Install dev dependencies
-      run: npm ci
-
-    - name: Install just
-      uses: taiki-e/install-action@v2.86.7
-      with:
-        tool: just
+      run: bun install --frozen-lockfile
 
     - name: Test Component
-      run: just test
+      run: bun run test
