@@ -50,7 +50,7 @@ describe('pull request CI configuration', () => {
     assert.match(githubActionsUpdate[0], /^    open-pull-requests-limit:\s*2$/m);
   });
 
-  test('pins every CodeQL workflow action to the commit recorded in actions.lock', () => {
+  test('pins every CodeQL workflow action to the version recorded in actions.lock', () => {
     const references = actionReferences(codeqlWorkflow);
 
     assert.deepStrictEqual(
@@ -64,12 +64,19 @@ describe('pull request CI configuration', () => {
       const action = reference.slice(0, separator).replace(/\/(?:init|analyze)$/, '');
       const revision = reference.slice(separator + 1);
 
-      assert.match(revision, /^[0-9a-f]{40}$/, `${reference} should use an immutable commit SHA`);
-      assert.strictEqual(
+      assert.match(
         revision,
-        lockedCommitFor(action),
+        /^v\d+\.\d+\.\d+$/,
+        `${reference} should pin by version tag; actions.lock owns the commit`,
+      );
+
+      const block = dependencyBlock(`${action}@${revision}`);
+      assert.match(
+        block,
+        new RegExp(`^        ref: '${revision}'$`, 'm'),
         `${reference} should agree with the repository action lockfile`,
       );
+      lockedCommitFor(`${action}@${revision}`);
     }
   });
 
@@ -84,7 +91,7 @@ describe('pull request CI configuration', () => {
     const references = actionReferences(scorecardWorkflow);
 
     assert.deepStrictEqual(references, [
-      'hyperpolymath/standards/.github/workflows/scorecard-reusable.yml@8750b94ac1bbe8c51ad13fe106669b13478f0b62',
+      'hyperpolymath/standards/.github/workflows/scorecard-reusable.yml@7b931ef7f9dbb8d2386fc9170895708c0acae95c',
     ]);
   });
 });

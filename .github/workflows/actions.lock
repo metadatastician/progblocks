@@ -8,9 +8,10 @@ workflows:
         - 'oven-sh/setup-bun@v2.2.0'
     '.github/workflows/codeql.yml':
         - 'actions/checkout@v7.0.1'
-        - 'github/codeql-action@v4.37.9'
+        - 'github/codeql-action@v4.38.1'
     '.github/workflows/label-triage.yml': []
     '.github/workflows/labels.yml': []
+    '.github/workflows/scorecard.yml': []
     '.github/workflows/secret-scanner.yml': []
 dependencies:
     'actions/checkout@v7.0.1':
@@ -18,9 +19,9 @@ dependencies:
         commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'
         owner_id: 44036562
         repo_id: 197814629
-    'github/codeql-action@v4.37.9':
-        ref: 'v4.37.9'
-        commit: 'sha1-cdf488f595d80d6e07e03d4674febd5ab45fa938'
+    'github/codeql-action@v4.38.1':
+        ref: 'v4.38.1'
+        commit: 'sha1-1c5b675653bb5c22dbe9b12b556ec555138e09fd'
         owner_id: 9919
         repo_id: 259445878
     'oven-sh/setup-bun@v2.2.0':
