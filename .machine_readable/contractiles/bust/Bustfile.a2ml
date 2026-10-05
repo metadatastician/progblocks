@@ -52,7 +52,7 @@ code, not a hypothetical.
 - status: verified
 
 ### editing-destroys-focus-and-templates (RESOLVED 2026-10-05)
-- description: Editing a variable input used to trigger a full shadowRoot.innerHTML rewrite, destroying the <input> being typed into; separately, the contenteditable editor overwrote variant source with post-interpolation text. Fixed: the shadow tree is built once and patched in place, and the editor was removed as out of charter. Kept as a regression guard
+- description: Editing a variable input used to trigger a full shadowRoot.innerHTML rewrite, destroying the <input> being typed into; separately, the contenteditable editor overwrote variant source with post-interpolation text. Fixed: the shadow tree is built once and patched in place (rebuilt only when the authored light DOM changes, never on typing), and the editor was removed as out of charter. Kept as a regression guard
 - run: "! grep -q 'shadowRoot.innerHTML' src/prog-block.js"
 - severity: critical
 - enforced-by: tests/component.test.js ("typing keeps the same input element…") plus this probe

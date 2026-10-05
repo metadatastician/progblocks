@@ -50,6 +50,7 @@ milestones = [
   { name = "just test able to fail honestly (remove the || echo fallback in Justfile)", completion = 100 },
   { name = "XSS remediation — all author/reader text rendered via textContent, no innerHTML (branch feat/render-core-variants-vars, 2026-10-05; tested under happy-dom; not yet merged)", completion = 100 },
   { name = "Fix focus-destroying re-render on every keystroke in variable inputs (same branch; shadow tree built once, patched in place)", completion = 100 },
+  { name = "Opt-in persist of the variant choice per group (localStorage) and live authored content via MutationObserver + refresh() (branch feat/persist-and-live-content, 2026-10-05; tested under happy-dom; not yet merged)", completion = 100 },
   { name = "Preview toggle — dropped from README and from scope on 2026-10-05; not implemented", completion = 0 },
   { name = "Real A2ML parser wired up (currently a stub; tree-sitter WASM asset is a 118-byte placeholder)", completion = 0 },
   { name = "Live linter — removed as out of charter on 2026-10-05 (placeholder panel and view-manager.js deleted); not planned", completion = 0 },
@@ -70,7 +71,7 @@ blockers = [
   { id = "B7", kind = "test", state = "fixed", detail = "Justfile's test recipe used to be `node --test tests/ || echo \"No tests configured yet\"` — a real failure was swallowed and the recipe always exited 0. The `|| echo` fallback has been removed; the recipe is now `bun test` and propagates failure." },
   { id = "B8", kind = "cicd", state = "fixed", detail = "package.json and bun.lock exist in this tree, so CI's `bun install --frozen-lockfile` / `bun run test` have something to install and run" },
   { id = "B9", kind = "docs", state = "fixed", detail = "README.md used to advertise a code/preview toggle, templating wizards, and split/glyph editor modes that did not exist. Its feature table was rewritten on 2026-10-05 to match the code; re-check it against FACTS.md before repeating any claim." },
-  { id = "B10", kind = "code", state = "open", detail = "Light-DOM changes after first connect are not observed: templates are read once and the shadow tree is built once. See DEBT.adoc C14." },
+  { id = "B10", kind = "code", state = "fixed", detail = "Light-DOM changes after first connect used to be ignored (templates read once, shadow tree built once). Fixed 2026-10-05 on branch feat/persist-and-live-content: a MutationObserver on the host (childList, subtree, characterData, data-variant) schedules refresh(), coalesced to one rebuild per microtask, keeping the selected variant and the reader's values. Edits to a template's .content need an explicit refresh(); a rebuild loses focus inside the block. Guarded by tests/component.test.js (happy-dom). See DEBT.adoc C14." },
   { id = "B11", kind = "test", state = "open", detail = "Accessibility (WAI-ARIA tabs, labelled inputs, live region, focus rings, forced-colors) is implemented and its structure unit-tested under happy-dom, and an axe-core audit in headless Chromium (just a11y) reports 0 violations with contrast checked; it has not been checked with a screen reader. See DEBT.adoc T3." },
 ]
 
@@ -78,7 +79,7 @@ blockers = [
 actions = [
   "Land branch feat/render-core-variants-vars (XSS and focus fixes, scope cut to the charter) and confirm whether SonarCloud's security rating recovers on it (DEBT.adoc G2).",
   "Test accessibility with at least one real screen reader, and run the axe audit in CI, before making any AA claim (B11).",
-  "Decide whether to observe light-DOM changes after first connect (B10).",
+  "Land branch feat/persist-and-live-content (opt-in persist, live authored content and refresh(); B10 fixed, DEBT.adoc C14/C15 cleared) and exercise both in a real browser.",
   "Resolve the version-string drift (1.0.0 / 0.1.0 / 0.3.0 across three files) before any tag is cut.",
 ]
 
@@ -88,10 +89,10 @@ last-run-utc = "unknown"   # this pass did not query live GitHub Actions state;
                             # use `gh run list --repo metadatastician/progblocks`,
                             # not `gh pr checks`, to check
 last-result = "unknown"     # unknown | pass | warn | fail
-open-warnings = 2           # count of [blockers-and-issues] entries still open
-                             # (B10/B11); B1–B9 are now state=fixed
+open-warnings = 1           # count of [blockers-and-issues] entries still open
+                             # (B11); B1–B10 are now state=fixed
 open-failures = 0           # no failure has been mechanically confirmed by this pass;
-                             # B10/B11 are known limitations, not CI failures
+                             # B11 is a known limitation, not a CI failure
 
 [ecosystem]
 part-of = ["metadatastician"]

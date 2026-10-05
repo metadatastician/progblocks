@@ -24,10 +24,11 @@ edited).
 |File |Lines |Role
 
 |`src/prog-block.js`
-|~370
+|~440
 |The `<prog-block>` custom element. This is the whole component: light-DOM
-reading, the one-time shadow-tree build, in-place patches, the tabs
-keyboard model, variable inputs, copy, and `group` sync.
+reading, the shadow-tree build, in-place patches, the tabs
+keyboard model, variable inputs, copy, `group` sync, the opt-in
+`persist` storage, and the light-DOM observer.
 
 |`src/prog-block.css`
 |~160
@@ -82,14 +83,18 @@ Deleted on 2026-10-05 as out of charter: `src/modules/exporter.js`,
 == Render model
 
 `ProgBlock` builds its shadow tree **once**, on first connect, and then
-patches it in place. It never assigns `innerHTML`.
+patches it in place; it rebuilds only when the authored light DOM
+changes (step 5). It never assigns `innerHTML`.
 
 1. `connectedCallback()` runs `_readLightDom()` (reads each
    `template[data-variant]`'s `content.textContent`, dedents it, and
    tokenises it into text and `{{ variable }}` segments) and `_build()`
    (creates the header and tablist, the variable fieldset, the gutter,
    the code panel and the status region with `createElement`). A
-   `_built` flag stops this running again.
+   `_built` flag stops this running again. With `persist` and `group`
+   both set, a variant name remembered in `localStorage`
+   (`progblocks:variant:<group>`) is selected first, ahead of the
+   `variant` attribute; every storage access is in `try`/`catch`.
 2. Switching variant calls `_renderVariant()`, which updates
    `aria-selected`, the roving `tabindex` and `aria-labelledby`, and
    replaces only the children of `<code>` with fresh text nodes and
@@ -100,6 +105,15 @@ patches it in place. It never assigns `innerHTML`.
    never replaced, so focus and caret survive.
 4. Observed attributes (`variant`, `line-numbers`, `language`, `group`)
    are applied as targeted patches in `attributeChangedCallback()`.
+5. A `MutationObserver` on the host (`childList`, `subtree`,
+   `characterData`, and the `data-variant` attribute) calls
+   `_scheduleRefresh()`, which coalesces a burst of mutations into one
+   `refresh()` per microtask. `refresh()` (public) re-reads the light
+   DOM, replaces the shadow tree via `_build()`, and restores the
+   selected variant by name and the reader's values. The observer
+   disconnects in `disconnectedCallback()`. Edits to a template's
+   `.content` fragment are invisible to observers; the host calls
+   `refresh()` after one.
 
 Consequences:
 
@@ -110,13 +124,20 @@ Consequences:
   markup`.
 * **Focus is stable.** Test: `typing keeps the same input element and
   updates the code in place`.
-* **Listeners are attached once**, at build time, to nodes that live for
-  the element's lifetime.
-* **Light-DOM changes after first connect are ignored** — the trade-off
-  of building once. Tracked as `DEBT.adoc` C14.
+* **Listeners are attached at build time**, to nodes that live until the
+  next rebuild (step 5) or the element's removal.
+* ~~**Light-DOM changes after first connect are ignored**~~ — observed
+  since 2026-10-05 (`DEBT.adoc` C14, cleared). The cost: a rebuild
+  replaces the variable inputs, so focus inside the block is lost when
+  the authored content changes. Tests: `authored content that changes
+  after render`.
+* **Persistence is opt-in and minimal**: only the variant name, only
+  with `persist`, only for reader-initiated selections; no cross-tab
+  sync. Tests: `remembering the reader's variant`.
 
-All of this is tested under happy-dom only; it has not been profiled or
-exercised in a real browser during this review.
+All of this is unit-tested under happy-dom. Checked once by hand in headless Chromium on 2026-10-05: persist
+survived a reload, group sync and arrow keys worked, and a live template
+swap kept the variant and typed value. It has not been profiled.
 
 == Unused code
 

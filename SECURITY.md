@@ -214,7 +214,10 @@ markup**:
 - Variant content is read from `<template data-variant>` via `template.content.textContent`, so tags
   written unescaped inside a template are dropped, not rendered.
 - The component makes no network requests other than loading its own stylesheet from next to the
-  module, and stores nothing (no cookies, no `localStorage`).
+  module. It sets no cookies. Its only storage is opt-in: on a block with both `group` and `persist`,
+  the name of the variant the reader last selected is written to `localStorage` under
+  `progblocks:variant:<group>`. No personal data and no variable values are ever stored. The stored
+  name is only compared against the block's own variant names, never rendered as markup.
 
 This is enforced by `tests/component.test.js` (under happy-dom) and has not been independently
 reviewed. Until 2026-10-05 the component did interpolate content into `innerHTML` unescaped; see

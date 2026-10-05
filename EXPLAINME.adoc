@@ -8,8 +8,8 @@ that evidences it — or states plainly "no automated evidence" where none exist
 this was written (2026-10-05, branch `feat/render-core-variants-vars`); a line number is given only
 where it is stable. If the source has moved, re-verify rather than trust this table.
 
-Overall automated-test coverage: `bun test` runs **29** tests in four files, all passing.
-`tests/component.test.js` (22 tests) exercises the component's behaviour; `tests/registration.test.js`
+Overall automated-test coverage: `bun test` runs **37** tests in four files, all passing.
+`tests/component.test.js` (30 tests) exercises the component's behaviour; `tests/registration.test.js`
 (1) asserts the element registers; `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js`
 (2) guard CI configuration. Every component test runs under happy-dom (`tests/helpers/dom.js`), **not
 in a real browser**. `src/a2ml-parser.js` and `src/k9-validator.js` have no tests and are not imported
@@ -56,7 +56,48 @@ generic labels: there is no OS/shell/language semantics and no platform detectio
 *name* in every other block of the group that has one.
 
 *Evidence:* **Automated, under happy-dom:** `blocks in the same group switch together; other groups do
-not`. The selection is in memory only — it is not persisted across page loads (`DEBT.adoc` C15).
+not`. By default the selection is in memory only. Persisting it across page loads is opt-in with
+`persist` (next section); `DEBT.adoc` C15 recorded its absence until 2026-10-05.
+
+== Remembering the reader's variant (`persist`)
+
+*Claim:* on a block with `group` and the boolean `persist` attribute, the variant the reader selects
+is remembered across page loads in `localStorage` and restored ahead of the `variant` attribute. Only
+reader-initiated selections are stored; blocked or unavailable storage degrades silently to
+page-local group sync; a remembered name the block lacks falls back to the first variant. Without
+`persist` nothing is stored. There is no cross-tab sync.
+
+*Implementation:* `recall()` and `remember()` near the top of `src/prog-block.js`, both reading or
+writing the key `progblocks:variant:<group>` (`STORAGE_PREFIX`) inside `try`/`catch`.
+`connectedCallback()` calls `recall()` on first connect when `persist` and `group` are both set, and
+prefers the result over the `variant` attribute; `_selectByName()` ignores a name the block lacks.
+`_select()` calls `remember()` only on the `notify` path, i.e. for a reader-initiated change. No
+`storage` event listener exists, so other open tabs do not follow.
+
+*Evidence:* **Automated, under happy-dom:** `tests/component.test.js` › `remembering the reader's
+variant` — `persist stores a reader choice and restores it on the next page`, `without persist nothing
+is stored`, `a remembered name the block lacks falls back to the first variant`, `blocked storage
+degrades silently` (a `localStorage` getter that throws). Mutation-checked by hand on 2026-10-05:
+removing the persist write failed 1 test. Not observed in a real browser.
+
+== Authored content that changes after render
+
+*Claim:* if the host adds, removes or edits the block's templates or text after it has rendered, the
+block re-renders, keeping the selected variant (by name) and the reader's variable values.
+
+*Implementation:* `connectedCallback()` attaches a `MutationObserver` to the host (`childList`,
+`subtree`, `characterData`, and the `data-variant` attribute). `_scheduleRefresh()` coalesces a burst
+of mutations into one `refresh()` per microtask. `refresh()` (public) re-reads the light DOM,
+replaces the shadow tree via `_build()`, restores the variant by name (first variant if it is gone)
+and writes the reader's values back into the new inputs. `disconnectedCallback()` disconnects the
+observer. Limits: edits to a `<template>`'s `.content` fragment are invisible to observers, so the host
+calls `refresh()` after one; a rebuild replaces the inputs, so focus inside the block is lost.
+
+*Evidence:* **Automated, under happy-dom:** `tests/component.test.js` › `authored content that changes
+after render` — `replacing templates re-renders, keeping the variant and reader values`, `editing
+plain-text content is picked up`, `refresh() picks up edits inside template.content`, `a burst of
+mutations triggers one rebuild`. Mutation-checked by hand on 2026-10-05: disabling the observer failed
+3 tests. Not observed in a real browser.
 
 == Variable substitution
 
@@ -87,7 +128,8 @@ placeholder) is shown. A variable cannot be set to the empty string (`DEBT.adoc`
 
 *Implementation:* the input's `input` listener calls `setVariable()` (wired in `_build()`), which
 patches text nodes only. The shadow tree is built once (`_build()`, guarded by `_built` in `connectedCallback()`) and
-never rebuilt, so the focused `<input>` is never replaced.
+is rebuilt only when the authored content changes (see above), never in response to typing, so the
+focused `<input>` is not replaced while the reader types.
 
 *Evidence:* **Automated, under happy-dom:** `typing keeps the same input element and updates the code
 in place` (asserts the same node identity before and after input). Not observed in a real browser.
@@ -138,7 +180,8 @@ between a code view and a live preview view.
 
 *Claim (removed):* guided wizards for building templates.
 
-*Implementation:* none. No storage, no forms, no wizard code anywhere in `src/`.
+*Implementation:* none. No forms and no wizard code anywhere in `src/`; the only storage is the opt-in
+`persist` variant name (see above).
 
 *Evidence:* No automated evidence — absent, not broken.
 
@@ -210,8 +253,8 @@ or opacity (`.tab[aria-selected="true"]`); a `@media (forced-colors: active)` bl
 *Evidence:* **Structure automated, under happy-dom:** the tabs-pattern, label and line-number tests
 above. **Automated audit in a real browser:** `just a11y` (`tools/a11y-audit.mjs`) runs axe-core with
 the WCAG 2.0/2.1/2.2 A and AA and best-practice rules against `index.html` in headless Chromium, dark
-and light colour schemes: 0 violations, 0 needing review, colour contrast passing on 38 nodes
-(2026-10-05). Planted defects (an unnamed button, a 1.5:1 colour pair) make it exit 1. It is not in
+and light colour schemes: 0 violations, 0 needing review, colour contrast passing on 39 nodes
+(2026-10-05; the demo now uses `persist`). Planted defects (an unnamed button, a 1.5:1 colour pair) make it exit 1. It is not in
 CI and needs a local Chromium. **Not verified:** no screen-reader session; axe sees the default
 palette in its resting state only, not hover/focus states or host overrides. The live region announces
 copy and download results only; a variant change caused by `group` sync in

@@ -20,7 +20,7 @@ last-updated = "2026-10-05"
 # not describe any of it as a proof, a formal check, or a gate.
 formal-proof-claims = false
 evidence-sources = [
-  { kind = "test", tool = "bun test (happy-dom)", location = "tests/", notes = "Four files, 29 tests, all passing as of 2026-10-05: tests/component.test.js (22 behavioural tests — rendering safety, variants, variables, events, copy, download, embedding), tests/registration.test.js (asserts customElements.get('prog-block') is defined), tests/ci-config.test.js and tests/dependabot-config.test.js. Runs under happy-dom, not a real browser." },
+  { kind = "test", tool = "bun test (happy-dom)", location = "tests/", notes = "Four files, 37 tests, all passing as of 2026-10-05: tests/component.test.js (30 behavioural tests — rendering safety, variants, variables, events, copy, download, embedding, opt-in persist, authored content that changes after render), tests/registration.test.js (asserts customElements.get('prog-block') is defined), tests/ci-config.test.js and tests/dependabot-config.test.js. Runs under happy-dom, not a real browser." },
   { kind = "static-analysis", tool = "CodeQL", location = ".github/workflows/codeql.yml", notes = "Matrix scan: 'actions' and 'javascript-typescript'." },
   { kind = "secret-scan", tool = "gitleaks", location = ".github/workflows/secret-scanner.yml", notes = "Added PR #16; this repo previously had no secret scanning at all." },
 ]
