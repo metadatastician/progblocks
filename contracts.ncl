@@ -2,7 +2,7 @@
 # Nickel Contracts for ProgBlocks configuration
 
 let Config = {
-  version | String | default = "1.0.0",
+  version | String | default = "0.3.0",
   entry_points | Array String | default = ["src/prog-block.js"],
   styles | Array String | default = ["src/prog-block.css"],
   a2ml_dialect_version | String | default = "1.1",
@@ -11,7 +11,7 @@ let Config = {
 
 {
   package_config | Config = {
-    version = "1.0.0",
+    version = "0.3.0",
     entry_points = ["src/prog-block.js"],
     styles = ["src/prog-block.css"],
     a2ml_dialect_version = "1.1",

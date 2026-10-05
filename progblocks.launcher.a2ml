@@ -11,7 +11,7 @@ name         = "progblocks"
 display      = "ProgBlocks"
 description  = "Standalone Advanced Presentation Component for Rich Code Blocks"
 categories   = ["Development", "Utility", "Documentation"]
-version      = "0.1.0"
+version      = "0.3.0"
 license      = "MPL-2.0"
 
 [repo]
@@ -39,7 +39,7 @@ wait-for-url-timeout-seconds = 10
 [version-output]
 # Per launcher-standard_praxis.deed (version-output ...) clause
 first-line-format = "progblocks {version} ({build-sha-short}) [{platform}]"
-example = "progblocks 0.1.0 (abc1234) [linux-x86_64]"
+example = "progblocks 0.3.0 (abc1234) [linux-x86_64]"
 exit-code = 0
 
 [icon]
