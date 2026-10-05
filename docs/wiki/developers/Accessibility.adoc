@@ -92,6 +92,46 @@ in a variable input destroyed and recreated the input — was fixed on
 2026-10-05: the shadow tree is built once and patched in place (see
 link:Architecture.adoc[Architecture]).
 
+== Screen-reader test script
+
+Nothing below has been run yet. It is written so that one person with a
+screen reader can run it in about 15 minutes and record a result. Use the
+demo page (`index.html`, served over HTTP from the repository root) and
+run it with at least *NVDA + Firefox or Chrome on Windows* and
+*VoiceOver + Safari on macOS*. For each step, record pass, fail, or what
+was actually announced.
+
+. *Reach the first example.* Tab from the top of the page. Expected: focus
+  lands on the selected tab, announced as a tab in the "Operating system"
+  tab list, "1 of 3", selected.
+. *Switch variants with the keyboard.* Press Right Arrow, then End, then
+  Home. Expected: each key moves focus *and* selection; each tab is
+  announced with its name, position and "selected". Left Arrow on the
+  first tab wraps to the last.
+. *Reach the code.* Press Tab from the tab list. Expected: focus moves to
+  the code panel, announced as a tab panel labelled by the selected tab
+  ("macOS" and so on). Reading its content should not include line numbers.
+. *Edit a value.* Tab to the "package" field. Expected: announced as an
+  edit field labelled "package", inside the group "Customise this
+  example". Type `jq`. Expected: focus and caret stay in the field for
+  every character.
+. *Hear the substituted code.* Shift+Tab back to the code panel and read
+  it. Expected: the line reads `brew install jq` (or the variant's
+  equivalent), not `{{ package }}`.
+. *Copy.* Tab to "Copy" and press Enter. Expected: "Copied to clipboard"
+  is announced without moving focus.
+. *Download.* Tab to "Download" and press Enter. Expected: "Downloaded
+  example.txt" is announced.
+. *Group sync (known gap).* Change the tab in the first example, then
+  navigate to the second example. Expected today: the second example
+  shows the same variant, but nothing announced the change when it
+  happened. Record whether this is confusing in practice.
+. *High contrast.* In Windows High Contrast (or forced colours), confirm
+  that the selected tab and substituted values are still distinguishable.
+
+Record results in `DEBT.adoc` T3. Only when every step passes on both
+readers may AA move from "target" to "tested with assistive technology".
+
 == Net assessment
 
 ProgBlocks now implements the markup and keyboard behaviour that WCAG 2.1
