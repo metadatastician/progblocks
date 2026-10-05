@@ -17,9 +17,10 @@
 
   <section>
     <h2>1. Variants and variables</h2>
-    <p>Both blocks share <code>group="os"</code>: choosing an OS in one switches the other.
+    <p>Both blocks share <code>group="os"</code>: choosing an OS in one switches the other, and
+       <code>persist</code> remembers the choice on your next visit.
        Tabs are keyboard-operable with the arrow keys, Home and End.</p>
-    <prog-block group="os" line-numbers label="Operating system">
+    <prog-block group="os" persist line-numbers label="Operating system">
       <template data-variant="macOS">
         # Install on macOS
         brew install {{ package = ripgrep }}
@@ -34,7 +35,7 @@
       </template>
     </prog-block>
     <p>Later on the same page:</p>
-    <prog-block group="os" label="Operating system">
+    <prog-block group="os" persist label="Operating system">
       <template data-variant="macOS">brew upgrade {{ package = ripgrep }}</template>
       <template data-variant="Windows">winget upgrade {{ package = ripgrep }}</template>
       <template data-variant="Linux">sudo apt-get install --only-upgrade {{ package = ripgrep }}</template>
