@@ -20,11 +20,10 @@
     group: "${{ github.workflow }}-${{ github.ref }}",
     cancel-in-progress: true,
   },
+  # Read-only at the top (Scorecard TokenPermissions); the write grants the
+  # reusable workflow needs are scoped to the one job below.
   permissions: {
-    actions: "read",
     contents: "read",
-    security-events: "write",
-    id-token: "write",
   },
   jobs: {
     scorecard: {
@@ -39,6 +38,12 @@
       # The previous pin (`8750b94a`) was a blob id, not a commit, so every run
       # from #36 onward failed at startup. A reusable-workflow pin is not
       # Dependabot-managed; it is hand-bumped.
+      permissions: {
+        actions: "read",
+        contents: "read",
+        security-events: "write",
+        id-token: "write",
+      },
       uses: "hyperpolymath/standards/.github/workflows/scorecard-reusable.yml@7b931ef7f9dbb8d2386fc9170895708c0acae95c",
     },
   },

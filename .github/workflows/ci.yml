@@ -15,6 +15,11 @@
       ],
     },
   },
+  # Read-only default for every job (Scorecard TokenPermissions); each job
+  # also declares its own.
+  permissions: {
+    contents: "read",
+  },
   jobs: {
     build: {
       runs-on: "ubuntu-latest",
