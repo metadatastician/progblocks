@@ -23,30 +23,32 @@ FACTS.md wins.
 
 ## Where things live
 
-- `src/prog-block.js` (247 lines) — the `<prog-block>` custom element, the
-  whole component. `src/prog-block.css` (182 lines) — its Shadow-DOM
-  stylesheet.
-- `src/modules/exporter.js` — export block content to JSON/CSV/Nickel/TXT
-  (works, but the "CSV" and "JSON" paths are not real serialisation — see
-  FACTS.md defect #7).
-- `src/modules/smart-paste.js` — paste detection (array/matrix/text).
-  Works; no tuple support.
+- `src/prog-block.js` (~370 lines, no imports) — the `<prog-block>` custom
+  element, the whole component: variant tabs (WAI-ARIA tabs pattern),
+  `group` sync, `{{ name }}` / `{{ name = default }}` variables, copy
+  button, line numbers. The shadow tree is built once with DOM APIs and
+  patched in place; all text goes in via `textContent`, never `innerHTML`.
+  `src/prog-block.css` (~160 lines) — its Shadow-DOM stylesheet, loaded via
+  `new URL('./prog-block.css', import.meta.url)`.
+- Removed 2026-10-05 as out of charter (not an editor, IDE or language
+  server): `src/modules/exporter.js`, `src/modules/smart-paste.js`,
+  `src/modules/view-manager.js`, the contenteditable editor, the placeholder
+  linter, and split view. Do not reintroduce them.
 - `src/a2ml-parser.js` — **stub**. Tree-sitter path commented out;
-  `A2MLState` class is dead code; the parse function is never called.
-- `src/modules/view-manager.js` — **entirely dead code**. Never imported by
-  anything, despite containing the only real linter/WebSocket code in the
-  tree.
+  `A2MLState` class is dead code; nothing imports the module.
 - `src/k9-validator.js` — `K9Validator` class + `defaultValidator`
-  instance. `validateNickel()` and `executeJustTask()` are fakes that are
-  never called; `defaultValidator.checkMust()` IS called but ignores its
-  only parameter.
+  instance. `validateNickel()` and `executeJustTask()` are fakes; nothing
+  imports the module, so none of its methods is ever called.
 - `assets/tree-sitter-a2ml.wasm` — **not WebAssembly**. A 118-byte ASCII
   placeholder reading "// Dummy WASM file placeholder".
-- `index.html` — the demo page, two `<prog-block>` elements. Registers and
-  renders (see Invariants below).
-- `tests/` — two `node:test` files: `prog-block.test.js` (smart-paste
-  parsing) and `registration.test.js` (asserts
-  `customElements.get('prog-block')` is defined).
+- `index.html` — the demo page, several `<prog-block>` elements. Registers
+  and renders (see Invariants below).
+- `tests/` — `bun test` files run under happy-dom: `component.test.js`
+  (rendering safety, variants, variables, copy, embedding),
+  `registration.test.js` (asserts `customElements.get('prog-block')` is
+  defined), plus `ci-config.test.js` and `dependabot-config.test.js`.
+  29 tests, all passing as of 2026-10-05, under happy-dom. `just a11y`
+  runs an axe-core audit in a real Chromium (local only).
 - `contracts.ncl`, `package.k9` — self-description manifests. Neither is
   consumed by anything in this tree; treat them as declared intent, not
   enforced contract.
@@ -65,8 +67,10 @@ FACTS.md wins.
 - `.well-known/` — `ai.txt`, `humans.txt`, `security.txt`.
 - `README.md`, `SECURITY.md`, `GOVERNANCE.md`, `CONTRIBUTING.md`,
   `CODE_OF_CONDUCT.md`, `LICENSE` (MPL-2.0) — the human documentation set.
-  **README.md is aspirational; FACTS.md is authoritative on what actually
-  works.** Do not treat the feature list in README.md as verified.
+  As of 2026-10-05 README.md's feature table was rewritten to match the
+  code; FACTS.md still wins on any disagreement. Accessibility is
+  implemented, unit-tested and axe-audited (`just a11y`), **not**
+  screen-reader-tested.
 
 ## Invariants (read before editing)
 
@@ -88,17 +92,15 @@ FACTS.md wins.
 - **The component must actually register.**
   `customElements.get('prog-block')` must be truthy after
   `src/prog-block.js` loads — there is a test for this
-  (`tests/registration.test.js`), and it passes: `src/prog-block.js` was
-  fixed to import `{ defaultValidator }` from `k9-validator.js` instead of
-  the non-existent `{ validateK9 }`, so the module graph finishes loading
-  and `customElements.define('prog-block', ...)` runs. Re-verify with
-  `npm test` before relying on this if the tree has moved since
-  2026-08-07 — do not assume it stays fixed without checking.
+  (`tests/registration.test.js`), and it passes. The original fatal
+  `{ validateK9 }` import was fixed in PR #18, and since 2026-10-05
+  `src/prog-block.js` imports nothing at all. Re-verify with `bun test`
+  before relying on this if the tree has moved since 2026-10-05 — do not
+  assume it stays fixed without checking.
 - **Do not document features the code does not implement.** In particular:
-  there is no code/preview toggle, no templating wizard, no working live
-  linter (the rendered panel is the hardcoded string `'<i>Linter ready</i>'`),
-  and split-view is wired to a `:host([split-view="…"])` selector the JS
-  never reflects onto the host attribute. See
+  there is no code/preview toggle, no templating wizard, no linter, no
+  split view, no smart paste, no structured (JSON/CSV/Nickel) export, no syntax highlighting, and
+  no reaction to light-DOM changes after the first connect. See
   `.machine_readable/descriptiles/STATE.a2ml` and FACTS.md's "Feature
   reality" section before writing anything that reads as a capability
   claim.
@@ -107,7 +109,8 @@ FACTS.md wins.
   `progblocks.launcher.a2ml`/`progblocks-launcher.sh`, `0.3.0` in
   `package.json`). Treat this project as pre-alpha; do not cut a
   tag without resolving the drift first.
-- **There is a known, unfixed XSS surface.** Variant content is read via
-  `innerHTML` and re-injected as HTML with no escaping anywhere; variable
-  values are interpolated unescaped into `value="${val}"`. Do not add new
-  features that write untrusted content through the same unescaped path.
+- **Never render author or reader text as markup.** The former XSS surface
+  (variant content and variable values interpolated into `innerHTML`) was
+  closed on 2026-10-05: everything goes in via `textContent`, and
+  `tests/component.test.js` guards it. Do not introduce `innerHTML`,
+  `insertAdjacentHTML` or template-string DOM construction for content.

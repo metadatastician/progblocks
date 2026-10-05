@@ -5,7 +5,7 @@
 :page-audience: All
 :page-maturity: DRAFT
 :page-owner: Documentation workstream
-:page-last-reviewed: 2026-08-07
+:page-last-reviewed: 2026-10-05
 :page-next-review: 2026-11-07
 :toc: left
 
@@ -33,11 +33,19 @@ and treat the component itself as experimental.
 `K9Validator` and `defaultValidator`) — a link-time `SyntaxError` that
 kept the module graph from ever finishing loading, so the
 `prog-block` custom element never registered and every `<prog-block>`
-on a page using the `src/` tree was inert. That import has been fixed
-(it now imports `defaultValidator`), and `tests/registration.test.js`
-asserts `customElements.get('prog-block')` is defined so this class of
-bug cannot regress silently. Re-verify against the checked-out
-`src/prog-block.js` if you have reason to doubt this.
+on a page using the `src/` tree was inert. That was fixed, and since
+2026-10-05 `src/prog-block.js` imports nothing at all;
+`tests/registration.test.js` asserts `customElements.get('prog-block')`
+is defined so this class of bug cannot regress silently.
+
+On 2026-10-05 the component was rewritten (branch
+`feat/render-core-variants-vars`): it renders all text through
+`textContent` (closing the former XSS surface), keeps focus while you
+type, resolves its stylesheet against its own module URL, and follows
+the WAI-ARIA tabs pattern. Its behaviour is unit-tested under happy-dom
+(`bun test`, 29 tests), and the demo passes an axe-core audit in
+headless Chromium (`just a11y`); it has **not** been checked with a
+screen reader.
 ====
 
 See link:users/Feature-Status.adoc[Feature Status] for a full,
@@ -45,36 +53,39 @@ evidence-based table of what actually works.
 
 == ProgBlocks in one paragraph
 
-ProgBlocks is a dependency-free web component (`<prog-block>`) intended
-for rich, interactive code blocks in technical documentation and wikis:
-variant tabs (e.g. OS or shell flavours of a command), `{{ variable }}`
-substitution over variant content, smart paste detection, and export to
-a handful of file formats. It was conceived for BerryWiki
-(`metadatastician/berrywiki`) and decoupled by design so it can, in
-principle, be dropped into other static sites — see
-link:users/Getting-Started.adoc[Getting Started] for a real limitation
-on that claim.
+ProgBlocks is a dependency-free web component (`<prog-block>`) for
+variant-aware, personalisable code examples in technical documentation
+and wikis: variant tabs (e.g. OS or shell flavours of a command), kept in
+step across blocks with `group`, `{{ variable }}` substitution with
+optional inline defaults, and Copy and Download buttons for the personalised
+text. It is not an editor, linter or data converter — the inline editor,
+placeholder linter, split view, smart paste and JSON/CSV/Nickel export were removed
+on 2026-10-05. It was conceived for BerryWiki
+(`metadatastician/berrywiki`) and decoupled by design so it can be
+dropped into other static sites — see
+link:users/Getting-Started.adoc[Getting Started].
 
 == Choose your route
 
 * link:users/Getting-Started.adoc[**Users and integrators**] — how to
-  drop `<prog-block>` into a page, and the stylesheet-path limitation
-  that blocks the "inject anywhere" pitch for most consumers.
+  drop `<prog-block>` into a page, and what has and has not been
+  checked about embedding it elsewhere.
 * link:users/Authoring-Blocks.adoc[**Authoring blocks**] — the
-  `<template data-variant="…">` model, variable substitution, and two
-  bugs you will hit while authoring content.
+  `<template data-variant="…">` model, escaping, variables, groups, and
+  the script API.
 * link:developers/Architecture.adoc[**Developers**] — the module map,
-  which files are dead code, and why the render model is a problem.
+  which files are unused stubs, and the build-once render model.
 * link:contributors/Contributing-Guide.adoc[**Contributors**] — how to
   send a change, pointing at the root `CONTRIBUTING.md`.
 
 == Everyone should read this
 
 * link:users/Feature-Status.adoc[Feature Status] — Works / Partial /
-  Broken / Absent for every advertised feature, with evidence.
-* link:developers/Accessibility.adoc[Accessibility] — what ARIA is
-  actually present, and an explicit statement that the top WCAG
-  conformance tier is **not** met despite historic claims.
+  Broken / Absent / Removed for every feature, with evidence.
+* link:developers/Accessibility.adoc[Accessibility] — what is
+  implemented, what is only unit-tested rather than verified, and an
+  explicit statement that the top WCAG conformance tier is **not** met
+  despite historic claims.
 
 == Wiki bookkeeping
 

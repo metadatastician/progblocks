@@ -7,12 +7,14 @@
 # not a hard gate.
 
 @abstract:
-Accessibility is this repo's stated target (README.md: "WCAG 2.1 AA target
-for all interactive elements") and its most concrete drift risk: it is easy
+Accessibility is this repo's stated target (README.md: accessibility
+"Implemented, not verified", AA target) and its most concrete drift risk: it is easy
 to let a claim of AAA, or of AA fully met, creep into documentation that
 the markup does not back up. AAA IS NOT MET. AA is the target, and AA is
-not fully met either — see the gaps below, all sourced from a direct read
-of src/prog-block.js and src/prog-block.css on 2026-08-07.
+not verified either. The structural gaps below were read from the source on
+2026-08-07 and fixed in the render-core rewrite on 2026-10-05; what remains
+is verification — no screen reader yet, and the axe-core audit
+(just a11y, 0 violations on 2026-10-05) is local only (see verification-missing below).
 @end
 
 ## Level Honesty
@@ -24,42 +26,48 @@ of src/prog-block.js and src/prog-block.css on 2026-08-07.
 - enforced-by: not yet automated (documentary)
 
 ### present-aria-semantics
-- description: The baseline ARIA that IS present must not regress — role=tablist/tab and aria-selected are the floor
-- run: grep -q 'role="tablist"' src/prog-block.js && grep -q 'aria-selected' src/prog-block.js
+- description: The baseline ARIA that IS present must not regress — role=tablist/tab and aria-selected are the floor (since 2026-10-05 the roles are set via setAttribute-style attribute objects, e.g. role: 'tablist', so the probe matches that form)
+- run: grep -q "role: 'tablist'" src/prog-block.js && grep -q "role: 'tab'" src/prog-block.js && grep -q 'aria-selected' src/prog-block.js
 - severity: warning
 - enforced-by: not yet automated (documentary)
 
 ## Known AA Gaps (tracked, not gated — do not let these silently become "compliant" claims)
 
-### roving-tabindex-missing
-- description: The tablist has no roving tabindex / arrow-key navigation, which real APG tablist semantics require for AA
-- tolerance: known gap, tracked here; 0 tolerance for a documentation claim of "APG-compliant" tablist while this is open
-- corrective: implement roving tabindex plus ArrowLeft/ArrowRight handling on the variant tablist
+### roving-tabindex-missing (RESOLVED 2026-10-05)
+- description: The tablist had no roving tabindex / arrow-key navigation. Fixed: roving tabindex, ArrowLeft/ArrowRight with wrap, Home/End, automatic activation — asserted in tests/component.test.js under happy-dom
+- tolerance: still 0 tolerance for a documentation claim of an "APG-compliant" or AA-conformant tablist until verification-missing below is closed
+- corrective: done (src/prog-block.js _onTabKey / _renderVariant)
 - severity: advisory
 
-### tabpanel-pairing-missing
-- description: No tabpanel role + aria-controls/aria-labelledby pairing between tabs and their content
-- tolerance: known gap, tracked here
-- corrective: add role="tabpanel" to variant content containers and wire aria-controls/aria-labelledby to the corresponding tab
+### tabpanel-pairing-missing (RESOLVED 2026-10-05)
+- description: There was no tabpanel role + aria-controls/aria-labelledby pairing. Fixed: the code panel is role="tabpanel", each tab's aria-controls points at it, and its aria-labelledby follows the selected tab — asserted in tests/component.test.js
+- tolerance: n/a
+- corrective: done
 - severity: advisory
 
-### aria-live-missing
-- description: No aria-live region for variant switches or export-state changes — a screen-reader user gets no announcement when content changes
-- tolerance: known gap, tracked here
-- corrective: add a polite aria-live region and update it on variant switch and on export completion
+### aria-live-missing (PARTLY RESOLVED 2026-10-05)
+- description: There was no live region. Now a role="status" region announces the copy and download results. A variant switch the reader makes is conveyed by focus moving to the newly selected tab; a switch caused by group sync from ANOTHER block is not announced
+- tolerance: known gap for group-synced changes, tracked here
+- corrective: decide whether group-synced switches need an announcement, and if so route them through the status region
 - severity: advisory
 
-### inactive-tab-contrast
-- description: Inactive tabs render at opacity: 0.7, which degrades text contrast below what AA requires at small sizes
-- run: grep -q 'opacity: 0.7' src/prog-block.css
+### inactive-tab-contrast (RESOLVED 2026-10-05)
+- description: Inactive tabs used to render at opacity: 0.7, degrading text contrast. Removed; selection is shown by an underline bar plus font weight. Kept as a regression guard. The default palette's contrast has still not been measured
+- run: "! grep -q 'opacity: 0.7' src/prog-block.css"
 - severity: warning
-- enforced-by: not yet automated (documentary)
+- enforced-by: this probe
 
-### focus-destroyed-on-keystroke
-- description: Editing any variable input triggers a full shadowRoot.innerHTML rewrite, destroying and recreating the focused <input> — a WCAG-adjacent failure (2.4.3/3.2.1-adjacent focus stability) as much as a usability one
-- run: "test $(grep -c 'shadowRoot.innerHTML' src/prog-block.js) -gt 0"
+### focus-destroyed-on-keystroke (RESOLVED 2026-10-05)
+- description: Editing a variable input used to trigger a full shadowRoot.innerHTML rewrite, destroying the focused <input>. Fixed: the shadow tree is built once and patched in place. Kept as a regression guard
+- run: "! grep -q 'shadowRoot.innerHTML' src/prog-block.js"
 - severity: critical
-- enforced-by: not yet automated (documentary) — same defect tracked in ../bust/Bustfile.a2ml
+- enforced-by: tests/component.test.js ("typing keeps the same input element…") plus this probe — same defect tracked in ../bust/Bustfile.a2ml
+
+### verification-missing
+- description: Accessibility is verified by structural unit tests and a local axe-core audit (just a11y: 0 violations, resting-state contrast on 38 nodes, 2026-10-05) — but there is no screen-reader session and the audit is not in CI
+- tolerance: known gap, tracked here; 0 tolerance for any claim that AA is met while this is open
+- corrective: run an automated audit in CI and test with at least one real screen reader
+- severity: advisory
 
 ## Drift Tolerance
 

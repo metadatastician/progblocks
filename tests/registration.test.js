@@ -1,8 +1,6 @@
 import { test } from 'bun:test';
 import assert from 'node:assert';
-import { GlobalRegistrator } from '@happy-dom/global-registrator';
-
-GlobalRegistrator.register();
+import './helpers/dom.js';
 
 test('<prog-block> registers and constructs as a real HTMLElement', async () => {
   // This import would have thrown at link time if the named-import mismatch

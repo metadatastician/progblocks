@@ -6,7 +6,7 @@
 
 [metadata]
 version = "0.1.0"
-last-updated = "2026-08-07"
+last-updated = "2026-10-05"
 
 [agent-permissions]
 can-edit-source = true
@@ -33,18 +33,24 @@ can-create-files = true
 #   carry tag refs. "Fixing" them back to inline SHAs breaks the lockfile
 #   model and has caused startup_failure elsewhere in the estate.
 # - Never claim in documentation that a feature the code does not
-#   implement exists. In particular, as of 2026-08-07: there is no
+#   implement exists. In particular, as of 2026-10-05: there is no
 #   code/preview toggle, no templating wizard (no storage, no forms, no
-#   wizard code anywhere in the tree), no working live linter (the
-#   rendered panel is the hardcoded string '<i>Linter ready</i>'), and
-#   split-view is wired to a :host([split-view="…"]) CSS selector the JS
-#   never reflects onto the host attribute. Read FACTS.md's "Feature
-#   reality" section before writing anything that reads as a capability
-#   claim.
-# - Never describe A2ML variable substitution as "backed by the A2ML
-#   parser" — it is plain regex (/\{\{\s*([\w:-]+)\s*\}\}/g); a2ml-parser.js
-#   is a stub whose tree-sitter path is commented out and whose parse
-#   function is never called.
+#   wizard code anywhere in the tree), no linter, no split view, no smart
+#   paste, no structured (JSON/CSV/Nickel) export, no inline code editing, and no syntax
+#   highlighting. The linter, split view, smart paste, structured export and the
+#   contenteditable editor were removed on 2026-10-05 as out of charter —
+#   do not reintroduce them. Read FACTS.md's "Feature reality" section
+#   before writing anything that reads as a capability claim.
+# - Never claim accessibility conformance. The WAI-ARIA tabs pattern,
+#   labelled inputs, live region and focus rings are implemented and
+#   unit-tested under happy-dom; an axe-core audit (just a11y) reports 0
+#   violations; nothing has been screen-reader-tested. AA is a target.
+# - Never render author or reader text as markup: no innerHTML for content
+#   in src/ (the former XSS surface, closed 2026-10-05).
+# - Never describe variable substitution as "backed by the A2ML parser" —
+#   it is a plain regex in src/prog-block.js's tokenize() (supporting
+#   {{ name }} and {{ name = default }}); a2ml-parser.js is a stub whose
+#   tree-sitter path is commented out and which nothing imports.
 # - Licence is MPL-2.0 for this repo — do not swap in AGPL or another
 #   licence.
 
@@ -63,12 +69,13 @@ release-claim-requires-hard-pass = true
 # the module graph never finished loading, and
 # customElements.define('prog-block', ...) never ran. A real registration
 # test (tests/registration.test.js, asserting
-# customElements.get('prog-block') exists) is now in the tree and passes
-# (`npm test`, 5/5). Re-verify against the live source before trusting this
-# if the tree has moved since 2026-08-07.
+# customElements.get('prog-block') exists) is now in the tree and passes.
+# As of 2026-10-05 src/prog-block.js imports nothing, and `bun test` passes
+# 27/27. Re-verify against the live source before trusting this if the
+# tree has moved since 2026-10-05.
 component-registration-invariant = "customElements.get('prog-block') must be truthy after loading src/prog-block.js — currently true, guarded by tests/registration.test.js; see descriptiles/STATE.a2ml"
 
 [automation-hooks]
 # on-enter: read /0-AI-MANIFEST.a2ml, then descriptiles/STATE.a2ml
 # on-exit: update STATE.a2ml with session outcomes
-# on-commit: ci.yml's `build` job (checkout -> setup-node -> just test) is the real gate
+# on-commit: ci.yml's `build` job (checkout -> setup-bun -> bun install --frozen-lockfile -> bun run test) is the real gate

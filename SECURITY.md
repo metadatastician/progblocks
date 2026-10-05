@@ -203,6 +203,24 @@ The following are **not** in scope:
 - Issues already reported or publicly known
 - Theoretical vulnerabilities without proof of concept
 
+### Component threat model
+
+`<prog-block>` renders code examples that may be written by people other than the page owner, and
+reader-typed variable values. Its security property is that **none of that text is ever parsed as
+markup**:
+
+- The shadow tree is built with DOM APIs; author content, tab labels, variable names and typed values
+  go in through `textContent` or attribute setters. There is no `innerHTML` in `src/`.
+- Variant content is read from `<template data-variant>` via `template.content.textContent`, so tags
+  written unescaped inside a template are dropped, not rendered.
+- The component makes no network requests other than loading its own stylesheet from next to the
+  module, and stores nothing (no cookies, no `localStorage`).
+
+This is enforced by `tests/component.test.js` (under happy-dom) and has not been independently
+reviewed. Until 2026-10-05 the component did interpolate content into `innerHTML` unescaped; see
+`DEBT.adoc` C1. A way to make the component render author or reader text as markup is in scope and
+qualifies below.
+
 ### Qualifying Vulnerabilities
 
 We're particularly interested in:
@@ -321,10 +339,8 @@ To stay informed about security updates:
 
 | Version | Supported | Notes |
 |---------|-----------|-------|
-| `main` branch | ✅ Yes | Latest development |
-| Latest release | ✅ Yes | Current stable |
-| Previous minor release | ✅ Yes | Security fixes backported |
-| Older versions | ❌ No | Please upgrade |
+| `main` branch | ✅ Yes | Latest development — the only supported version |
+| Releases | — | None exist yet; ProgBlocks is pre-alpha and nothing has been published |
 
 ---
 
