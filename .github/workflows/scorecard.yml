@@ -1,35 +1,45 @@
 # SPDX-License-Identifier: MPL-2.0
 # This workflow is managed by gh actions-lock.
-name: Scorecard
-
-on:
-  schedule:
-    - cron: "0 0 * * 0"
-  push:
-    branches: [main, master]
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  actions: read
-  contents: read
-  security-events: write
-  id-token: write
-
-jobs:
-  scorecard:
-    # Pinned to standards `7b931ef7` ("fix(ci): re-pin codeql-action to v4.38.0
-    # SHA", 2026-09-22), the commit verified green estate-wide for this callee
-    # (metadatastician/berrywiki#30). It carries the SARIF upload restored by
-    # standards#642 (`a63b2761`), now unconditional: the upload can no longer
-    # be skipped by a failing reconciliation step. This caller grants exactly
-    # the four permissions the callee's job declares: actions: read,
-    # contents: read, security-events: write and id-token: write.
-    #
-    # The previous pin (`8750b94a`) was a blob id, not a commit, so every run
-    # from #36 onward failed at startup. A reusable-workflow pin is not
-    # Dependabot-managed; it is hand-bumped.
-    uses: hyperpolymath/standards/.github/workflows/scorecard-reusable.yml@7b931ef7f9dbb8d2386fc9170895708c0acae95c
+{
+  name: "Scorecard",
+  on: {
+    schedule: [
+      {
+        cron: "0 0 * * 0",
+      },
+    ],
+    push: {
+      branches: [
+        "main",
+        "master",
+      ],
+    },
+    workflow_dispatch: null,
+  },
+  concurrency: {
+    group: "${{ github.workflow }}-${{ github.ref }}",
+    cancel-in-progress: true,
+  },
+  permissions: {
+    actions: "read",
+    contents: "read",
+    security-events: "write",
+    id-token: "write",
+  },
+  jobs: {
+    scorecard: {
+      # Pinned to standards `7b931ef7` ("fix(ci): re-pin codeql-action to v4.38.0
+      # SHA", 2026-09-22), the commit verified green estate-wide for this callee
+      # (metadatastician/berrywiki#30). It carries the SARIF upload restored by
+      # standards#642 (`a63b2761`), now unconditional: the upload can no longer
+      # be skipped by a failing reconciliation step. This caller grants exactly
+      # the four permissions the callee's job declares: actions: read,
+      # contents: read, security-events: write and id-token: write.
+      #
+      # The previous pin (`8750b94a`) was a blob id, not a commit, so every run
+      # from #36 onward failed at startup. A reusable-workflow pin is not
+      # Dependabot-managed; it is hand-bumped.
+      uses: "hyperpolymath/standards/.github/workflows/scorecard-reusable.yml@7b931ef7f9dbb8d2386fc9170895708c0acae95c",
+    },
+  },
+}

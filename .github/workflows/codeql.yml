@@ -1,51 +1,87 @@
 # SPDX-License-Identifier: MPL-2.0
 # This workflow is managed by gh actions-lock.
 
-name: CodeQL Security Analysis
-on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  schedule:
-    - cron: '0 6 1 * *'   # monthly 1st 06:00 UTC (Actions burn cut, standards#288)
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-permissions:
-  contents: read
-  actions: read
-  security-events: write
-jobs:
-  analyze:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      actions: read
-      security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # actions = workflow files; javascript-typescript = the component source in src/.
-          - language: actions
-            build-mode: none
-          - language: javascript-typescript
-            build-mode: none
-    steps:
-      # Sanctioned pinning form for this repository (AGENTS.md): `uses:` tag
-      # refs plus `.github/workflows/actions.lock`, which owns the commit.
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4.38.2
-        with:
-          languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4.38.2
-        with:
-          category: "/language:${{ matrix.language }}"
+{
+  name: "CodeQL Security Analysis",
+  on: {
+    push: {
+      branches: [
+        "main",
+        "master",
+      ],
+    },
+    pull_request: {
+      branches: [
+        "main",
+        "master",
+      ],
+    },
+    schedule: [
+      {
+        cron: "0 6 1 * *", # monthly 1st 06:00 UTC (Actions burn cut, standards#288)
+      },
+    ],
+  },
+  concurrency: {
+    group: "${{ github.workflow }}-${{ github.ref }}",
+    cancel-in-progress: true,
+  },
+  permissions: {
+    contents: "read",
+    actions: "read",
+    security-events: "write",
+  },
+  jobs: {
+    analyze: {
+      runs-on: "ubuntu-latest",
+      timeout-minutes: 15,
+      permissions: {
+        contents: "read",
+        actions: "read",
+        security-events: "write",
+      },
+      strategy: {
+        fail-fast: false,
+        matrix: {
+          include: [
+            # actions = workflow files; javascript-typescript = the component source in src/.
+            {
+              language: "actions",
+              build-mode: "none",
+            },
+            {
+              language: "javascript-typescript",
+              build-mode: "none",
+            },
+          ],
+        },
+      },
+      steps: [
+        # Sanctioned pinning form for this repository (AGENTS.md): `uses:` tag
+        # refs plus `.github/workflows/actions.lock`, which owns the commit.
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v7.0.1",
+          with: {
+            persist-credentials: false,
+          },
+        },
+        {
+          name: "Initialize CodeQL",
+          uses: "github/codeql-action/init@v4.38.2",
+          with: {
+            languages: "${{ matrix.language }}",
+            build-mode: "${{ matrix.build-mode }}",
+          },
+        },
+        {
+          name: "Perform CodeQL Analysis",
+          uses: "github/codeql-action/analyze@v4.38.2",
+          with: {
+            category: "/language:${{ matrix.language }}",
+          },
+        },
+      ],
+    },
+  },
+}
