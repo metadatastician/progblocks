@@ -7,45 +7,39 @@
 [metadata]
 project = "ProgBlocks"
 version = "0.1.0"   # per progblocks.launcher.a2ml; see [notes] on version drift below
-last-updated = "2026-08-07"
+last-updated = "2026-10-05"
 status = "active"
 
 [project-context]
 name = "progblocks"
-purpose = "Dependency-free web component for rich code blocks in technical documentation and wikis: variant switching, A2ML variable substitution, smart paste parsing, and clipboard-safe line numbers."
+purpose = "Dependency-free web component for variant-aware, personalisable code examples in technical documentation and wikis: WAI-ARIA variant tabs with optional cross-block group sync, {{ variable }} substitution with inline defaults, copy-to-clipboard of the personalised text, and clipboard-safe line numbers."
 language = "javascript (ESM, no build)"
 runtime = "any modern browser"
 dependencies = "none at runtime; dev dependencies happy-dom and @happy-dom/global-registrator (see package.json)"
 distribution = "no build artefact; consumers import src/prog-block.js directly"
-completion-percentage = 35   # of the 8 features README.md advertises (switchable
-                              # blocks, A2ML substitution + live preview, smart
-                              # paste, export, line numbers, split/glyph editor
-                              # modes, AA accessibility, drop-in integration),
-                              # roughly 3 work as described: variant tabs (generic
-                              # only), smart paste, and export-to-file. A2ML
-                              # substitution works but is not "backed by the A2ML
-                              # parser" as implied; line numbers work but have no
-                              # UI toggle. Preview toggle, templating wizards, live
-                              # linter, and split view are absent, absent, faked,
-                              # and wired wrong respectively (FACTS.md). This ratio
-                              # is unchanged by the B1 fix below: B1 previously
-                              # blocked the component from registering in a browser
-                              # AT ALL, so fixing it makes these same features
-                              # actually reachable live rather than changing which
-                              # ones work.
+completion-percentage = 35   # NOT re-scored on 2026-10-05 — the rationale below
+                              # is historical. It scored the 8 features the old
+                              # README advertised, of which roughly 3 worked.
+                              # On 2026-10-05 (branch feat/render-core-variants-vars)
+                              # the README feature table was rewritten to the
+                              # charter: variant tabs, group sync, variables,
+                              # copy, line numbers and safe rendering work and are
+                              # unit-tested under happy-dom; accessibility is
+                              # implemented but not verified; smart paste, export,
+                              # the linter, split view and the inline editor were
+                              # removed as out of charter. The owner should
+                              # re-score this figure against the new table.
 
 [position]
 phase = "implementation"   # design | implementation | testing | maintenance | archived
 maturity = "experimental"  # experimental | alpha | beta | production | lts
-                            # NOT beta: the component's flagship advertised
-                            # features (preview toggle, templating wizards, a
-                            # real live linter) are entirely absent. The
-                            # component previously had a link-time load
-                            # failure (every <prog-block> on the demo page
-                            # inert) — that has been fixed (see
-                            # [blockers-and-issues] B1 below) — but the
-                            # missing/faked flagship features alone keep this
-                            # below beta.
+                            # NOT beta: nothing has been exercised in a real
+                            # browser, a screen reader, or an automated
+                            # accessibility audit; all behavioural tests run
+                            # under happy-dom; nothing has been released. The
+                            # advertised-but-absent features that used to keep
+                            # this below beta were removed from scope on
+                            # 2026-10-05 rather than built.
 
 [route-to-mvp]
 milestones = [
@@ -54,34 +48,37 @@ milestones = [
   { name = "gitleaks secret scanning added (PR #16) — this repo previously had none", completion = 100 },
   { name = "Fatal import bug fixed + registration test + package.json (branch fix/honest-gates-v2)", completion = 100 },
   { name = "just test able to fail honestly (remove the || echo fallback in Justfile)", completion = 100 },
-  { name = "XSS remediation — escape variant content and interpolated variable values (scheduled: fix/render-security, not started)", completion = 0 },
-  { name = "Fix focus-destroying re-render on every keystroke in variable inputs", completion = 0 },
-  { name = "Preview toggle (README's flagship claim) implemented", completion = 0 },
+  { name = "XSS remediation — all author/reader text rendered via textContent, no innerHTML (branch feat/render-core-variants-vars, 2026-10-05; tested under happy-dom; not yet merged)", completion = 100 },
+  { name = "Fix focus-destroying re-render on every keystroke in variable inputs (same branch; shadow tree built once, patched in place)", completion = 100 },
+  { name = "Preview toggle — dropped from README and from scope on 2026-10-05; not implemented", completion = 0 },
   { name = "Real A2ML parser wired up (currently a stub; tree-sitter WASM asset is a 118-byte placeholder)", completion = 0 },
-  { name = "Live linter wired to real code (view-manager.js exists but is never imported; the rendered panel is a hardcoded string)", completion = 0 },
-  { name = "Split-view CSS/JS mismatch fixed (:host attribute is never reflected)", completion = 0 },
-  { name = "Templating wizards (no storage, no forms, no wizard code exists anywhere in the tree)", completion = 0 },
+  { name = "Live linter — removed as out of charter on 2026-10-05 (placeholder panel and view-manager.js deleted); not planned", completion = 0 },
+  { name = "Split view — removed as out of charter on 2026-10-05; not planned", completion = 0 },
+  { name = "Templating wizards — dropped from README and from scope; no code exists anywhere in the tree", completion = 0 },
+  { name = "Accessibility verified with an automated audit and a real screen reader (implemented and unit-tested; not verified)", completion = 0 },
 ]
 
 [blockers-and-issues]
 # Full register with evidence: FACTS.md (.superpowers/sdd/progblocks-foamy-puzzle/FACTS.md).
 blockers = [
-  { id = "B1", kind = "code", state = "fixed", detail = "src/prog-block.js used to import { validateK9 } from k9-validator.js, which exports only K9Validator and defaultValidator — a link-time SyntaxError that stopped customElements.define('prog-block', ...) from ever running, leaving every <prog-block> on the demo page inert. Fixed by importing { defaultValidator } instead; guarded by tests/registration.test.js." },
-  { id = "B2", kind = "code", state = "open", detail = "XSS — variant content is read via innerHTML and re-injected as HTML with no escaping; variable values are interpolated unescaped into value=\"${val}\" (src/prog-block.js:61, 68, 165, 177). Scheduled for a fix/render-security PR that has not started." },
-  { id = "B3", kind = "code", state = "open", detail = "Editing any variable input triggers a full shadowRoot.innerHTML rewrite, destroying and recreating the focused <input> — multi-character values are effectively untypeable" },
-  { id = "B4", kind = "code", state = "open", detail = "The editor overwrites variant source with post-interpolation text, permanently losing {{ vars }} — self-confessed in a code comment" },
-  { id = "B5", kind = "code", state = "open", detail = "Split view is wired wrong: prog-block.css keys off :host([split-view=\"…\"]) but the JS only stamps the value on an inner <div>, never reflecting it to the host attribute, so the CSS never matches" },
-  { id = "B6", kind = "code", state = "open", detail = "The live linter is fake: the rendered panel is the hardcoded string '<i>Linter ready</i>'. The real WebSocket/linter code lives in view-manager.js, which nothing imports." },
-  { id = "B7", kind = "test", state = "fixed", detail = "Justfile's test recipe used to be `node --test tests/ || echo \"No tests configured yet\"` — a real failure was swallowed and the recipe always exited 0. The `|| echo` fallback has been removed; the recipe is now `node --test` and propagates failure." },
-  { id = "B8", kind = "cicd", state = "fixed", detail = "package.json now exists in this tree at HEAD, so `npm ci`/`npm test` have something to install and run" },
-  { id = "B9", kind = "docs", state = "flag-only", detail = "README.md advertises a code/preview toggle, templating wizards, and 'Advanced Editor Tooling' split/glyph modes that do not exist in the code — do not repeat these claims without checking FACTS.md first" },
+  { id = "B1", kind = "code", state = "fixed", detail = "src/prog-block.js used to import { validateK9 } from k9-validator.js, which exports only K9Validator and defaultValidator — a link-time SyntaxError that stopped customElements.define('prog-block', ...) from ever running, leaving every <prog-block> on the demo page inert. Fixed by importing { defaultValidator } instead; since 2026-10-05 prog-block.js imports nothing at all. Guarded by tests/registration.test.js." },
+  { id = "B2", kind = "code", state = "fixed", detail = "XSS — variant content used to be read via innerHTML and re-injected as HTML, and variable values interpolated unescaped into value=\"${val}\". Fixed 2026-10-05 on branch feat/render-core-variants-vars: the shadow tree is built with DOM APIs and every text value goes in via textContent; no innerHTML remains in src/. Guarded by tests/component.test.js (happy-dom, not a real browser)." },
+  { id = "B3", kind = "code", state = "fixed", detail = "Editing a variable input used to trigger a full shadowRoot.innerHTML rewrite, destroying the focused <input>. Fixed 2026-10-05: inputs are created once and only the matching code spans are patched. Guarded by tests/component.test.js." },
+  { id = "B4", kind = "code", state = "fixed", detail = "The contenteditable editor overwrote variant source with post-interpolation text. Resolved 2026-10-05 by removing the editor as out of charter." },
+  { id = "B5", kind = "code", state = "fixed", detail = "Split view was wired wrong (:host([split-view]) never set). Resolved 2026-10-05 by removing split view as out of charter." },
+  { id = "B6", kind = "code", state = "fixed", detail = "The live linter was a hardcoded placeholder string and view-manager.js was dead code. Resolved 2026-10-05 by deleting both; a linter is out of charter." },
+  { id = "B7", kind = "test", state = "fixed", detail = "Justfile's test recipe used to be `node --test tests/ || echo \"No tests configured yet\"` — a real failure was swallowed and the recipe always exited 0. The `|| echo` fallback has been removed; the recipe is now `bun test` and propagates failure." },
+  { id = "B8", kind = "cicd", state = "fixed", detail = "package.json and bun.lock exist in this tree, so CI's `bun install --frozen-lockfile` / `bun run test` have something to install and run" },
+  { id = "B9", kind = "docs", state = "fixed", detail = "README.md used to advertise a code/preview toggle, templating wizards, and split/glyph editor modes that did not exist. Its feature table was rewritten on 2026-10-05 to match the code; re-check it against FACTS.md before repeating any claim." },
+  { id = "B10", kind = "code", state = "open", detail = "Light-DOM changes after first connect are not observed: templates are read once and the shadow tree is built once. See DEBT.adoc C14." },
+  { id = "B11", kind = "test", state = "open", detail = "Accessibility (WAI-ARIA tabs, labelled inputs, live region, focus rings, forced-colors) is implemented and its structure unit-tested under happy-dom, but has not been checked with a screen reader, an automated audit, or a contrast measurement. See DEBT.adoc T3." },
 ]
 
 [critical-next-actions]
 actions = [
-  "Start the fix/render-security PR for the unescaped-innerHTML XSS surface — this is the highest-severity defect not yet scheduled with an open branch.",
-  "Fix the focus-destroying full-shadowRoot re-render so variable inputs are typeable.",
-  "Either correct README.md to match FACTS.md reality (remove preview-toggle / templating-wizard / live-linter claims until built) or build the features — do not leave both drifting apart.",
+  "Land branch feat/render-core-variants-vars (XSS and focus fixes, scope cut to the charter) and confirm whether SonarCloud's security rating recovers on it (DEBT.adoc G2).",
+  "Verify accessibility with an automated audit and at least one real screen reader before making any AA claim (B11).",
+  "Decide whether to observe light-DOM changes after first connect (B10).",
   "Resolve the version-string drift (1.0.0 / 0.1.0 / 0.3.0 across three files) before any tag is cut.",
 ]
 
@@ -91,10 +88,10 @@ last-run-utc = "unknown"   # this pass did not query live GitHub Actions state;
                             # use `gh run list --repo metadatastician/progblocks`,
                             # not `gh pr checks`, to check
 last-result = "unknown"     # unknown | pass | warn | fail
-open-warnings = 6           # count of [blockers-and-issues] entries still open
-                             # (B2/B3/B4/B5/B6/B9); B1/B7/B8 are now state=fixed
+open-warnings = 2           # count of [blockers-and-issues] entries still open
+                             # (B10/B11); B1–B9 are now state=fixed
 open-failures = 0           # no failure has been mechanically confirmed by this pass;
-                             # B2/B3/B4/B5/B6 are code-read defects, not CI failures
+                             # B10/B11 are known limitations, not CI failures
 
 [ecosystem]
 part-of = ["metadatastician"]

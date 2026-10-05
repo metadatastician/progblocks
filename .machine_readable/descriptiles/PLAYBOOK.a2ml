@@ -5,13 +5,13 @@
 
 [metadata]
 version = "0.1.0"
-last-updated = "2026-08-07"
+last-updated = "2026-10-05"
 
 [testing]
 command = "just test"
-underlying = "node --test tests/"
-notes = "Justfile's test recipe used to be `node --test tests/ || echo \"No tests configured yet\"` — the `|| echo` fallback swallowed a real test failure and exited 0 regardless of what node --test reported. That fallback has been removed; the recipe is now `node --test` and a green `just test` run means the tests actually passed. Verify against the live Justfile if you have reason to doubt this."
-direct-command = "node --test tests/"
+underlying = "bun test"
+notes = "Justfile's test recipe used to be `node --test tests/ || echo \"No tests configured yet\"` — the `|| echo` fallback swallowed a real test failure and exited 0 regardless of what node --test reported. That fallback has been removed; the recipe is now `bun test` (the same runner CI uses via `bun run test`) and a green `just test` run means the tests actually passed. Tests run under happy-dom, not a real browser. Verify against the live Justfile if you have reason to doubt this."
+direct-command = "bun test"
 
 [demo]
 method = "static-file"
@@ -19,12 +19,12 @@ steps = [
   "python3 -m http.server 8080   # or any static file server, from the repo root",
   "open http://localhost:8080/index.html",
 ]
-notes = "index.html loads two <prog-block> elements directly via a relative <script type=module> import of src/prog-block.js — no build step. The demo previously had a named-import mismatch in src/prog-block.js (see descriptiles/AGENTIC.a2ml and STATE.a2ml) that threw a SyntaxError at module-load time, so customElements.define never ran and both elements on the page stayed inert. That import has been fixed (tests/registration.test.js now guards it), so the demo registers and renders. Re-verify against the live src/prog-block.js if you have reason to doubt this."
+notes = "index.html loads several <prog-block> elements directly via a relative <script type=module> import of src/prog-block.js — no build step. Since 2026-10-05 the stylesheet resolves against the module URL, so the page may live at any depth. The demo previously had a named-import mismatch in src/prog-block.js (see descriptiles/AGENTIC.a2ml and STATE.a2ml) that threw a SyntaxError at module-load time, so customElements.define never ran and both elements on the page stayed inert. That import has been fixed (tests/registration.test.js now guards it), so the demo registers and renders. Re-verify against the live src/prog-block.js if you have reason to doubt this."
 launcher-caveat = "progblocks-launcher.sh (generated, do not hand-edit) cannot currently start this demo server either — REPO_DIR is never populated and the startup-command search can never match a non-executable string like \"python3 -m http.server\". Use the manual python3 -m http.server command above instead; see AGENTIC.a2ml and STATE.a2ml for the launch-scaffolder bug."
 
 [ci-verification]
 workflows = [
-  { file = ".github/workflows/ci.yml", steps = "checkout -> setup-node@20 -> npm ci -> install just -> just test", notes = "npm ci now has a package.json/lockfile to install from. The Justfile no longer has a build recipe (it cat-concatenated ES modules without stripping import/export syntax and never produced a runnable bundle; it has been deleted rather than fixed) and ci.yml does not invoke `just check` or `just build`." },
+  { file = ".github/workflows/ci.yml", steps = "checkout -> setup-bun -> bun install --frozen-lockfile -> bun run test", notes = "bun install has a package.json/bun.lock to install from. The Justfile no longer has a build recipe (it cat-concatenated ES modules without stripping import/export syntax and never produced a runnable bundle; it has been deleted rather than fixed) and ci.yml does not invoke `just check` or `just build`." },
   { file = ".github/workflows/codeql.yml", steps = "matrix scan: actions, javascript-typescript" },
   { file = ".github/workflows/secret-scanner.yml", steps = "gitleaks" },
 ]
@@ -40,7 +40,7 @@ notes = [
 steps = [
   "Check .machine_readable/descriptiles/STATE.a2ml for current status.",
   "Run `gh run list --repo metadatastician/progblocks` — not `gh pr checks`, which hides startup_failure.",
-  "If the component itself is at issue, first check whether src/prog-block.js's import of k9-validator.js still names `validateK9` (a mismatch); this is the single highest-impact known defect and blocks everything downstream of component registration.",
+  "If the component itself is at issue, first run `bun test`: tests/registration.test.js fails if src/prog-block.js no longer loads or registers, which blocks everything downstream. (The historical cause was a `validateK9` import mismatch; since 2026-10-05 the file imports nothing.)",
 ]
 
 [release-process]

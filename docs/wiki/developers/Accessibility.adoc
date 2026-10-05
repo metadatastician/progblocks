@@ -5,15 +5,15 @@
 :page-audience: Developers and users/integrators
 :page-maturity: VERIFIED
 :page-owner: Documentation workstream
-:page-last-reviewed: 2026-08-07
+:page-last-reviewed: 2026-10-05
 :page-next-review: 2026-11-07
 
 include::../_Status-Panel.adoc[]
 
 [IMPORTANT]
 ====
-`README.md` states an "WCAG 2.1 AA target for all interactive
-elements." Read this as a target, not an achieved conformance level.
+`README.md` lists accessibility as "Implemented, not verified" with
+an AA target. Read this as a target, not an achieved conformance level.
 **The AAA conformance tier of WCAG is not met** by this component,
 despite historic claims made about it elsewhere in the estate. Do not
 repeat an AAA conformance claim for ProgBlocks anywhere — this
@@ -24,58 +24,72 @@ tier and failing if it finds one.
 
 == What is actually present
 
-Read directly from `src/prog-block.js`'s `render()` output:
+Read directly from `src/prog-block.js` and `src/prog-block.css` as of
+2026-10-05 (branch `feat/render-core-variants-vars`):
 
-* `role="tablist"` on the tab container, `role="tab"` on each tab
-  button, with `aria-selected` reflecting the active variant.
-* `aria-pressed` on the linter toggle button.
-* `aria-label` on the export button, the export-format `<select>`, and
-  the editable code area.
-* The line-number gutter is `aria-hidden="true"` and
-  `user-select:none; pointer-events:none;`, so it never enters the
-  accessibility tree and never pollutes copy-paste.
-* `:focus-visible` and a `.sr-only` utility class exist in
-  `src/prog-block.css`.
+* **Tabs pattern.** With two or more variants: `role="tablist"` (named by
+  the `label` attribute, default "Example variants"), `role="tab"` buttons
+  with `aria-selected` and `aria-controls`, and a `role="tabpanel"` code
+  panel whose `aria-labelledby` follows the selected tab. Roving
+  `tabindex` gives the tablist a single tab stop; ArrowLeft/ArrowRight
+  (wrapping), Home and End move and activate the selection (automatic
+  activation). With one variant there is no tablist, and the code panel
+  has `aria-label="Code example"`.
+* **Labelled inputs.** Each variable input has a `<label for>`, inside a
+  `<fieldset>` whose `<legend>` ("Customise this example") is visually
+  hidden with `.sr-only`.
+* **Live region.** A visually hidden `role="status"` region announces
+  "Copied to clipboard" or a copy-failure instruction.
+* **Keyboard access to long lines.** The code panel is focusable
+  (`tabindex="0"`) so keyboard users can scroll it horizontally.
+* **Line numbers** are `aria-hidden="true"` and `user-select: none`, and
+  Copy never includes them.
+* **Visible state without colour alone.** The selected tab is shown by an
+  underline bar and font weight; the old `opacity: 0.7` on inactive tabs
+  was removed. Unset variables are shown as `{{ name }}` in italic as well
+  as colour.
+* **Focus and high-contrast modes.** `:focus-visible` outline rings, and a
+  `@media (forced-colors: active)` block that maps the selected-tab bar to
+  `Highlight` and outlines variable values.
 
-== What is missing, even for AA / APG conformance
+Structural parts of this (roles, `aria-controls`/`aria-labelledby`,
+roving `tabindex`, arrow/Home/End keys, every input labelled, line
+numbers hidden, the status message after copy) are asserted by
+`tests/component.test.js`, under happy-dom.
 
-* **No roving `tabindex` or arrow-key navigation** on the tablist. The
-  ARIA Authoring Practices Guide tab pattern requires arrow-key
-  movement between tabs with a single tab-stop into the tablist as a
-  whole; the current tabs are plain buttons, each independently
-  focusable via Tab, with no `keydown` handling for arrow keys at all.
-* **No `tabpanel` role, and no `aria-controls` pairing** between each
-  tab button and the content it controls. A screen-reader user
-  activating a tab has no programmatic association telling them which
-  region of the page just changed.
-* **No `aria-live` region** for state changes — switching variants,
-  completing an export, or toggling the (non-functional) linter panel
-  all change visible content with nothing announced to assistive
-  technology.
-* **Contrast on inactive tabs.** Inactive tabs render at `opacity:0.7`
-  in `src/prog-block.css`, which reduces effective contrast against
-  the background rather than using a colour with guaranteed contrast
-  at full opacity. This has not been checked against a contrast ratio
-  target.
+== What is not verified
 
-== The accessibility-relevant defect that outweighs the ARIA gaps
+* **No screen-reader testing.** No session with NVDA, JAWS, VoiceOver,
+  TalkBack or Orca has been run against the component.
+* **No automated audit.** No axe-core (or equivalent) check exists in
+  `tests/` or CI.
+* **No measured contrast.** `src/prog-block.css` states that the default
+  `--pb-*` colour pairs meet AA contrast; that has not been measured, and
+  host pages can override every colour.
+* **Not run in a real browser** during this review — happy-dom does not
+  implement layout, focus rings or the accessibility tree.
 
-**Focus is destroyed on every keystroke.** Because `render()` replaces
-`shadowRoot.innerHTML` wholesale on each state update (see
-link:Architecture.adoc[Architecture]), typing into a variable `<input>`
-tears down and recreates that same input element mid-edit. The new
-element does not receive focus. For a keyboard or screen-reader user —
-who cannot simply "click back into the box" with the same fluency a
-sighted mouse user might — this makes the variable-editing feature
-effectively unusable, independent of any ARIA attribute correctness.
-No amount of correct ARIA labelling compensates for an interactive
-element that loses focus on every input event.
+== Known gaps
+
+* **Group-synced changes are not announced.** When a reader switches
+  variant in one block, other blocks in the same `group` change silently;
+  only copy results go through the status region. A reader who switches
+  variant in the focused block hears the newly focused tab, which carries
+  the change.
+* **Content changes after first connect are ignored**, so a host that
+  rewrites a block's templates leaves the rendered block (and what
+  assistive technology reads) stale. See `DEBT.adoc` C14.
+
+The focus-loss defect that used to dominate this page — every keystroke
+in a variable input destroyed and recreated the input — was fixed on
+2026-10-05: the shadow tree is built once and patched in place (see
+link:Architecture.adoc[Architecture]).
 
 == Net assessment
 
-Present markup gives ProgBlocks a reasonable *starting point* toward
-WCAG 2.1 AA for static, non-interactive reading of a rendered block
-(tab roles, labels, hidden line numbers). It does not meet AA once you
-account for keyboard tab navigation, live-region announcements, and —
-most severely — the focus-loss defect on the one genuinely interactive
-surface (variable editing). AAA is not attempted and is not met.
+ProgBlocks now implements the markup and keyboard behaviour that WCAG 2.1
+AA and the ARIA Authoring Practices tabs pattern call for, and its
+structure is unit-tested. That makes AA a credible *target*; it is **not**
+a verified conformance level until a screen reader, an automated audit
+and a contrast measurement have been run. AAA is not attempted and is not
+met.

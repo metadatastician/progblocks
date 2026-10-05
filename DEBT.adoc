@@ -11,7 +11,8 @@ Companion document: `AUDIT.adoc` is authoritative on what has been *verified*.
 This file is authoritative on what is *owed*.
 
 Last compiled: 2026-08-07, against `main` plus the stacked branches for PR #18
-(honest gates) and this documentation set.
+(honest gates) and this documentation set. Code-debt and test-debt entries updated
+2026-10-05 for the render-core rewrite on branch `feat/render-core-variants-vars`.
 
 toc::[]
 
@@ -22,6 +23,7 @@ toc::[]
 | *OPEN* | Confirmed by evidence recorded here. Needs doing.
 | *FLAG-ONLY* | Confirmed, but may not be fixed unilaterally (licence changes, upstream-owned files). Recorded, not actioned.
 | *ACCEPTED* | A real limitation, deliberately not being fixed for now. Not a TODO.
+| *CLEARED* | Fixed or removed. Kept, with the date and the evidence, so the history stays readable.
 |===
 
 Severity reflects consequence, not effort.
@@ -107,7 +109,20 @@ is worse than no manifest.
 
 == Code debt
 
-=== C1 — Cross-site scripting via unescaped re-injection *(OPEN, highest severity in this file)*
+=== C1 — Cross-site scripting via unescaped re-injection *(CLEARED 2026-10-05, branch `feat/render-core-variants-vars`)*
+
+*Cleared.* `src/prog-block.js` was rewritten to build its shadow tree once with
+`createElement` and patch it in place. Variant source is read with
+`template.content.textContent` (so unescaped tags in a template are dropped, never
+rendered), and every piece of author or reader text — code, tab labels, variable names,
+typed values — reaches the shadow tree through `textContent`. There is no `innerHTML`
+assignment anywhere in `src/`. Evidence: `grep -n innerHTML src/` → one hit, the explanatory
+header comment in `src/prog-block.js`; the `untrusted content is never rendered as markup`
+group in `tests/component.test.js` (four tests: escaped markup in a variant, unescaped
+markup in a template, markup in a typed value, markup in a tab label) passes under
+`bun test`. Those tests run under happy-dom, not in a real browser.
+
+The original finding, kept for the record:
 
 Variant content is read with `t.innerHTML` (`src/prog-block.js:60`) and re-injected as
 HTML (`:199`); variable values are interpolated unescaped into an attribute,
@@ -121,11 +136,17 @@ other than the page owner.
 
 Evidence: `grep -n "innerHTML\|value=\"\${" src/prog-block.js`
 
-Clearing it: escape on the way in (an `escapeHtml()` helper) or build the DOM with
-`createElement` + `textContent` / `.value` instead of string concatenation. Scheduled for
-the `fix/render-security` change.
+Clearing it (as done): build the DOM with `createElement` + `textContent` / `.value`
+instead of string concatenation.
 
-=== C2 — Every keystroke destroys the focused input *(OPEN)*
+=== C2 — Every keystroke destroys the focused input *(CLEARED 2026-10-05)*
+
+*Cleared* by the same rewrite: the variable `<input>` elements are created once, and an
+`input` event updates only the `<span>` nodes for that variable in the code panel. Evidence:
+`tests/component.test.js` › `typing keeps the same input element and updates the code in
+place` (asserts the same node before and after typing). Not observed in a real browser.
+
+The original finding, kept for the record:
 
 Editing a variable calls `updateState`, which rewrites `shadowRoot.innerHTML` wholesale
 (`src/prog-block.js:95-99` → `:49-52` → `:177`). The `<input>` being typed into is
@@ -138,7 +159,13 @@ Evidence: `sed -n '95,99p;49,52p;177p' src/prog-block.js`
 Clearing it: targeted DOM updates — variable input events update only the rendered
 output node; inputs are rebuilt only when the variant changes.
 
-=== C3 — The editor destroys the variant template *(OPEN)*
+=== C3 — The editor destroys the variant template *(CLEARED 2026-10-05 — feature removed)*
+
+*Cleared by removal.* The `contenteditable` code editor was removed as out of charter
+(ProgBlocks renders examples; it is not an editor). The variant source is now immutable
+after it is read. Evidence: `grep -n contenteditable src/` → nothing.
+
+The original finding, kept for the record:
 
 Typing in the editor overwrites the variant source with post-interpolation text,
 permanently losing `{{ variables }}`. The code says so itself: *"Careful: if A2ML vars
@@ -149,7 +176,16 @@ Evidence: `sed -n '234,242p' src/prog-block.js`
 Clearing it: keep the raw variant template as the source of truth; the editor edits raw
 source and the preview re-interpolates.
 
-=== C4 — Falsy variable values render as raw placeholders *(OPEN)*
+=== C4 — Falsy variable values render as raw placeholders *(ACCEPTED 2026-10-05 — now deliberate)*
+
+*Re-assessed 2026-10-05.* The rewrite keeps `||` semantics on purpose: an empty value means
+"not set", so the block shows the inline default if there is one, otherwise `{{ name }}`
+styled `.unset` (`_resolve` and `_renderValues` in `src/prog-block.js`). A variable cannot
+be deliberately set to the empty string. Correction to the original entry: `"0"` is a
+non-empty string and therefore truthy, so it was never affected and is substituted
+normally.
+
+The original finding, kept for the record:
 
 `this._state.variables.get(key) || match` (`src/prog-block.js:91`) falls back to the
 literal `{{ key }}` whenever the value is falsy, so a variable deliberately set to `""`
@@ -159,7 +195,15 @@ Evidence: `sed -n '91p' src/prog-block.js`
 
 Clearing it: `variables.has(key) ? variables.get(key) : match`.
 
-=== C5 — Variables accumulate across variant switches *(OPEN)*
+=== C5 — Variables accumulate across variant switches *(CLEARED 2026-10-05 — superseded by design)*
+
+*Superseded.* Variables are now collected once, from every variant, when the element first
+connects; the block shows one labelled input per variable for its whole life, and values
+persist across variant switches. That union is the intended behaviour, not drift. Evidence:
+`tests/component.test.js` › `values persist across variant switches and one input serves
+all variants`.
+
+The original finding, kept for the record:
 
 `extractA2MLVariables` (`src/prog-block.js:76-86`) merges into the existing map and never
 prunes. Switching variants leaves every variable from every previously visited variant in
@@ -170,7 +214,15 @@ Evidence: `sed -n '76,86p' src/prog-block.js`
 Clearing it: rebuild the variable map per variant, preserving values only for keys the
 new variant actually declares.
 
-=== C6 — Shadow stylesheet path breaks the component's core promise *(OPEN)*
+=== C6 — Shadow stylesheet path breaks the component's core promise *(CLEARED 2026-10-05)*
+
+*Cleared.* The stylesheet URL is now `new URL('./prog-block.css', import.meta.url)`
+(`STYLESHEET_URL` in `src/prog-block.js`), so it resolves against the module, not the host page. Evidence:
+`tests/component.test.js` › `stylesheet resolves against the module, not the host page`,
+which mounts the block on a page at `/docs/deep/page.html` under happy-dom. Not yet
+exercised in a real browser at a non-root depth.
+
+The original finding, kept for the record:
 
 The shadow root loads `<link rel="stylesheet" href="./src/prog-block.css">`
 (`src/prog-block.js:178`), which resolves against the *document* URL, not the module URL.
@@ -183,7 +235,12 @@ Evidence: `sed -n '178p' src/prog-block.js`
 Clearing it: `new URL('./prog-block.css', import.meta.url)`, or adopt a constructable
 stylesheet, or inline the CSS into the shadow root.
 
-=== C7 — Split view is wired to nothing *(OPEN)*
+=== C7 — Split view is wired to nothing *(CLEARED 2026-10-05 — feature removed)*
+
+*Cleared by removal.* Split view was removed as out of charter; neither the CSS selectors
+nor the state remain. Evidence: `grep -rn split-view src/` → nothing.
+
+The original finding, kept for the record:
 
 `src/prog-block.css:37-45` selects on `:host([split-view="…"])`, but `toggleLinter`
 (`src/prog-block.js:116-121`) only mutates internal state and stamps the value on an inner
@@ -194,7 +251,12 @@ Evidence: `sed -n '37,45p' src/prog-block.css; sed -n '116,121p' src/prog-block.
 
 Clearing it: reflect the state to the host attribute.
 
-=== C8 — The exporter's CSV is not CSV and its JSON is not structured *(OPEN)*
+=== C8 — The exporter's CSV is not CSV and its JSON is not structured *(CLEARED 2026-10-05 — feature removed)*
+
+*Cleared by removal.* `src/modules/exporter.js` was deleted; export to JSON/CSV/Nickel/TXT
+is out of charter. A Copy button that copies the personalised example text replaces it.
+
+The original finding, kept for the record:
 
 The CSV path quotes each whole line as a single field and never splits on delimiters
 (`src/modules/exporter.js:36-38`), so the output is not a CSV representation of the
@@ -208,7 +270,13 @@ Evidence: `sed -n '15,23p;36,38p' src/modules/exporter.js`
 Clearing it: real field-level CSV quoting and escaping; structured JSON; delete the dead
 handler.
 
-=== C9 — `view-manager.js` is dead code holding the only real linter implementation *(OPEN)*
+=== C9 — `view-manager.js` is dead code holding the only real linter implementation *(CLEARED 2026-10-05 — deleted)*
+
+*Cleared by removal.* `src/modules/view-manager.js` was deleted and the placeholder linter
+panel and its button were removed from the component. ProgBlocks is not a language server
+client; a linter is out of charter.
+
+The original finding, kept for the record:
 
 The 55-line module is imported by nothing. It contains the actual WebSocket/LSP linter
 code and a `toggleLineNumbers` implementation. Meanwhile the component renders the
@@ -225,13 +293,20 @@ it returns as a real change with tests.
 `validateNickel()` fakes a 50 ms `setTimeout` "WASM call" and then returns
 `{valid: true, errors: []}` unconditionally; `executeJustTask()` logs and returns `true`.
 Neither is called by anything. `checkMust(environmentDetails)` ignores its only parameter.
+Since 2026-10-05 nothing imports `k9-validator.js` at all (C11).
 
 Evidence: `sed -n '17,24p;31,42p;48,51p' src/k9-validator.js`
 
 Clearing it: delete both fake methods. A validator that cannot fail is worse than no
 validator, because it launders unverified claims into apparent verification.
 
-=== C11 — `defaultValidator` is imported but never used *(OPEN)*
+=== C11 — `defaultValidator` is imported but never used *(CLEARED 2026-10-05)*
+
+*Cleared.* `src/prog-block.js` no longer imports anything; the dead import is gone.
+`src/k9-validator.js` itself is unchanged and still carries the fake methods in C10.
+Evidence: `grep -n "^import" src/prog-block.js` → nothing.
+
+The original finding, kept for the record:
 
 `src/prog-block.js:2` imports `defaultValidator`. Nothing in the file calls it.
 
@@ -256,6 +331,10 @@ text file** reading "// Dummy WASM file placeholder", not WebAssembly.
 
 Evidence: `file assets/tree-sitter-a2ml.wasm; wc -c assets/tree-sitter-a2ml.wasm`;
 `grep -rn "a2ml-parser" src/ | grep -v "^src/a2ml-parser.js"` returns nothing.
+
+Unchanged by the 2026-10-05 rewrite. The component's own substitution is now `tokenize()`
+in `src/prog-block.js` (a regex that also accepts `{{ name = default }}`); it still does
+not use, or import, `a2ml-parser.js`.
 
 Clearing it: either build the real `tree-sitter-a2ml` grammar and wire it in, or delete
 the module and the placeholder and describe the regex substitution as what it is. Accepted
@@ -283,6 +362,48 @@ Clearing it: file the defect against `launch-scaffolder` and regenerate. **Do no
 hand-edit the generated file** — it affects every generated launcher in the estate, so
 fixing it here would hide an estate-wide bug behind one repo's patch.
 
+=== C14 — Light-DOM changes after first connect are not observed *(OPEN, added 2026-10-05)*
+
+The authored `<template data-variant>` children (or the element's own text) are read once,
+in the first `connectedCallback`. Adding, removing or editing templates afterwards — for
+example by a client-side router or a CMS preview that patches the DOM in place — has no
+effect on the rendered block. Re-connecting the element does not re-read either, because
+`_built` stays `true`.
+
+Evidence: `grep -n "_built" src/prog-block.js` (the guard in `connectedCallback()` around
+`_readLightDom()`).
+No `MutationObserver` or `slotchange` listener exists in `src/`.
+
+Clearing it: observe the light DOM and rebuild the variant list and variable inputs when it
+changes, preserving entered values for variables that survive. Until then, hosts must
+replace the whole `<prog-block>` element to change its content.
+
+=== C15 — Variant-group selection is not persisted *(ACCEPTED, added 2026-10-05)*
+
+`group="name"` keeps every block on the page with that group on the same variant, but the
+registry is an in-memory `Map` (`const groups` in `src/prog-block.js`). The choice is lost on navigation or
+reload, and blocks on other pages start from their own `variant` attribute or first variant.
+
+Evidence: `grep -n "localStorage\|sessionStorage" src/prog-block.js` → nothing.
+
+Accepted for now: persistence is a host-page policy decision (storage consent, key naming),
+and the `progblocks:variant-change` event plus the `variant` property let a host persist
+and restore the choice itself.
+
+=== C16 — No syntax highlighting *(ACCEPTED, added 2026-10-05)*
+
+The component renders code as plain text. It does not tokenise or colour any language, and
+`.machine_readable/contractiles/intend/Intentfile.a2ml` lists "a syntax highlighter" as an
+anti-purpose. What it provides for a host highlighter: the `language` attribute becomes a
+`language-*` class on the inner `<code>`, and the shadow parts `header`, `tab`,
+`copy-button`, `variables`, `code` and `variable` are exposed for `::part()` styling.
+
+Evidence: `grep -n "language-\|part:" src/prog-block.js`.
+
+Not verified: no external highlighter has been tried against the shadow tree. A highlighter
+that rewrites `<code>` content with markup would also replace the variable `<span>` nodes,
+so the integration is not a drop-in; this is a design question, not yet a tested path.
+
 == Test and proof debt
 
 === T1 — No formal proofs, and none claimed *(ACCEPTED)*
@@ -294,7 +415,19 @@ position rather than an oversight, and so nothing later claims proof-backed rigo
 Evidence: `.machine_readable/rsr-profile.a2ml` does not declare `formal-proofs`;
 `.machine_readable/descriptiles/NEUROSYM.a2ml` states the position explicitly.
 
-=== T2 — The test suite covers 4 of ~660 source lines' worth of behaviour *(OPEN)*
+=== T2 — The test suite covers 4 of ~660 source lines' worth of behaviour *(PARTIALLY CLEARED 2026-10-05)*
+
+*Update 2026-10-05.* `bun test` now runs 27 tests across four files, all passing:
+`tests/component.test.js` (20 behavioural tests: rendering safety, variable substitution,
+variant switching and the tabs keyboard model, group sync, stylesheet resolution, copy,
+line numbers, and the `dedent`/`tokenize` helpers), `tests/registration.test.js` (1),
+`tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2). The smart-paste
+tests (`tests/prog-block.test.js`) were deleted with the module. Coverage has not been
+measured, and every test runs under happy-dom, not a real browser. Still untested:
+`src/a2ml-parser.js` and `src/k9-validator.js` (neither is imported by the component),
+`glyph-mode` rendering, the `progblocks:variant-change` event, and the copy-failure path.
+
+The original finding, kept for the record:
 
 Five tests exist: three assert `parsePaste` behaviour including parsed content, one
 asserts the custom element registers and constructs, one smoke-checks the validator. That
@@ -310,7 +443,25 @@ Clearing it: each defect in the Code debt section above should land with a faili
 first. The registration test is the model: it is 19 lines and it is the only test that
 would have caught the bug that made the entire component inert.
 
-=== T3 — No accessibility testing of any kind *(OPEN)*
+=== T3 — No accessibility testing of any kind *(OPEN — gaps fixed, verification still missing)*
+
+*Update 2026-10-05.* The specific gaps listed below were fixed in the render-core rewrite:
+the tablist follows the WAI-ARIA tabs pattern (`role` tab/tablist/tabpanel,
+`aria-controls`/`aria-labelledby`, roving `tabindex`, ArrowLeft/ArrowRight with wrap,
+Home/End, automatic activation); the `opacity: 0.7` on inactive tabs was removed and
+selection is shown by an underline bar plus weight; every variable input has a `<label>`,
+inside a `<fieldset>` with a visually hidden legend; a `role="status"` region announces the
+copy result; `:focus-visible` rings and a `forced-colors` block exist; line numbers are
+`aria-hidden`; the code panel is focusable (`tabindex="0"`) for keyboard scrolling. The
+structural parts are asserted in `tests/component.test.js` under happy-dom.
+
+What is still missing, and why this entry stays open: no automated audit (axe or similar),
+no screen-reader session, and no measured contrast check of the default palette (the CSS
+comment claiming AA contrast is unverified). The status region announces only copy results:
+a variant change driven by `group` sync in *another* block is not announced. AA remains a
+target, not a verified level.
+
+The original finding, kept for the record:
 
 The repository claims a WCAG 2.1 AA *target* and carries real ARIA attributes, but nothing
 tests them. Known gaps against AA/APG for a tablist: no roving `tabindex` or arrow-key
@@ -322,7 +473,8 @@ Evidence: `grep -rn "aria-\|role=" src/prog-block.js` shows the attributes prese
 `grep -rln "axe\|pa11y\|aria" tests/` returns nothing.
 
 Clearing it: add an automated accessibility check (axe-core under happy-dom is enough to
-catch the structural gaps), and fix the tablist keyboard model.
+catch the structural gaps), and test with at least one real screen reader. The tablist
+keyboard model was fixed on 2026-10-05.
 
 === T4 — `contracts.ncl` validates a self-description, not the repository *(OPEN, partially cleared)*
 
@@ -342,7 +494,13 @@ it carries is part of L1.
 
 == CI/CD debt
 
-=== CI1 — The three green workflows do not gate the known defects *(OPEN)*
+=== CI1 — The three green workflows do not gate the known defects *(PARTIALLY CLEARED 2026-10-05)*
+
+*Update 2026-10-05.* `ci.yml` now runs `bun run test`, and the suite exercises rendering
+(T2), including the injection, focus and stylesheet regressions that C1, C2 and C6
+describe. Those three would now fail CI if they came back. CodeQL is unchanged.
+
+The original finding, kept for the record:
 
 `ci.yml` runs the 5-test suite; `codeql.yml` scans `actions` and `javascript-typescript`;
 `secret-scanner.yml` runs gitleaks. None of them would fail on any Code debt entry above —
@@ -493,6 +651,10 @@ correctly — until the injection path is fixed.
 Clearing it: fix C1 (escaping) and re-run. If the rating is driven by something else, this
 entry should be corrected once the findings are readable.
 
+*Update 2026-10-05.* C1 is cleared on branch `feat/render-core-variants-vars`. Whether
+SonarCloud's rating returns to A has **not** been observed; this entry stays open until a
+run on that branch reports it.
+
 === G4 — A deployment was required from a pipeline that does not exist *(CLEARED 2026-08-07)*
 
 The ruleset carried `required_deployments: ["github-pages"]`, so every pull request had to
@@ -513,14 +675,16 @@ want, and then the gate would mean something.
 === G3 — The ruleset demands 95% coverage of a repository with almost none *(OPEN)*
 
 The `code_coverage` rule requires `minimum_coverage: 95` and `max_coverage_drop: 3`. The
-suite is five tests over roughly 660 lines of source (T2). Nothing close to 95% is
+suite was five tests over roughly 660 lines of source when this was recorded (T2). Nothing close to 95% is
 achievable, so this rule also guarantees a bypass on every merge.
 
 **Deliberately not lowered.** Lowering a bar to meet the code is the mirror image of the
 fake-gate problem. The bar is reasonable for a component this small; the coverage is what is
 wrong.
 
-Evidence: ruleset `code_coverage` parameters; `npm test` → 5 tests.
+Evidence: ruleset `code_coverage` parameters; `npm test` → 5 tests (2026-08-07). As of
+2026-10-05 the suite is 27 tests (T2), but coverage is still not measured, so whether the
+95% bar is met is unknown.
 
 Clearing it: raise real coverage as each defect in the Code debt section lands with a test.
 Until then, every merge legitimately requires a bypass, and that fact should be visible
@@ -599,3 +763,9 @@ and is marked as such. Cross-browser behaviour, performance, and the exported fi
 acceptance by downstream tools are all unverified. The XSS finding (C1) has not been
 demonstrated with a live payload; it is asserted from the absence of any escaping on a
 path that concatenates untrusted content into HTML.
+
+*2026-10-05 update.* For the render-core entries (C1–C9, C11, C14–C16, T2, T3, CI1) the
+checks were: reading the rewritten `src/prog-block.js` and `src/prog-block.css` in full;
+`bun test` → 27 pass, 0 fail; and the `grep` commands quoted in each entry. Still not
+done: a real-browser session, a screen-reader session, an automated accessibility audit,
+and a coverage measurement.

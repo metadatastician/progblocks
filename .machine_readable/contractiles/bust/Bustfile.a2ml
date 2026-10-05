@@ -14,10 +14,10 @@
 
 @abstract:
 Failure modes specific to progblocks: a pre-alpha, dependency-free web
-component with a real XSS surface and a launcher that cannot start the
-demo server. A previous fatal link-time load failure (component-fails-to-
-register, below) has been fixed and is kept here only as a regression
-guard. This is a shorter list than a mature repo's Bustfile because the
+component and a launcher that cannot start the demo server. A previous
+fatal link-time load failure (component-fails-to-register, below) and the
+former XSS and focus-destroying render path (fixed 2026-10-05) are kept
+here only as regression guards. This is a shorter list than a mature repo's Bustfile because the
 project is young — but every entry here is grounded in a specific line of
 code, not a hypothetical.
 @end
@@ -29,7 +29,7 @@ code, not a hypothetical.
 - run: "! grep -q 'import { validateK9 }' src/prog-block.js"
 - severity: critical
 - enforced-by: tests/registration.test.js (asserts customElements.get('prog-block') is defined) plus this probe
-- recovery: N/A — fixed on branch fix/honest-gates-v2. If this probe ever fails again, re-apply the { defaultValidator } import and re-run `npm test`.
+- recovery: N/A — fixed on branch fix/honest-gates-v2; since 2026-10-05 src/prog-block.js imports nothing. If this probe ever fails again, remove the import and re-run `bun test`.
 - expected_recovery_time_seconds: 60
 - status: verified
 
@@ -42,26 +42,26 @@ code, not a hypothetical.
 - expected_recovery_time_seconds: 30
 - status: declared
 
-### xss-injection-surface
-- description: Variant content is read via innerHTML (lines 61, 68) and re-injected as HTML (line 177) with no escaping anywhere; variable values are interpolated unescaped into value="${val}" (line 165) — a live injection surface for a component whose job is rendering untrusted documentation snippets
-- run: grep -n '\.innerHTML' src/prog-block.js
+### xss-injection-surface (RESOLVED 2026-10-05)
+- description: Variant content used to be read via innerHTML and re-injected as HTML with no escaping, and variable values interpolated unescaped into value="${val}". Fixed on branch feat/render-core-variants-vars: the shadow tree is built with DOM APIs and all author/reader text goes in via textContent. Kept as a regression guard
+- run: "! grep -rn '\.innerHTML' src/"
 - severity: critical
-- enforced-by: not yet automated (documentary) — scheduled for a fix/render-security PR that has not started
-- recovery: Escape all interpolated values before writing to innerHTML/attribute strings, or move to textContent plus DOM API construction
+- enforced-by: tests/component.test.js ("untrusted content is never rendered as markup", four tests, happy-dom) plus this probe
+- recovery: N/A — fixed. If this probe ever fails, move the new code back to textContent plus DOM API construction
 - expected_recovery_time_seconds: 3600
-- status: declared
+- status: verified
 
-### editing-destroys-focus-and-templates
-- description: Editing any variable input triggers a full shadowRoot.innerHTML rewrite, destroying and recreating the <input> being typed into (multi-character values are effectively untypeable); separately, the editor overwrites variant source with post-interpolation text, permanently losing {{ vars }}
-- run: grep -c 'shadowRoot.innerHTML' src/prog-block.js
+### editing-destroys-focus-and-templates (RESOLVED 2026-10-05)
+- description: Editing a variable input used to trigger a full shadowRoot.innerHTML rewrite, destroying the <input> being typed into; separately, the contenteditable editor overwrote variant source with post-interpolation text. Fixed: the shadow tree is built once and patched in place, and the editor was removed as out of charter. Kept as a regression guard
+- run: "! grep -q 'shadowRoot.innerHTML' src/prog-block.js"
 - severity: critical
-- enforced-by: not yet automated (documentary)
-- recovery: Re-render only the changed DOM nodes instead of the whole shadow root; keep the raw {{ var }} template separate from the interpolated display text
+- enforced-by: tests/component.test.js ("typing keeps the same input element…") plus this probe
+- recovery: N/A — fixed. If this probe ever fails, patch only the changed nodes instead of rebuilding the shadow root
 - expected_recovery_time_seconds: 3600
-- status: declared
+- status: verified
 
 ### wasm-placeholder-not-webassembly
-- description: assets/tree-sitter-a2ml.wasm is a 118-byte ASCII placeholder, not real WebAssembly; the tree-sitter path in a2ml-parser.js is commented out and its parse function is never called
+- description: assets/tree-sitter-a2ml.wasm is a 118-byte ASCII placeholder, not real WebAssembly; the tree-sitter path in a2ml-parser.js is commented out and nothing imports the module
 - run: "file assets/tree-sitter-a2ml.wasm | grep -qv 'WebAssembly'"
 - severity: warning
 - enforced-by: not yet automated (documentary)

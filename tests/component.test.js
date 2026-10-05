@@ -156,6 +156,15 @@ describe('variant switching', () => {
     assert.equal(c.variant, 'macOS');
   });
 
+  test('emits progblocks:variant-change for reader selection only', () => {
+    const block = mount(THREE_OS);
+    const seen = [];
+    document.addEventListener('progblocks:variant-change', (e) => seen.push(e.detail.variant));
+    tabs(block)[1].click();
+    block.variant = 'Linux';
+    assert.deepEqual(seen, ['Windows']);
+  });
+
   test('a single variant renders no tablist', () => {
     const block = mount('<prog-block language="js">let x = 1;</prog-block>');
     assert.equal(block.shadowRoot.querySelector('[role="tablist"]'), null);

@@ -6,7 +6,7 @@
 
 [metadata]
 version = "0.1.0"
-last-updated = "2026-08-07"
+last-updated = "2026-10-05"
 
 [proof-obligations]
 # This repo makes NO formal proof claims. contracts.ncl is a 20-line
@@ -15,12 +15,12 @@ last-updated = "2026-08-07"
 # k9-validator.js's validateNickel() fakes a 50ms setTimeout and always
 # returns {valid:true, errors:[]} regardless of input, and
 # executeJustTask() console.logs and returns true unconditionally.
-# defaultValidator.checkMust() IS called (from connectedCallback) but
-# ignores its only parameter. None of this constitutes verification. Do
+# checkMust() ignores its only parameter, and since 2026-10-05 nothing
+# imports k9-validator.js at all. None of this constitutes verification. Do
 # not describe any of it as a proof, a formal check, or a gate.
 formal-proof-claims = false
 evidence-sources = [
-  { kind = "test", tool = "node:test", location = "tests/", notes = "Two files: tests/prog-block.test.js (smart-paste parsing) and tests/registration.test.js (asserts customElements.get('prog-block') is defined). Both pass; 5 tests total." },
+  { kind = "test", tool = "bun test (happy-dom)", location = "tests/", notes = "Four files, 27 tests, all passing as of 2026-10-05: tests/component.test.js (20 behavioural tests — rendering safety, variants, variables, copy, embedding), tests/registration.test.js (asserts customElements.get('prog-block') is defined), tests/ci-config.test.js and tests/dependabot-config.test.js. Runs under happy-dom, not a real browser." },
   { kind = "static-analysis", tool = "CodeQL", location = ".github/workflows/codeql.yml", notes = "Matrix scan: 'actions' and 'javascript-typescript'." },
   { kind = "secret-scan", tool = "gitleaks", location = ".github/workflows/secret-scanner.yml", notes = "Added PR #16; this repo previously had no secret scanning at all." },
 ]
@@ -34,10 +34,10 @@ report-format = "logtalk"
 
 [symbolic-rules]
 rules = [
-  { name = "no-unescaped-innerhtml", pattern = "\\.innerHTML\\s*=", severity = "critical", notes = "prog-block.js reads variant content via t.innerHTML/this.innerHTML (lines 61, 68) and re-injects it as HTML at shadowRoot.innerHTML (line 177) with no escaping anywhere; variable values are interpolated unescaped into value=\"${val}\" (line 165). A live XSS surface for a component whose job is rendering untrusted documentation snippets." },
-  { name = "dead-module-import-guard", pattern = "from ['\"]\\./modules/view-manager\\.js['\"]", severity = "info", notes = "view-manager.js is never imported by anything in this tree. If this pattern starts matching, the dead-code status recorded in contractiles/dust/Dustfile.a2ml has changed and should be re-verified, not assumed." },
+  { name = "no-unescaped-innerhtml", pattern = "\\.innerHTML\\s*=", severity = "critical", notes = "Regression guard. Until 2026-10-05 prog-block.js read variant content via innerHTML and re-injected it into shadowRoot.innerHTML with no escaping, and interpolated variable values unescaped into value=\"${val}\". The render-core rewrite removed every innerHTML assignment from src/ (all text goes in via textContent); tests/component.test.js guards it. If this pattern matches again in src/, treat it as a reintroduced XSS surface." },
+  { name = "dead-module-import-guard", pattern = "from ['\"]\\./modules/view-manager\\.js['\"]", severity = "info", notes = "view-manager.js was deleted on 2026-10-05 (a linter is out of charter). If this pattern ever matches, someone has reintroduced it; re-check against contractiles/dust/Dustfile.a2ml." },
 ]
 
 [neural-config]
-# No neural pattern detection configured — the src/ tree is seven small
+# No neural pattern detection configured — the src/ tree is four small
 # files; confidence-threshold tuning would not add value at this size.

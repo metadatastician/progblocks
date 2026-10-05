@@ -40,8 +40,8 @@ changes patch the nodes they affect:
 browser has already parsed the template, so any tags in it are dropped and only their text survives.
 That text is then written back with `textContent`. Tab labels, variable names and reader input follow
 the same path. No route exists from author or reader input to parsed markup.
-`tests/component.test.js` asserts this for each input path and was mutation-checked: replacing one
-`textContent` with `innerHTML` fails the suite.
+`tests/component.test.js` asserts this for each input path. On 2026-10-05 it was checked by hand:
+replacing one `textContent` with `innerHTML` failed the suite. That check is not automated.
 
 ## Data model
 

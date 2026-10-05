@@ -14,9 +14,10 @@
 # demo page (index.html) and a public custom-element interface
 # (src/prog-block.js) — that is the whole of what it HAS. It has none of the
 # server, packaging, proof, or governance-tier machinery a maximal template
-# would score it against, and several of its own README-advertised features
-# (preview toggle, templating wizards, live linter, working split view) do
-# not exist in the code. Declaring more than the two capabilities below
+# would score it against. Features it once advertised without having them
+# (preview toggle, templating wizards, live linter, split view) were dropped
+# from README.md, and their stub code removed from src/, on 2026-10-05.
+# Declaring more than the two capabilities below
 # would score this repo against modules it does not carry — exactly the
 # over-scaffolding failure RSR v2.0 exists to fix.
 #

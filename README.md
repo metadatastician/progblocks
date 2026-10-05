@@ -73,7 +73,7 @@ module's own URL, so the page can live at any depth.
 | Feature | Status | Notes |
 |---|---|---|
 | Custom element registers | Works | Guarded by `tests/registration.test.js` |
-| Safe rendering of untrusted content | Works | No `innerHTML` in `src/`; tested for markup in variants, tab labels and typed values, with a mutation check |
+| Safe rendering of untrusted content | Works | No `innerHTML` in `src/`; tested for markup in variants, tab labels and typed values, mutation-checked once by hand on 2026-10-05 (not automated) |
 | Variant tabs | Works | Tabs pattern with roving `tabindex`, `aria-controls`/`aria-labelledby`, wrap-around arrows, Home/End |
 | Cross-block variant sync | Works | `group` attribute; page-local, not persisted across pages |
 | Variable substitution | Works | Inline defaults; one input per variable across all variants; values survive variant switches; typing keeps focus |

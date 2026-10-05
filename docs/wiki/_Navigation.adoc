@@ -5,7 +5,7 @@
 :page-audience: All
 :page-maturity: DRAFT
 :page-owner: Documentation workstream
-:page-last-reviewed: 2026-08-07
+:page-last-reviewed: 2026-10-05
 :page-next-review: 2026-11-07
 
 include::_Status-Panel.adoc[]
@@ -23,5 +23,5 @@ include::_Status-Panel.adoc[]
 . link:contributors/Contributing-Guide.adoc[Contributing Guide (contributors)]
 
 Read link:users/Feature-Status.adoc[Feature Status] before relying on any
-advertised capability — several flagship features described in `README.md`
-do not exist yet.
+capability — it records what works, how it is tested, what is not yet
+verified, and what was removed as out of charter.

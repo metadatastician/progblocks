@@ -79,4 +79,4 @@ read them as prior releases.
 - Added gitleaks-based secret scanning; this repository previously had no leak-scanning workflow at
   all (#16).
 - Unescaped HTML injection fixed: author and reader text now reaches the DOM only through
-  `textContent`; there is no `innerHTML` in `src/`. Covered by tests with a mutation check.
+  `textContent`; there is no `innerHTML` in `src/`. Covered by tests; mutation-checked once by hand on 2026-10-05 (not automated).

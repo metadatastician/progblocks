@@ -7,14 +7,15 @@ ecosystem = "metadatastician"
 
 [position]
 type = "web component / library"
-purpose = "Dependency-free web component for rich code blocks in technical documentation and wikis: variant switching (generic tabs, no OS/shell/language semantics), A2ML variable substitution (regex, not a real parse), smart paste parsing, export to file, and clipboard-safe line numbers."
+purpose = "Dependency-free web component for variant-aware, personalisable code examples in technical documentation and wikis: variant switching (generic WAI-ARIA tabs, no OS/shell/language semantics, optional page-local group sync), {{ variable }} substitution (regex, not a real A2ML parse), copy-to-clipboard of the personalised text, and clipboard-safe line numbers."
 # IS-NOT — anti-identity (the boundary-erosion guard)
 what-this-is-not = [
   "a syntax highlighter",
   "a static site generator",
   "a Markdown parser",
   "a full A2ML implementation — the parser (a2ml-parser.js) is a stub; variable substitution is plain regex, not a real parse; the tree-sitter WASM asset is a 118-byte ASCII placeholder",
-  "a code editor with a working live linter — the linter panel is a hardcoded placeholder string, not wired to view-manager.js's real (but unused) WebSocket/linter code",
+  "a code editor, IDE, or language-server client — the contenteditable editor, the placeholder linter panel, and the unused view-manager.js WebSocket code were removed on 2026-10-05 as out of charter",
+  "a data-conversion tool — smart paste and JSON/CSV/Nickel/TXT export were removed on 2026-10-05",
   "a released package — nothing has been published to any registry; version numbers disagree across files (1.0.0 in package.k9/contracts.ncl, 0.1.0 in the launcher config, 0.3.0 in package.json)",
 ]
 

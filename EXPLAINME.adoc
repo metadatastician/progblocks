@@ -3,92 +3,136 @@
 
 This document exists to be checked, not believed. For every substantive claim ProgBlocks makes about
 itself, it gives the claim, the exact file/line that implements it, and the automated test or check
-that evidences it — or states plainly "no automated evidence" where none exists. Line references are
-against this checkout (2026-08-07); if the source has moved, re-verify rather than trust this table.
+that evidences it — or states plainly "no automated evidence" where none exists. References into
+`src/prog-block.js` are by function or method name, because that file was still being edited when
+this was written (2026-10-05, branch `feat/render-core-variants-vars`); a line number is given only
+where it is stable. If the source has moved, re-verify rather than trust this table.
 
-Overall automated-test coverage: **two** test files. `tests/prog-block.test.js` exercises **one**
-module, `src/modules/smart-paste.js`. `tests/registration.test.js` imports `src/prog-block.js` and
-asserts `customElements.get('prog-block')` is defined. Nothing else in `src/` has a test that imports
-it.
+Overall automated-test coverage: `bun test` runs **27** tests in four files, all passing.
+`tests/component.test.js` (20 tests) exercises the component's behaviour; `tests/registration.test.js`
+(1) asserts the element registers; `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js`
+(2) guard CI configuration. Every component test runs under happy-dom (`tests/helpers/dom.js`), **not
+in a real browser**. `src/a2ml-parser.js` and `src/k9-validator.js` have no tests and are not imported
+by the component.
 
 == The component registers as a custom element
 
 *Claim:* `<prog-block>` is a working custom element.
 
-*Implementation:* `customElements.define('prog-block', ProgBlock)` — `src/prog-block.js:247`.
+*Implementation:* `customElements.define('prog-block', ProgBlock)` — the last line of `src/prog-block.js`, guarded
+so a second load does not throw.
 
-*Evidence:* **Automated: `tests/registration.test.js`, passing.** The claim used to be false: until this
-fix, `src/prog-block.js:3` imported `{ validateK9 }` from `src/k9-validator.js`, which exports only
-`K9Validator` and `defaultValidator` (`src/k9-validator.js:9,54`) — a link-time ES module error that
-kept the module graph from ever finishing loading, so `customElements.define()` at line 247 never
-executed and no `<prog-block>` element registered in a browser. The import was corrected to
-`{ defaultValidator }`, and `tests/registration.test.js` now imports the module and asserts
-`customElements.get('prog-block')` is truthy — this is the test that would have caught the original bug
-(the old suite never imported the component, so it was invisible to CI). Verify with `npm test`.
+*Evidence:* **Automated: `tests/registration.test.js`, passing.** History: before PR #18,
+`src/prog-block.js` imported `{ validateK9 }` from `src/k9-validator.js`, which exports only
+`K9Validator` and `defaultValidator` — a link-time ES module error that kept `customElements.define()`
+from ever running. That was corrected, and since 2026-10-05 `src/prog-block.js` imports nothing at
+all. Verify with `bun test`.
 
-== Variant switching (OS/shell/language tabs)
+== Variant switching (tabs)
 
-*Claim:* code blocks can offer multiple variants, switchable via a tab UI.
+*Claim:* code blocks can offer multiple variants, switchable via a tab UI that follows the WAI-ARIA
+tabs pattern.
 
-*Implementation:* `parseLightDOM()` (`src/prog-block.js:55-73`) reads `<template data-variant="…">`
-children into `_state.variants`; `handleTabClick()` (`:101-107`) switches the active one; `render()`'s
-`tabsHtml` (`:147-158`) draws the `role="tablist"`/`role="tab"` markup.
+*Implementation:* `_readLightDom()` in `src/prog-block.js` reads `<template data-variant="…">`
+children. `_build()` creates a `role="tablist"` (named by the `label` attribute, default
+"Example variants") with one `role="tab"` button per variant, each with `aria-controls` pointing at the
+`role="tabpanel"` code panel. `_renderVariant()` sets `aria-selected`, a
+roving `tabindex` and the panel's `aria-labelledby`. `_onTabKey()` handles ArrowLeft/
+ArrowRight (wrapping), Home and End with automatic activation. The `variant` attribute/property
+(`attributeChangedCallback`, `get`/`set variant`) selects the initial or current variant. With a single variant no tablist is built
+and the `language` attribute is shown as a label instead (`_build()`, `_renderLanguage()`).
 
-*Evidence:* No automated evidence. The tabs themselves are generic containers — there is no
-OS/shell/language/citation-style semantics, no platform detection, no cross-block synchronisation, and
-no persistence of the selected variant across page loads or between multiple `<prog-block>` instances.
+*Evidence:* **Automated, under happy-dom:** `tests/component.test.js` › `variant switching` —
+`tabs follow the WAI-ARIA tabs pattern`, `arrow keys, Home and End move selection with wrap-around`,
+`the variant attribute picks the initial variant`, `a single variant renders no tablist`. Tabs are
+generic labels: there is no OS/shell/language semantics and no platform detection.
 
-== A2ML variable substitution
+== Cross-block variant sync (`group`)
 
-*Claim:* `{{ variable }}` placeholders in variant content can be bound to user-editable values.
+*Claim:* blocks sharing a `group` attribute switch variant together.
 
-*Implementation:* `extractA2MLVariables()` (`:76-86`) regex-scans content with
-`/\{\{\s*([\w:-]+)\s*\}\}/g` and seeds `_state.variables`; `interpolateContent()` (`:89-93`) substitutes
-values back in at render time; `render()`'s `varsHtml` (`:160-169`) draws one `<input>` per variable.
+*Implementation:* a module-level `Map` of groups (`src/prog-block.js:13`); `_joinGroup()`,
+`_leaveGroup()` and `_syncGroup()`. A user-initiated switch selects the same variant
+*name* in every other block of the group that has one.
 
-*Evidence:* No automated evidence. Two defects affect correctness even if it were tested:
+*Evidence:* **Automated, under happy-dom:** `blocks in the same group switch together; other groups do
+not`. The selection is in memory only — it is not persisted across page loads (`DEBT.adoc` C15).
 
-* `interpolateContent()`'s substitution is `variables.get(key) || match` (`:91`) — a value of `""` or
-  `"0"` is falsy in JavaScript, so the raw `{{ placeholder }}` is shown instead of the actual value.
-* `extractA2MLVariables()` merges new keys into the existing map and never removes old ones (`:76-86`),
-  so switching variant tabs accumulates every variable name ever seen, for the life of the element.
+== Variable substitution
 
-Not backed by the A2ML parser (`src/a2ml-parser.js`) — see that section below.
+*Claim:* `{{ name }}` and `{{ name = default }}` placeholders in variant content are bound to
+reader-editable values.
 
-== Editing a variable value updates the preview live
+*Implementation:* `tokenize()` (pattern `VAR_PATTERN`, `src/prog-block.js:9`) splits each variant into
+text and variable segments. `_readLightDom()` collects every variable across all variants with its
+default. `_build()` creates one labelled `<input>` per variable inside a `<fieldset>`
+with a visually hidden legend. `setVariable()` stores the value and updates
+only the matching `<span>` nodes in the code panel (`_renderValues()`). An unset variable
+with no default shows as `{{ name }}` with class `unset`. API: `getVariable()`,
+`setVariable()`, and the `text` getter, which returns the personalised example.
 
-*Claim:* typing into a variable's `<input>` updates the rendered code in place.
+This is a regex, not the A2ML parser (`src/a2ml-parser.js`), which the component does not import.
 
-*Implementation:* `handleVarChange()` (`:95-99`) → `updateState()` (`:49-52`) → a full
-`this.shadowRoot.innerHTML = ...` rewrite (`:177`) → `bindEvents()` (`:210-244`) re-attaches listeners.
+*Evidence:* **Automated, under happy-dom:** `tests/component.test.js` › `variable substitution` —
+`unset variables keep their placeholder visible`, `inline defaults fill the example and the input
+placeholder`, `values persist across variant switches and one input serves all variants`, `every
+input has an associated label`; and `tokenize separates text and variables with defaults`.
 
-*Evidence:* No automated evidence, and the claim fails in practice. Every keystroke in the `<input>`
-fires an `input` event, which triggers the full shadow-tree rewrite at line 177. That destroys and
-recreates the very `<input>` node the user is typing into; focus does not survive an `innerHTML` swap.
-Multi-character values are effectively untypeable through the UI. See `ARCHITECTURE.md`'s render-model
-section for the full mechanism.
+Deliberate behaviour, not a defect: an empty value means "not set", so the default (or the
+placeholder) is shown. A variable cannot be set to the empty string (`DEBT.adoc` C4).
+
+== Editing a variable value updates the code live
+
+*Claim:* typing into a variable's `<input>` updates the rendered code in place without losing focus.
+
+*Implementation:* the input's `input` listener calls `setVariable()` (wired in `_build()`), which
+patches text nodes only. The shadow tree is built once (`_build()`, guarded by `_built` in `connectedCallback()`) and
+never rebuilt, so the focused `<input>` is never replaced.
+
+*Evidence:* **Automated, under happy-dom:** `typing keeps the same input element and updates the code
+in place` (asserts the same node identity before and after input). Not observed in a real browser.
+
+== Copy to clipboard
+
+*Claim:* the Copy button copies the example exactly as the reader sees it, with their values
+substituted, and announces the result.
+
+*Implementation:* `_copy()` writes `this.text` via
+`navigator.clipboard.writeText` and calls `_announce()`, which writes to a
+`role="status"` region created in `_build()`. On failure it announces a manual-copy instruction.
+
+*Evidence:* **Automated, under happy-dom, with `navigator.clipboard` stubbed:** `copy writes the
+personalised text and announces it`. The failure path has no test.
+
+== Events
+
+*Claim:* the block emits `progblocks:variant-change` `{ variant }` and `progblocks:variable-change`
+`{ name, value }`, both bubbling and composed.
+
+*Implementation:* `setVariable()` (variable) and `_select()` (variant), in `src/prog-block.js`. The variant event
+fires only for a change the reader makes in this block, not for programmatic or group-synced changes.
+
+*Evidence:* **Automated, under happy-dom, for `progblocks:variable-change` only** (`emits
+progblocks:variable-change`). No test covers `progblocks:variant-change`.
 
 == Editing code inline
 
-*Claim:* the code area is directly editable (`contenteditable="true"`, `:199`).
+*Claim (removed 2026-10-05):* the code area is directly editable (`contenteditable`).
 
-*Implementation:* the `.code-content` `input` listener (`:234-242`) writes
-`e.target.textContent` back into `_state.variants[i].content`.
+*Implementation:* none. Removed as out of charter — ProgBlocks renders examples; it is not an editor.
+The previous implementation stored post-interpolation text and destroyed `{{ var }}` placeholders
+(`DEBT.adoc` C3).
 
-*Evidence:* No automated evidence, and the claim is false as a template-preserving editor: the listener
-stores the *post-interpolation* text (variables already substituted), permanently losing the
-`{{ var }}` placeholders from the source. Self-confessed in a code comment at line 238: "Careful: if
-A2ML vars exist, typing over them destroys the template tag!"
+*Evidence:* `grep -rn contenteditable src/` → nothing.
 
 == Preview toggle (code view / preview view)
 
-*Claim (removed from this README, listed here because earlier revisions made it):* users can toggle
+*Claim (removed from the README, listed here because earlier revisions made it):* users can toggle
 between a code view and a live preview view.
 
 *Implementation:* none found anywhere in `src/`.
 
-*Evidence:* No automated evidence, because there is nothing to evidence — grep for "preview" across
-`src/` returns no view-toggling code. Absent, not broken.
+*Evidence:* No automated evidence, because there is nothing to evidence. Absent, not broken.
 
 == Templating wizards
 
@@ -102,157 +146,119 @@ between a code view and a live preview view.
 
 *Claim (removed):* a live, LSP-backed linter panel.
 
-*Implementation:* `_state.linterHtml` is hardcoded to `'<i>Linter ready</i>'` at construction
-(`:22`) and rendered verbatim by `render()`'s `linterHtml` block (`:171-175`). The real WebSocket/LSP
-logic exists in `ViewManager.attachLinterPanel()` (`src/modules/view-manager.js:30-54`), including a
-real `new WebSocket(serverUrl)` call — but `view-manager.js` is never imported by `prog-block.js` or
-`index.html` (verified by grep across `src/` and `index.html`). It is unreachable code.
+*Implementation:* none since 2026-10-05. The hardcoded placeholder panel, its toggle button and the
+unimported `src/modules/view-manager.js` (which held unused WebSocket code) were all deleted. A
+linter is out of charter: ProgBlocks is not a language-server client.
 
-*Evidence:* No automated evidence. The claim is false as shipped: no linting, live or otherwise, ever
-occurs.
+*Evidence:* `ls src/modules` → no such directory; `grep -rni linter src/` → nothing.
 
 == Split view (side-by-side / top-bottom)
 
-*Claim:* the block can render in a side-by-side or top-and-bottom split layout.
+*Claim (removed 2026-10-05):* the block can render in a side-by-side or top-and-bottom split layout.
 
-*Implementation:* CSS selectors `:host([split-view="side-by-side"])` and
-`:host([split-view="top-bottom"])` (`src/prog-block.css:37-45`, `:149-151`) key off a `split-view`
-*host* attribute. `toggleLinter()` (`src/prog-block.js:116-121`) sets `_state.splitView`, and
-`render()` stamps that value only onto an inner `<div class="container" split-view="…">` (`:179`) — it
-is never reflected onto `this` (the host element) via `setAttribute`.
+*Implementation:* none. The previous CSS keyed off a `:host([split-view])` attribute the JavaScript
+never set (`DEBT.adoc` C7); both halves were removed.
 
-*Evidence:* No automated evidence, and the wiring is provably broken by inspection: the CSS selector is
-`:host([split-view=…])`, the JS sets the attribute on a *child* `<div>`, and CSS host selectors do not
-match attributes on descendants. The split-view CSS rules never apply, regardless of state.
+*Evidence:* `grep -rn split-view src/` → nothing.
 
 == Smart paste
 
-*Claim:* pasted content is auto-detected as a JSON array, a CSV/TSV matrix, or falls back to plain
-text.
+*Claim (removed 2026-10-05):* pasted content is auto-detected as a JSON array, a CSV/TSV matrix, or
+plain text.
 
-*Implementation:* `parsePaste()` (`src/modules/smart-paste.js:8-53`), wired via `handlePaste()`
-(`src/prog-block.js:123-135`).
+*Implementation:* none. `src/modules/smart-paste.js` and its tests (`tests/prog-block.test.js`) were
+deleted as out of charter.
 
-*Evidence:* **The one claim in this document with real automated evidence.**
-`tests/prog-block.test.js` (4 assertions, all passing as of this checkout, run directly with
-`node --test tests/prog-block.test.js`):
-
-* detects a well-formed JSON array (`[1, 2, 3]`) → `type: 'array'`
-* falls back to `type: 'text'` for a malformed array (`[1, 2, 3`)
-* detects CSV/matrix data (multi-line, comma-separated) → `type: 'matrix'`
-
-Not covered by any test: TSV detection, the "no tuple support" gap noted in the README, and the
-integration path through `handlePaste()` in `prog-block.js` itself (the test only exercises
-`parsePaste()` in isolation with a mock clipboard event).
+*Evidence:* `ls src/modules tests/prog-block.test.js` → neither exists.
 
 == Export to file (JSON / CSV / Nickel / TXT)
 
-*Claim:* one-click export of block content to JSON, CSV, Nickel, or plain text.
+*Claim (removed 2026-10-05):* one-click export of block content to JSON, CSV, Nickel, or plain text.
 
-*Implementation:* `exportBlockData()` (`src/modules/exporter.js:8-52`), wired via `handleExport()`
-(`src/prog-block.js:109-114`). The function is called and does produce a file download — this path is
-wired in, unlike the linter or split-view.
+*Implementation:* none. `src/modules/exporter.js` was deleted; its "CSV" and "JSON" were not real
+encodings (`DEBT.adoc` C8). The Copy button (above) replaces it.
 
-*Evidence:* No automated evidence. The output is not what "export to JSON/CSV" implies:
-
-* The `json` case (`exporter.js:14-23`) does not parse and re-stringify structured data; it wraps the
-  entire raw content string in `{"block_content": "…"}"`. The surrounding `try/catch` guards a
-  `JSON.stringify` call that cannot throw on a string input, so the `catch` branch is dead code.
-* The `csv` case (`:34-41`) quotes each *entire line* as a single CSV field
-  (`` `"${line.replace(/"/g, '""')}"` ``) and never splits on commas or tabs — it is not a real
-  CSV transform, just a line-per-row wrapper.
+*Evidence:* `grep -rni export src/prog-block.js` → only the `export` keywords on `dedent`,
+`tokenize` and `ProgBlock`.
 
 == Clipboard-safe line numbers
 
-*Claim:* line numbers are visible but excluded from copy-paste.
+*Claim:* line numbers are visible but excluded from copy-paste and from assistive technology.
 
-*Implementation:* `render()`'s `lineNumbersHtml` (`:142-145`) sets `aria-hidden="true"` on the
-container; `src/prog-block.css:154-163` sets `user-select: none; pointer-events: none;` on
-`.line-numbers`.
+*Implementation:* the gutter is `aria-hidden="true"` (set in `_build()`) and
+`user-select: none` (`.line-numbers` in `src/prog-block.css`); `_renderLineNumbers()`
+matches the active variant's line count. The Copy button copies `text`, which never includes them.
+Controlled by the `line-numbers` host attribute; there is no UI toggle.
 
-*Evidence:* No automated evidence (no test asserts computed style or clipboard content), but the
-mechanism is standard and directly readable — `user-select: none` reliably excludes an element from a
-text selection in all evergreen browsers. The one accurate gap: there is no toggle control in the UI;
-line numbers are controlled only via the `line-numbers` host attribute.
+*Evidence:* **Automated, under happy-dom:** `line numbers match the line count and are hidden from
+assistive tech`. No test asserts the computed `user-select` style or a manual selection.
 
 == Accessibility
 
-*Claim (as rewritten):* WCAG 2.1 AA-target for interactive elements. (The pre-rewrite README claimed
-AAA; `contracts.ncl:9,18` still asserts `accessibility_standard = "WCAG_AAA"` — that field is stale and
-tracked in `DEBT.adoc`.)
+*Claim:* WCAG 2.1 AA *target* for interactive elements. A target, not a verified level.
 
-*Implementation present:* `role="tablist"`/`role="tab"` (`:148,151`), `aria-selected` (`:152`),
-`aria-pressed` on the linter button (`:184`), `aria-label` on the code editor/export button/line
-numbers (`:185,191,199,143`), `:focus-visible` rules (`src/prog-block.css:80-83,103-105,130-132`), and
-a `.sr-only` utility class (`:173-182`).
+*Implementation present:* the WAI-ARIA tabs pattern (see Variant switching); one `<label>` per variable
+input inside a `<fieldset>` with a `.sr-only` legend; a `role="status"` live region for copy
+results; a focusable code panel (`tabindex="0"`) so keyboard
+users can scroll long lines; `aria-hidden` line numbers; `:focus-visible` rings
+(`src/prog-block.css`); selection shown by an underline bar and weight rather than colour
+or opacity (`.tab[aria-selected="true"]`); a `@media (forced-colors: active)` block.
 
-*Evidence:* No automated accessibility check (no axe or equivalent in `tests/` or CI). Direct reading
-finds the claim only partially true even at AA:
-
-* No roving `tabindex` or arrow-key navigation on the tablist.
-* No `tabpanel` element paired with `aria-controls`.
-* No `aria-live` region announcing variant switches or export completion.
-* Inactive tabs render at `opacity: 0.7` (`src/prog-block.css:69`), which degrades their text contrast.
-* The `.sr-only` class is defined in CSS but never referenced by any element in `prog-block.js`'s
-  markup (verified by grep) — dead CSS.
-* Focus is destroyed on every keystroke in a variable input (see above) — a functional accessibility
-  failure independent of ARIA markup.
+*Evidence:* **Structure automated, under happy-dom:** the tabs-pattern, label and line-number tests
+above. **Not verified:** no screen-reader session, no automated audit (axe or similar), and no measured
+contrast check — the CSS comment stating that the default colours meet AA contrast has not been
+measured. The live region announces copy results only; a variant change caused by `group` sync in
+another block is not announced. See `DEBT.adoc` T3.
 
 == A2ML parser (tree-sitter / WASM)
 
 *Claim:* variable interpolation is backed by a real A2ML grammar parsed via tree-sitter/WASM.
 
-*Implementation:* `src/a2ml-parser.js:45-59` (`parseA2ML`). The tree-sitter/WASM body (loading
-`Parser`, `Parser.Language.load('./assets/tree-sitter-a2ml.wasm')`, building a parse tree) is entirely
-commented out (`:48-54`); the function falls through to the same `{{ key }}` regex substitution
-`prog-block.js` already does inline. `assets/tree-sitter-a2ml.wasm` is a 118-byte ASCII text file
-reading `// Dummy WASM file placeholder`, not a compiled WebAssembly binary (confirmed by reading the
-file directly). `prog-block.js:2` imports `parseA2ML` but never calls it anywhere (confirmed by grep
-for `parseA2ML` across `src/` — only the import line matches).
+*Implementation:* `src/a2ml-parser.js:45-59` (`parseA2ML`). The tree-sitter/WASM body is entirely
+commented out (`:48-54`); the function falls through to a `{{ key }}` regex substitution.
+`assets/tree-sitter-a2ml.wasm` is a 118-byte ASCII text file reading `// Dummy WASM file
+placeholder`, not a compiled WebAssembly binary. Nothing imports `a2ml-parser.js`; the component uses
+its own `tokenize()`.
 
-*Evidence:* No automated evidence. The claim is false: there is no tree-sitter parser, no WASM, and the
-stub function isn't even wired into the component.
+*Evidence:* No automated evidence. The claim is false: there is no tree-sitter parser, no WASM, and
+the stub is not wired into the component.
 
 == K9 / Nickel validation triad
 
 *Claim:* the block's state is validated against Nickel contracts via a "Must-Just-Nickel" triad
 (`src/k9-validator.js:4-7`'s own docstring).
 
-*Implementation:* `K9Validator.checkMust()` (`:17-24`) does a real, if trivial, feature check
-(`'customElements' in window`). `validateNickel()` (`:31-42`) awaits a `setTimeout(resolve, 50)` then
-unconditionally returns `{ valid: true, errors: [] }` regardless of input — a stub, not a bridge to any
-Nickel evaluator. `executeJustTask()` (`:48-51`) `console.log`s and returns `true` unconditionally.
+*Implementation:* `K9Validator.checkMust()` (`:17-24`) does a trivial feature check.
+`validateNickel()` (`:31-42`) awaits a `setTimeout(resolve, 50)` then unconditionally returns
+`{ valid: true, errors: [] }`. `executeJustTask()` (`:48-51`) `console.log`s and returns `true`.
 
-*Evidence:* No automated evidence. Grep across `src/` finds no call site for any of `checkMust`,
-`validateNickel`, or `executeJustTask`. `prog-block.js:2` now imports `{ defaultValidator }` from
-`k9-validator.js` (the earlier broken `{ validateK9 }` import — see the top of this document — has been
-fixed), but that import is unused: nothing in `prog-block.js` calls `defaultValidator.checkMust()` or
-any other method on it. The validation triad the docstring describes still does not run — the reason
-changed from a link-time `SyntaxError` to a dead import, but the practical effect (no validation
-happens) is unchanged.
+*Evidence:* No automated evidence. Since 2026-10-05 nothing imports `k9-validator.js` at all
+(`grep -rn k9-validator src/ index.html` → only the file's own header). No validation happens.
 
 == Escaping / sanitising untrusted content
 
-*Claim (implicit — never stated, but necessary for a component rendering pasted documentation
-snippets):* content is safe to render.
+*Claim:* author content and reader input are rendered as text, never as markup.
 
-*Implementation:* none. Variant `<template>` content is read via `t.innerHTML` (`:60`) and later
-re-injected as raw HTML inside `.code-content` (`:199`, part of the `shadowRoot.innerHTML` rewrite at
-`:177`); variable values interpolate unescaped into the `value="${val}"` attribute of generated
-`<input>`s (`:165`). Grep for `escape`/`sanitize`/`DOMPurify` across `src/` returns no matches.
+*Implementation:* the shadow tree is built with `createElement` and every text value goes in through
+`textContent` (`el()`, `_renderVariant()`, `_renderValues()` in `src/prog-block.js`). Variant source is read with `template.content.textContent` (`_readLightDom()`), so tags written
+unescaped inside a `<template>` are dropped rather than rendered; authors escape `<` and `&` as they
+would inside `<pre>`. There is no `innerHTML` in `src/` (`grep -n innerHTML src/` → only the explanatory
+comment near the top of `src/prog-block.js`). No sanitiser is used, because nothing is parsed as markup.
 
-*Evidence:* No automated evidence, and none would pass if written honestly — this is a real, unfixed
-XSS surface. Tracked in `DEBT.adoc`, scheduled for a `fix/render-security` branch not yet started.
+*Evidence:* **Automated, under happy-dom:** `tests/component.test.js` › `untrusted content is never
+rendered as markup` — escaped markup in a variant, unescaped markup in a template, markup typed into a
+variable input, and markup in a tab label. Not tested in a real browser and not independently
+reviewed.
 
 == Stylesheet loads correctly wherever the component is embedded
 
-*Claim (implicit in "decoupled by design... injected into any system"):* the component's styling works
-regardless of where the host page lives.
+*Claim:* the component's styling works regardless of where the host page lives.
 
-*Implementation:* `<link rel="stylesheet" href="./src/prog-block.css">` injected into
-`shadowRoot.innerHTML` on every render (`:178`).
+*Implementation:* the stylesheet URL is `new URL('./prog-block.css', import.meta.url)`
+(`STYLESHEET_URL`, `src/prog-block.js:10`), appended once as a `<link>` in the shadow root by
+`_build()`. It resolves
+against the module, so the host page can live at any depth.
 
-*Evidence:* No automated evidence. By the relative-URL resolution rules for shadow-DOM `<link>`
-elements, this only resolves when the host page sits exactly one directory above a sibling `src/` —
-i.e. laid out like this repository's own `index.html`. Any other embedding depth breaks the stylesheet
-silently. See `ARCHITECTURE.md` for the full mechanism.
+*Evidence:* **Automated, under happy-dom:** `stylesheet resolves against the module, not the host
+page`, mounted on a page at `/docs/deep/page.html`. Not yet checked in a real browser at a non-root
+depth.
