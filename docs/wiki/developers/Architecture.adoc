@@ -37,11 +37,6 @@ via a `<link>` whose URL is resolved against the module
 (`new URL('./prog-block.css', import.meta.url)`), so it works at any
 host-page depth.
 
-|`src/a2ml-parser.js`
-|60
-|**Stub, unused.** The tree-sitter load path is commented out; the
-`A2MLState` class is dead code; nothing imports the module.
-
 |`src/k9-validator.js`
 |54
 |**Unused.** `K9Validator` class + a `defaultValidator` instance.
@@ -65,20 +60,19 @@ step beyond an optional `just check`.
 
 |`progblocks-launcher.sh`
 |466
-|**Generated** by `launch-scaffolder` from `progblocks.launcher.a2ml`;
+|**Generated** by `launch-scaffolder` from `progblocks.launcher_praxis.deed`;
 marked "do not edit". Currently non-functional — see
 link:CI-CD.adoc[CI/CD] for the launcher defects; this is an upstream
 generator bug, not something to hand-fix here.
-
-|`assets/tree-sitter-a2ml.wasm`
-|—
-|**118-byte ASCII placeholder**, not WebAssembly. Its content is the
-literal text `// Dummy WASM file placeholder`.
 |===
 
 Deleted on 2026-10-05 as out of charter: `src/modules/exporter.js`,
 `src/modules/smart-paste.js`, `src/modules/view-manager.js`, and
 `tests/prog-block.test.js`.
+
+Deleted on 2026-10-05 when A2ML was retired estate-wide: the unimported
+`src/a2ml-parser.js` stub and `assets/tree-sitter-a2ml.wasm`, a 118-byte
+ASCII placeholder that was never WebAssembly. No A2ML parser is planned.
 
 == Render model
 
@@ -141,7 +135,6 @@ swap kept the variant and typed value. It has not been profiled.
 
 == Unused code
 
-`src/a2ml-parser.js`'s `A2MLState` class (a pub/sub variable store) and
-`parseA2ML()`, and all of `src/k9-validator.js`, are never imported by
-the component. The variable syntax the component actually supports is
-defined by `tokenize()` in `src/prog-block.js`.
+All of `src/k9-validator.js` is never imported by the component.
+(`src/a2ml-parser.js`, likewise unimported, was deleted on 2026-10-05.)
+The variable syntax the component actually supports is defined by `tokenize()` in `src/prog-block.js`.

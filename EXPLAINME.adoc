@@ -8,12 +8,13 @@ that evidences it — or states plainly "no automated evidence" where none exist
 this was written (2026-10-05, branch `feat/render-core-variants-vars`); a line number is given only
 where it is stable. If the source has moved, re-verify rather than trust this table.
 
-Overall automated-test coverage: `bun test` runs **39** tests in four files, all passing.
+Overall automated-test coverage: `bun test` runs **49** tests in five files, all passing; `tests/jcs.test.js` (10) covers `tools/jcs.mjs`.
 `tests/component.test.js` (32 tests) exercises the component's behaviour; `tests/registration.test.js`
 (1) asserts the element registers; `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js`
 (2) guard CI configuration. Every component test runs under happy-dom (`tests/helpers/dom.js`), **not
-in a real browser**. `src/a2ml-parser.js` and `src/k9-validator.js` have no tests and are not imported
-by the component.
+in a real browser**. `src/k9-validator.js` has no tests and is not imported by the component.
+(`src/a2ml-parser.js`, likewise untested and unimported, was deleted on 2026-10-05 when A2ML was
+retired estate-wide.)
 
 == The component registers as a custom element
 
@@ -115,7 +116,7 @@ only the matching `<span>` nodes in the code panel (`_renderValues()`). An unset
 with no default shows as `{{ name }}` with class `unset`. API: `getVariable()`,
 `setVariable()`, and the `text` getter, which returns the personalised example.
 
-This is a regex, not the A2ML parser (`src/a2ml-parser.js`), which the component does not import.
+These are template variables, matched by a regex; no grammar or parser is involved.
 
 *Evidence:* **Automated, under happy-dom:** `tests/component.test.js` › `variable substitution` —
 `unset variables keep their placeholder visible`, `inline defaults fill the example and the input
@@ -263,18 +264,20 @@ palette in its resting state only, not hover/focus states or host overrides. The
 copy and download results only; a variant change caused by `group` sync in
 another block is not announced. See `DEBT.adoc` T3.
 
-== A2ML parser (tree-sitter / WASM)
+== A2ML parser (tree-sitter / WASM) — claim withdrawn
 
-*Claim:* variable interpolation is backed by a real A2ML grammar parsed via tree-sitter/WASM.
+*Claim (withdrawn 2026-10-05):* variable interpolation is backed by a real A2ML grammar parsed via
+tree-sitter/WASM.
 
-*Implementation:* `src/a2ml-parser.js:45-59` (`parseA2ML`). The tree-sitter/WASM body is entirely
-commented out (`:48-54`); the function falls through to a `{{ key }}` regex substitution.
-`assets/tree-sitter-a2ml.wasm` is a 118-byte ASCII text file reading `// Dummy WASM file
-placeholder`, not a compiled WebAssembly binary. Nothing imports `a2ml-parser.js`; the component uses
-its own `tokenize()`.
+*Implementation:* none. Template variables (`{{ name }}` / `{{ name = default }}`) are a regex in
+`tokenize()` (see Variable substitution above). The claim was always false: `src/a2ml-parser.js` was
+an unimported stub whose tree-sitter/WASM body was commented out, and `assets/tree-sitter-a2ml.wasm`
+was a 118-byte ASCII text file reading `// Dummy WASM file placeholder`, not WebAssembly. A2ML was
+retired estate-wide on 2026-10-05 (owner decision) and both files were deleted; no A2ML parser is
+planned.
 
-*Evidence:* No automated evidence. The claim is false: there is no tree-sitter parser, no WASM, and
-the stub is not wired into the component.
+*Evidence:* `test ! -e src/a2ml-parser.js && test ! -e assets/tree-sitter-a2ml.wasm` (the Dust
+contractile's `a2ml-parser-stub` and `wasm-placeholder` probes, `just probes`).
 
 == K9 / Nickel validation triad
 

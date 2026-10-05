@@ -18,7 +18,7 @@ test:
 
 # List the documentation tree
 docs:
-	@find docs .machine_readable -type f \( -name '*.adoc' -o -name '*.a2ml' \) | sort
+	@find docs .machine_readable -type f \( -name '*.adoc' -o -name '*.deed' -o -name '*.ncl' \) | sort
 
 # Gate the in-repo wiki: every page registered, attributed, unique, and drift-free
 docs-health:

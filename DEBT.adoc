@@ -14,6 +14,9 @@ Last compiled: 2026-08-07, against `main` plus the stacked branches for PR #18
 (honest gates) and this documentation set. Code-debt and test-debt entries updated
 2026-10-05 for the render-core rewrite on branch `feat/render-core-variants-vars`.
 C14 and C15 cleared 2026-10-05 on branch `feat/persist-and-live-content`.
+Metadata references updated 2026-10-05 on branch `chore/a2ml-to-deed` (A2ML retired; every
+`.a2ml` file replaced by the repo deed, the launcher praxis deed and Nickel contractiles);
+C12 and H5 cleared there.
 
 toc::[]
 
@@ -36,19 +39,24 @@ Severity reflects consequence, not effort.
 `package.k9` and `contracts.ncl` declared `1.0.0`; `progblocks.launcher.a2ml` and
 `progblocks-launcher.sh` declared `0.1.0`; `package.json` declared `0.3.0`. The owner
 chose `0.3.0`, and every one of those fields now says it. Nothing has been released;
-`0.3.0` is a pre-release number.
+`0.3.0` is a pre-release number. On 2026-10-05 `progblocks.launcher.a2ml` was replaced by
+`progblocks.launcher_praxis.deed` (A2ML retired), which carries `:version "0.3.0"`.
 
-Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" package.k9 contracts.ncl progblocks.launcher.a2ml package.json`
+Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" package.k9 contracts.ncl progblocks.launcher_praxis.deed package.json`
+(the deed's `:schema-version "1.0.0"` is the deed format's version, not the package's).
 
-=== L2 — `progblocks.launcher.a2ml` licence was changed without upstream coordination *(FLAG-ONLY)*
+=== L2 — The launcher descriptor's licence was changed without upstream coordination *(FLAG-ONLY)*
 
 The file previously declared `CC-BY-SA-4.0` while the rest of the repo was MPL-2.0. PR #15
 aligned it to MPL-2.0 on the reasoning that a launcher config is code, not content. If
 `launch-scaffolder` generates these files from a template that assumes CC-BY-SA, the
 change will be reverted on the next regeneration.
 
-Evidence: `head -20 progblocks.launcher.a2ml`; the file's own header names
-`launcher-standard_praxis.deed v0.4.0` as its governing spec.
+Evidence (historical): `progblocks.launcher.a2ml`'s header named
+`launcher-standard_praxis.deed v0.4.0` as its governing spec. On 2026-10-05 that file was
+replaced by `progblocks.launcher_praxis.deed` (launch-scaffolder #42 form; A2ML retired),
+which keeps `:license "MPL-2.0"` and `(compliance :standard-version "0.4.0")` — see
+`head -25 progblocks.launcher_praxis.deed`. The coordination question is unchanged.
 
 Clearing it: confirm the licence expectation with the `launch-scaffolder` standard, then
 either keep MPL-2.0 or restore CC-BY-SA-4.0 with a documented rationale.
@@ -61,8 +69,9 @@ Estate house rule is `.adoc` for documentation including README; this repo uses
 `README.md`. Small repos carrying `.md` is a tolerated deviation, but it must be logged
 rather than silent.
 
-Evidence: `ls README.*` returns `README.md` only. Logged in
-`.machine_readable/rsr-profile.a2ml`.
+Evidence: `ls README.*` returns `README.md` only. Logged in the `(rsr-profile …)` clause
+of `.machine_readable/descriptiles/progblocks_chora.deed` (a `(deviation …)` entry; it was
+`.machine_readable/rsr-profile.a2ml` until A2ML was retired on 2026-10-05).
 
 Clearing it: convert to `README.adoc`, or leave as-is with the deviation logged (current
 choice). Do not carry both.
@@ -86,10 +95,13 @@ Several load-bearing decisions have no written rationale: shadow DOM over light 
 tree-sitter A2ML parser, and MPL-2.0 over the estate's more common AGPL.
 
 Evidence: `ls docs/decisions/ 2>/dev/null` → no such directory.
-`.machine_readable/descriptiles/META.a2ml` records that the ADR set is empty.
+The `(meta …)` clause of `.machine_readable/descriptiles/progblocks_chora.deed` records that
+no ADRs exist (it was `META.a2ml` until 2026-10-05).
 
-Clearing it: write ADRs for at least the A2ML-parser deferral and the licence choice,
-since both are questions a contributor will otherwise re-litigate.
+Clearing it: write an ADR for at least the licence choice, a question a contributor will
+otherwise re-litigate. The A2ML-parser deferral no longer needs one: A2ML was retired
+estate-wide on 2026-10-05 (owner decision), so no A2ML parser is planned and the regex
+substitution of template variables is the design, not a stand-in.
 
 === D4 — `package.k9` documents an interface nothing consumes *(OPEN)*
 
@@ -320,7 +332,17 @@ line, no call site.
 
 Clearing it: drop the import (naturally handled by C10's deletion of the fake validator).
 
-=== C12 — A2ML parsing is a stub with a placeholder binary *(ACCEPTED, for now)*
+=== C12 — A2ML parsing is a stub with a placeholder binary *(CLEARED 2026-10-05 — deleted; A2ML retired)*
+
+*Cleared by deletion.* A2ML was retired estate-wide on 2026-10-05 (owner decision), so no
+A2ML parser is planned. `src/a2ml-parser.js` and `assets/tree-sitter-a2ml.wasm` were
+deleted; the component's substitution of template variables (`{{ name }}` /
+`{{ name = default }}`) is a regex in `tokenize()` in `src/prog-block.js`, and the
+documentation now describes it as exactly that. Evidence: `test ! -e src/a2ml-parser.js &&
+test ! -e assets/tree-sitter-a2ml.wasm` (the Dust contractile's `a2ml-parser-stub` and
+`wasm-placeholder` probes, `just probes`).
+
+The original finding, kept for the record:
 
 `src/a2ml-parser.js` has its tree-sitter path commented out and its own comment calls the
 remaining code a "Basic interpolation stub"; the function is never called. The `A2MLState`
@@ -350,8 +372,11 @@ generated it cannot work:
 * the startup-command search requires `[ -x "$candidate" ]`, which is false for strings such as `"python3 -m http.server"`, so `START_COMMAND` is **always empty** and `start_server` always dies with "No startup command found";
 * absolute paths from the author's machine (`/home/hyperpolymath/…`, `/var/mnt/eclipse/…`) are baked into every generated `.desktop` entry.
 
-The source config `progblocks.launcher.a2ml` is *correct* on every one of these points —
-it uses `{repo-dir}` tokens and XDG paths. The generator lost them.
+The source config (then `progblocks.launcher.a2ml`) was *correct* on every one of these
+points — it used `{repo-dir}` tokens and XDG paths. The generator lost them. Since
+2026-10-05 the source is `progblocks.launcher_praxis.deed` (launch-scaffolder #42 form;
+A2ML retired), which keeps the `{repo-dir}` tokens and leaves runtime paths to the
+launcher standard. The generated script has not been regenerated from it.
 
 Evidence: `head -1 progblocks-launcher.sh | cat -A` (blank first line);
 `grep -n 'REPO_DIR=\|ICON_SOURCE=\|-x "$candidate"' progblocks-launcher.sh`
@@ -423,8 +448,9 @@ and restore the choice itself.
 === C16 — No syntax highlighting *(ACCEPTED, added 2026-10-05)*
 
 The component renders code as plain text. It does not tokenise or colour any language, and
-`.machine_readable/contractiles/intend/Intentfile.a2ml` lists "a syntax highlighter" as an
-anti-purpose. What it provides for a host highlighter: the `language` attribute becomes a
+`.machine_readable/contractiles/intend/intend.ncl` (and the `(ecosystem …)` clause's `:not`
+list in `.machine_readable/descriptiles/progblocks_chora.deed`) lists "a syntax highlighter"
+as an anti-purpose. What it provides for a host highlighter: the `language` attribute becomes a
 `language-*` class on the inner `<code>`, and the shadow parts `header`, `tab`,
 `copy-button`, `variables`, `code` and `variable` are exposed for `::part()` styling.
 
@@ -442,12 +468,13 @@ This repository makes no formal correctness claims and carries no proof assistan
 obligations, or `formal-proofs` capability. Recorded here so the absence is a stated
 position rather than an oversight, and so nothing later claims proof-backed rigour.
 
-Evidence: `.machine_readable/rsr-profile.a2ml` does not declare `formal-proofs`;
-`.machine_readable/descriptiles/NEUROSYM.a2ml` states the position explicitly.
+Evidence: the `(rsr-profile …)` clause of `.machine_readable/descriptiles/progblocks_chora.deed`
+does not declare `formal-proofs`; its `(neurosym …)` clause states the position explicitly
+(`:formal-proof-claims #f`). Until 2026-10-05 these were `rsr-profile.a2ml` and `NEUROSYM.a2ml`.
 
 === T2 — The test suite covers 4 of ~660 source lines' worth of behaviour *(PARTIALLY CLEARED 2026-10-05)*
 
-*Update 2026-10-05.* `bun test` now runs 39 tests across four files, all passing:
+*Update 2026-10-05.* `bun test` now runs 49 tests across five files, all passing (10 of them in `tests/jcs.test.js`, for the JSON canonicaliser):
 `tests/component.test.js` (32 behavioural tests: rendering safety, variable substitution,
 variant switching and the tabs keyboard model, group sync, both events, stylesheet resolution, copy, download,
 line numbers, the opt-in `persist` storage, authored content that changes after render, and
@@ -455,7 +482,8 @@ the `dedent`/`tokenize` helpers), `tests/registration.test.js` (1),
 `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2). The smart-paste
 tests (`tests/prog-block.test.js`) were deleted with the module. Coverage has not been
 measured, and every test runs under happy-dom, not a real browser. Still untested:
-`src/a2ml-parser.js` and `src/k9-validator.js` (neither is imported by the component),
+`src/k9-validator.js` (not imported by the component; the unimported `src/a2ml-parser.js`
+stub was deleted on 2026-10-05),
 `glyph-mode` rendering and the copy-failure path.
 
 The original finding, kept for the record:
@@ -717,7 +745,7 @@ fake-gate problem. The bar is reasonable for a component this small; the coverag
 wrong.
 
 Evidence: ruleset `code_coverage` parameters; `npm test` → 5 tests (2026-08-07). As of
-2026-10-05 the suite is 39 tests (T2), but coverage is still not measured, so whether the
+2026-10-05 the suite is 49 tests (T2), but coverage is still not measured, so whether the
 95% bar is met is unknown.
 
 Clearing it: raise real coverage as each defect in the Code debt section lands with a test.
@@ -738,9 +766,17 @@ Evidence, now passing: `just probes` → the `Mustfile.a2ml` SPDX probe passes, 
 confirmed non-vacuous by planting an `.a2ml` file without a header and observing the
 probe fail.
 
+*Update 2026-10-05.* Both files were deleted when A2ML was retired; their content is now
+the `(ply …)` clause of `.machine_readable/descriptiles/progblocks_chora.deed`. The SPDX
+probe now lives in `.machine_readable/contractiles/must/must.ncl`
+(`machine-readable-spdx-headers`): it checks line 1 of every tracked `.deed` and
+contractile `.ncl` file, and that no `.a2ml` file is tracked. Its planted-violation check
+has not been repeated since the conversion.
+
 === H2 — The accessibility contractile's probe was naive *(CLEARED 2026-08-07)*
 
-`.machine_readable/contractiles/adjust/Adjustfile.a2ml` grepped for the bare string `AAA`,
+`.machine_readable/contractiles/adjust/Adjustfile.a2ml` (since 2026-10-05
+`adjust/adjust.ncl`) grepped for the bare string `AAA`,
 so it fired on this repository's own honest disclaimers — the ones stating that AAA is
 *not* met. A tripwire that cannot tell an assertion from a denial trains people to ignore it.
 
@@ -764,6 +800,24 @@ decouple the signal from the truth.
 Evidence: `just probes` → 36 pass, 0 fail; each security probe confirmed non-vacuous by
 planting a violation (a fake token in `src/`, a `.pem` file at the root) and observing the
 corresponding probe fail, then clear on removal.
+
+=== H5 — The probe runner misattributed severity, and one probe passed on a missing file *(CLEARED 2026-10-05)*
+
+`tools/run-probes.sh` read the contractiles line by line and acted on each `- run:` line as
+it reached it. Every item writes its `severity` *after* its `run`, so each probe was
+reported, and counted by `--strict`, with the severity of the item before it: `just
+probes-strict` miscounted critical failures. Separately, the Bust contractile's
+wasm-placeholder probe was `file … | grep -qv WebAssembly`, which passes when the file is
+missing, because `grep -v` exits 0 on `file`'s "cannot open" line — a probe that could not
+tell "fixed" from "gone".
+
+Fixed in the same change that converted the contractiles to Nickel data
+(`.machine_readable/contractiles/<verb>/<verb>.ncl`, A2ML retired): the runner now reads
+each file with `nickel export` + `jq`, gathers all of an item's fields before running its
+probe, and so attributes each probe its own severity. The placeholder file was deleted
+with the A2ML retirement and its probe is now `test ! -e assets/tree-sitter-a2ml.wasm`.
+
+Evidence: `just probes` → 36 pass, 0 fail; `sed -n '/probes_of()/,/^}/p' tools/run-probes.sh`.
 
 === H3 — Historic template contamination, now removed but worth recording *(ACCEPTED — closed)*
 

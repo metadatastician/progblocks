@@ -61,8 +61,8 @@ reader's variant` group.
 |Works
 |One labelled input per variable across all variants; values persist
 across variant switches; typing keeps the same `<input>` and focus; unset
-variables show `{{ name }}` styled as unset. A plain regex, not the A2ML
-parser. An empty value means "unset" and shows the default or
+variables show `{{ name }}` styled as unset. A plain regex in
+`tokenize()`; no parser is involved. An empty value means "unset" and shows the default or
 placeholder (`DEBT.adoc` C4). Tests: `variable substitution` group.
 
 |Copy button
@@ -125,11 +125,11 @@ link:../developers/Accessibility.adoc[Accessibility] for the explicit
 statement.
 
 |A2ML variable parser (tree-sitter)
-|Absent / stub
-|`assets/tree-sitter-a2ml.wasm` is a 118-byte ASCII placeholder file
-(literally reads "// Dummy WASM file placeholder"), not compiled
-WebAssembly. The tree-sitter load path in `src/a2ml-parser.js` is
-commented out, and nothing imports the module.
+|Not planned
+|A2ML is retired estate-wide (2026-10-05). The unimported stub
+`src/a2ml-parser.js` and `assets/tree-sitter-a2ml.wasm` (a 118-byte
+ASCII placeholder, never WebAssembly) were deleted that day. Template
+variables are a regex in `tokenize()`.
 
 |K9 / Nickel validation
 |Absent / stub

@@ -124,7 +124,7 @@ When creating or modifying templates:
 
 == Related Files
 
-* link:../0.1-AI-MANIFEST.a2ml[Parent AI Manifest]
-* link:../README.adoc[Parent Directory README]
+* link:../../.machine_readable/descriptiles/progblocks_chora.deed[Repo deed] (its `(ply …)` clause is this directory's manifest)
+* link:../../README.md[Repository README]
 * link:../../.machine_readable/[Machine Readable Metadata]
 * link:../DISCUSSION_TEMPLATE/[Discussion Templates]

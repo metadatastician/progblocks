@@ -71,9 +71,10 @@ updates only the affected text in the code panel; the input keeps focus.
 * An empty value counts as unset: you cannot make a variable render as
   the empty string.
 
-This substitution is **not** backed by the A2ML parser
-(`src/a2ml-parser.js`) — that module is a stub with its tree-sitter path
-commented out, and nothing imports it.
+These are template variables, matched by a regular expression in
+`tokenize()` (`src/prog-block.js`). No grammar or parser is involved:
+A2ML, which the syntax was once attributed to, is retired, and the
+unused parser stub was deleted on 2026-10-05.
 
 From script: `block.getVariable(name)`, `block.setVariable(name, value)`,
 `block.text` (the example exactly as the reader sees it), and

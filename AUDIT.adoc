@@ -67,7 +67,7 @@ These bind this repository and every sibling:
 | `just check` runs `nickel export contracts.ncl` and fails honestly if Nickel is absent or the contract is invalid. Note what this does *not* establish — see below.
 
 | The contractile probes are executable and non-vacuous
-| `just probes` (`tools/run-probes.sh`) evaluates all 36 `- run:` probes declared under `.machine_readable/contractiles/`; all pass. Non-vacuity was demonstrated per probe class by planting violations — a fake credential in `src/`, a `.pem` at the root, and an `.a2ml` file missing its SPDX header — and observing the corresponding probe fail, then clear on removal. `just probes-strict` exits non-zero on a failing `critical` probe.
+| `just probes` (`tools/run-probes.sh`) evaluates all 36 `run` probes declared in the Nickel contractiles `.machine_readable/contractiles/<verb>/<verb>.ncl` (read via `nickel export` + `jq`); all pass. Non-vacuity was demonstrated per probe class by planting violations — a fake credential in `src/`, a `.pem` at the root, and an `.a2ml` file missing its SPDX header — and observing the corresponding probe fail, then clear on removal. That was done in 2026-08, against the then `.a2ml` contractiles; since the 2026-10-05 conversion the SPDX probe checks `.deed` and contractile `.ncl` files and that no `.a2ml` file is tracked, and its planted-violation check has not been repeated. `just probes-strict` exits non-zero on a failing `critical` probe; until 2026-10-05 the runner gave each probe the *previous* item's severity, so this count was wrong, and that is now fixed.
 |===
 
 The last row deserves emphasis, because it is the one this repository most recently got
@@ -87,7 +87,7 @@ each can rot silently.
 
 * **The generated launcher cannot start the server (`DEBT.adoc` C13).** Derived from reading the generated script; the failure mode was traced through the `[ -x "$candidate" ]` test that rejects every multi-word command in the search list. Not reproduced by running it.
 
-* **The A2ML regex substitution is adequate for what the component actually does.** A judgement, not a measurement. The tree-sitter parser it stands in for was never built.
+* **The template-variable regex substitution (`{{ name }}` / `{{ name = default }}`, in `tokenize()`) is adequate for what the component actually does.** A judgement, not a measurement. The tree-sitter A2ML parser it once stood in for was never built; A2ML was retired on 2026-10-05 and no parser is planned.
 
 == Explicitly NOT claimed
 
@@ -107,7 +107,7 @@ Recorded so that nothing later mistakes silence for modesty.
 
 * **`package.k9` is not consumed by anything.** Its declarations are documentary. One of its `JUST` targets names a recipe that no longer exists.
 
-* **`k9-validator.js` validates nothing.** Two of its three methods return success unconditionally without inspecting anything, and none of the three is called. Since 2026-10-05 the component does not import it, and does not import `a2ml-parser.js` either. See `DEBT.adoc` C10.
+* **`k9-validator.js` validates nothing.** Two of its three methods return success unconditionally without inspecting anything, and none of the three is called. Since 2026-10-05 the component does not import it; the equally unimported `a2ml-parser.js` stub was deleted the same day. See `DEBT.adoc` C10.
 
 == Provenance of this audit
 

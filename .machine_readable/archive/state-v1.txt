@@ -1,4 +1,12 @@
 # SPDX-License-Identifier: MPL-2.0
+#
+# TOMBSTONE — archived 2026-10-05. This is the STATE v1 journal of progblocks,
+# formerly .machine_readable/descriptiles/STATE.a2ml. A2ML is retired; per the
+# owner's ruling (standards state-v1-decision, Option B) the live state moved
+# to the (maturity ...) clause of descriptiles/progblocks_chora.deed and this
+# journal is kept for history only. Nothing reads this file. Do not update it.
+#
+
 # STATE.a2ml — ProgBlocks
 #
 # Current project state, phase, and route to the next milestone.

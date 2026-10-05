@@ -13,6 +13,15 @@ Nothing has been released. There is no tagged version and no published package; 
 
 ### Added
 
+- Repo deed `.machine_readable/descriptiles/progblocks_chora.deed` (DEED grammar, linted with
+  `deed_lint.py`): the single machine-readable record of the repo, replacing every `.a2ml` file.
+  Its identity carries a UUID v8 profile C twin (`3a8b147b-7006-8d01-9edb-c29c4d6551bb`,
+  ADR-008, adopted ahead of ratification) beside the grammar-required v5 `:repo-uuid`.
+- `progblocks.launcher_praxis.deed`, the per-app launcher descriptor in launch-scaffolder's #42 form.
+- `tools/jcs.mjs`: RFC 8785 (JCS) canonicaliser and RFC 7493 (I-JSON) checker, cross-checked
+  byte-for-byte against the `ijson-jcs` CLI and the RFC 8785 §3.2.3 sample; `tests/jcs.test.js`;
+  a CI step that fails on any non-canonical tracked `.json`.
+
 - Variant switching completed: WAI-ARIA tabs keyboard model (arrows with wrap, Home, End), roving
   `tabindex`, `tabpanel` with `aria-controls`/`aria-labelledby`; `variant`, `group` and `label`
   attributes; `group` keeps every block on a page showing the same variant.
@@ -39,6 +48,12 @@ Nothing has been released. There is no tagged version and no published package; 
 
 ### Changed
 
+- A2ML retired (owner decision 2026-10-05). Contractiles are Nickel data
+  (`.machine_readable/contractiles/<verb>/<verb>.ncl`, converted losslessly — byte-identical round
+  trip); `tools/run-probes.sh` reads them through `nickel export` and `jq`. STATE v1's journal is
+  archived at `.machine_readable/archive/state-v1.txt`; its maturity is a deed clause.
+- `package.json`, `.github/labels.json` and `.github/label-classifier.json` rewritten in JCS form.
+
 - Dependabot configuration pruned to the one ecosystem that actually exists in this repo (#15).
 - README given an honesty pass (#15); rewritten again in this documentation set to replace the removed
   feature claims (preview toggle, templating wizards, live linter, WCAG AAA) with an evidence-backed
@@ -51,6 +66,10 @@ Nothing has been released. There is no tagged version and no published package; 
   `0`; the `||` fallback has been removed.
 
 ### Fixed
+
+- `tools/run-probes.sh` gave each probe the previous item's severity (severity is written after
+  `run`), so `--strict` miscounted critical failures. Each item's fields are now read together.
+- The Bustfile's WASM probe (`file … | grep -qv WebAssembly`) passed when the file was missing.
 
 - Single-variant code panel: `aria-label` on a role-less `<pre>` (flagged by axe) now has
   `role="group"`.
@@ -75,6 +94,10 @@ Nothing has been released. There is no tagged version and no published package; 
   `tests/registration.test.js`.
 
 ### Removed
+
+- Every `.a2ml` file, `src/a2ml-parser.js` (a stub nothing imported) and
+  `assets/tree-sitter-a2ml.wasm` (a 118-byte text placeholder): A2ML is retired, so no A2ML
+  parser is planned. `contracts.ncl` no longer declares an A2ML dialect.
 
 - `package-lock.json`: stale beside `bun.lock`; Bun is the runtime and CI installs with
   `bun install --frozen-lockfile`.
