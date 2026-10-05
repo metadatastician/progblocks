@@ -132,8 +132,8 @@ Consequences:
   the authored content changes. Tests: `authored content that changes
   after render`.
 * **Persistence is opt-in and minimal**: only the variant name, only
-  with `persist`, only for reader-initiated selections; no cross-tab
-  sync. Tests: `remembering the reader's variant`.
+  with `persist`, only for reader-initiated selections; other open
+  tabs follow via the `storage` event, without echo. Tests: `remembering the reader's variant`.
 
 All of this is unit-tested under happy-dom. Checked once by hand in headless Chromium on 2026-10-05: persist
 survived a reload, group sync and arrow keys worked, and a live template

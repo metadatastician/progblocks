@@ -23,6 +23,24 @@ function recall(group) {
   }
 }
 
+/**
+ * Follows variant choices persisted by other tabs of the same site: a
+ * `storage` event for `progblocks:variant:<group>` switches every `persist`
+ * block in that group here. Installed once, on the first persisted block.
+ */
+let listeningAcrossTabs = false;
+function listenAcrossTabs() {
+  if (listeningAcrossTabs || typeof window === 'undefined') return;
+  listeningAcrossTabs = true;
+  window.addEventListener('storage', (event) => {
+    if (!event.key?.startsWith(STORAGE_PREFIX) || event.newValue === null) return;
+    const group = event.key.slice(STORAGE_PREFIX.length);
+    for (const block of groups.get(group) ?? []) {
+      if (block.hasAttribute('persist')) block._selectByName(event.newValue, { notify: false });
+    }
+  });
+}
+
 /** Remembers a group's variant; silently does nothing when storage is unavailable. */
 function remember(group, variant) {
   try {
@@ -419,6 +437,7 @@ export class ProgBlock extends HTMLElement {
     this._group = name;
     if (!groups.has(name)) groups.set(name, new Set());
     groups.get(name).add(this);
+    if (this.hasAttribute('persist')) listenAcrossTabs();
   }
 
   /** Removes this block from its sync group. */

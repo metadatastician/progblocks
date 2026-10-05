@@ -24,12 +24,12 @@ Nothing has been released. There is no tagged version and no published package; 
   any violation. Dev dependencies `axe-core` and `playwright-core` (no bundled browser).
 - `persist` attribute (with `group`): the reader's variant choice is stored in `localStorage` under
   `progblocks:variant:<group>` and restored on the next page load, ahead of `variant`. Only
-  reader-initiated selections are stored; blocked storage degrades silently to page-local sync; no
-  cross-tab sync. The demo page uses it.
+  reader-initiated selections are stored; blocked storage degrades silently to page-local sync; other
+  open tabs follow via the `storage` event, without echo. The demo page uses it.
 - Live authored content: a `MutationObserver` re-reads the light DOM when templates or text change and
   rebuilds the block (one rebuild per microtask), keeping the selected variant and the reader's values.
   New `refresh()` method for edits to a `<template>`'s `.content`, which observers cannot see.
-- `tests/component.test.js` (30 behavioural tests) and `tests/helpers/dom.js`.
+- `tests/component.test.js` (32 behavioural tests) and `tests/helpers/dom.js`.
 
 - `.gitignore` and the MPL-2.0 `LICENSE` file (#15).
 - Secret scanning via gitleaks — this repository had none before (#16).
