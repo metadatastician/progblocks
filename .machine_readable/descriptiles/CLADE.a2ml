@@ -24,7 +24,7 @@ prefixed-name = "dx-progblocks"
 one-sentence = "A dependency-free web component (<prog-block>) for rich code blocks in technical documentation and wikis."
 conceived-for = "metadatastician/berrywiki"
 decoupled-by-design = true
-notes = "progblocks was conceived for BerryWiki but was built as a standalone, dependency-free web component from the start — no BerryWiki import of it has been verified in this tree — so it can be injected into ddraig-ssg output, nextgen-languages previewers, or plain Markdown sites, per README.md and FACTS.md. Nothing has been released; treat the project as pre-alpha (version drift: 1.0.0 in package.k9/contracts.ncl, 0.1.0 in progblocks.launcher.a2ml/progblocks-launcher.sh, 0.3.0 in package.json)."
+notes = "progblocks was conceived for BerryWiki but was built as a standalone, dependency-free web component from the start — no BerryWiki import of it has been verified in this tree — so it can be injected into ddraig-ssg output, nextgen-languages previewers, or plain Markdown sites, per README.md and FACTS.md. Nothing has been released; treat the project as pre-alpha (every version field says the pre-release 0.3.0, aligned 2026-10-05)."
 
 [clade]
 # The 2 letters abbreviate the CLADE's name below — never the repo's name.

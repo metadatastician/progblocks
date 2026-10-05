@@ -16,7 +16,7 @@ what-this-is-not = [
   "a full A2ML implementation — the parser (a2ml-parser.js) is a stub; variable substitution is plain regex, not a real parse; the tree-sitter WASM asset is a 118-byte ASCII placeholder",
   "a code editor, IDE, or language-server client — the contenteditable editor, the placeholder linter panel, and the unused view-manager.js WebSocket code were removed on 2026-10-05 as out of charter",
   "a data-conversion tool — smart paste and the JSON/CSV/Nickel export were removed on 2026-10-05; only a plain-text Download remains",
-  "a released package — nothing has been published to any registry; version numbers disagree across files (1.0.0 in package.k9/contracts.ncl, 0.1.0 in the launcher config, 0.3.0 in package.json)",
+  "a released package — nothing has been published to any registry; every version field says the pre-release 0.3.0",
 ]
 
 [pipeline]

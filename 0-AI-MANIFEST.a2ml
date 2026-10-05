@@ -107,11 +107,9 @@ FACTS.md wins.
   `.machine_readable/descriptiles/STATE.a2ml` and FACTS.md's "Feature
   reality" section before writing anything that reads as a capability
   claim.
-- **Nothing has been released.** Version numbers disagree across files
-  (`1.0.0` in `package.k9`/`contracts.ncl`, `0.1.0` in
-  `progblocks.launcher.a2ml`/`progblocks-launcher.sh`, `0.3.0` in
-  `package.json`). Treat this project as pre-alpha; do not cut a
-  tag without resolving the drift first.
+- **Nothing has been released.** Every version field says `0.3.0`
+  (aligned 2026-10-05). Treat this project as pre-alpha; `0.3.0` is a
+  pre-release number with no tag behind it.
 - **Never render author or reader text as markup.** The former XSS surface
   (variant content and variable values interpolated into `innerHTML`) was
   closed on 2026-10-05: everything goes in via `textContent`, and

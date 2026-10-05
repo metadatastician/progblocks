@@ -6,7 +6,7 @@
 # (
 #   id                   = "progblocks-launcher"
 #   type                 = "launcher"
-#   version              = "0.1.0"
+#   version              = "0.3.0"
 #   app-name             = "progblocks"
 #   app-display          = "ProgBlocks"
 #   app-url              = "http://localhost:8080"

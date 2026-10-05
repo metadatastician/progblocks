@@ -6,9 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Nothing has been released. There is no tagged version and no published package; everything below is
-`[Unreleased]`. Version strings that appear elsewhere in this repo (`package.k9`/`contracts.ncl` say
-`1.0.0`; the launcher config says `0.1.0`; `package.json` says `0.3.0`) are drift, not history — do not
-read them as prior releases.
+`[Unreleased]`. Every version field in this repo says `0.3.0` (aligned 2026-10-05, after `1.0.0`,
+`0.1.0` and `0.3.0` had drifted apart across files). That is a pre-release number, not a prior release.
 
 ## [Unreleased]
 

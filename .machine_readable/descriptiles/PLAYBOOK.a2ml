@@ -46,5 +46,5 @@ steps = [
 [release-process]
 steps = [
   "Nothing has been released yet — treat this repo as pre-alpha (FACTS.md).",
-  "Resolve the version drift (package.k9/contracts.ncl say 1.0.0; progblocks.launcher.a2ml/progblocks-launcher.sh say 0.1.0; package.json says 0.3.0) before any tag is cut.",
+  "Every version field says 0.3.0 (aligned 2026-10-05); bump them together, in one commit, when a tag is cut.",
 ]
