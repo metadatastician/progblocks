@@ -37,6 +37,13 @@
           name: "Test Component",
           run: "bun run test",
         },
+        # axe-core (WCAG 2.0-2.2 A/AA + best practice) against index.html in the
+        # runner's preinstalled Google Chrome; exits non-zero on any violation
+        # or item needing review. No third-party action, so no new pin.
+        {
+          name: "Accessibility audit",
+          run: "CHROMIUM_PATH=\"$(command -v google-chrome)\" bun tools/a11y-audit.mjs",
+        },
       ],
       permissions: {
         contents: "read",

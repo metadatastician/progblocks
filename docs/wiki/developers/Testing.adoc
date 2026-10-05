@@ -99,7 +99,8 @@ specifically to catch this class of regression. Since 2026-10-05
   link:../users/Feature-Status.adoc[Feature Status] means "works under
   happy-dom".
 * **Screen-reader verification** — none. The axe-core audit (`just a11y`)
-  runs in a real Chromium but is not part of `bun test` or CI. See
+  runs in a real Chromium; it is not part of `bun test`, but CI's
+  `build` job runs it. See
   link:Accessibility.adoc[Accessibility].
 * `glyph-mode` rendering, the
   copy-failure path, and attribute changes after first render

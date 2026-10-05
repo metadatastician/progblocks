@@ -489,7 +489,7 @@ structural parts are asserted in `tests/component.test.js` under happy-dom.
 *Update 2026-10-05.* `just a11y` (`tools/a11y-audit.mjs`) runs axe-core (WCAG 2.0/2.1/2.2 A+AA
 and best practice) on `index.html` in headless Chromium, dark and light: 0 violations, 0 needing
 review, contrast passing on 39 nodes (38 before the demo gained `persist`). Its one earlier finding (`aria-label` on a role-less `<pre>`)
-was fixed with `role="group"`. Planted defects make it exit 1. It is not wired into CI.
+was fixed with `role="group"`. Planted defects make it exit 1. Since 2026-10-05 the `build` job in `ci.yml` also runs it on every push and PR, against the runner's Google Chrome.
 
 What is still missing, and why this entry stays open: no screen-reader session, and axe checks
 only resting states of the default palette. The status region announces only copy and download results:
@@ -507,8 +507,7 @@ Focus destruction (C2) is itself an accessibility defect, not merely a usability
 Evidence: `grep -rn "aria-\|role=" src/prog-block.js` shows the attributes present;
 `grep -rln "axe\|pa11y\|aria" tests/` returns nothing.
 
-Clearing it: add an automated accessibility check (done locally 2026-10-05 as `just a11y`; not
-yet in CI), and test with at least one real screen reader. The tablist keyboard model was fixed
+Clearing it: add an automated accessibility check (done 2026-10-05 as `just a11y`, run in CI), and test with at least one real screen reader. The tablist keyboard model was fixed
 on 2026-10-05.
 
 === T4 — `contracts.ncl` validates a self-description, not the repository *(OPEN, partially cleared)*

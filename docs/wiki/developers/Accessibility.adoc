@@ -63,11 +63,12 @@ numbers hidden, the status message after copy) are asserted by
 
 * **No screen-reader testing.** No session with NVDA, JAWS, VoiceOver,
   TalkBack or Orca has been run against the component.
-* **Automated audit — local only.** `just a11y` (`tools/a11y-audit.mjs`,
+* **Automated audit, local and in CI.** `just a11y` (`tools/a11y-audit.mjs`,
   `CHROMIUM_PATH` required) runs axe-core with WCAG 2.0/2.1/2.2 A+AA and
   best-practice rules on `index.html` in headless Chromium, dark and
   light. On 2026-10-05: 0 violations, 0 needing review, colour contrast
-  passing on 39 nodes; planted defects make it exit 1. It is not in CI.
+  passing on 39 nodes; planted defects make it exit 1. CI's `build` job runs it on every
+  push and pull request, against the runner's Google Chrome.
 * **Contrast beyond the resting state is unmeasured** — hover and focus
   states, and any host override of the `--pb-*` colours.
 

@@ -49,7 +49,7 @@ FACTS.md wins.
   `registration.test.js` (asserts `customElements.get('prog-block')` is
   defined), plus `ci-config.test.js` and `dependabot-config.test.js`.
   39 tests, all passing as of 2026-10-05, under happy-dom. `just a11y`
-  runs an axe-core audit in a real Chromium (local only).
+  runs an axe-core audit in a real Chromium; CI runs it in the build job.
 - `contracts.ncl`, `package.k9` — self-description manifests. Neither is
   consumed by anything in this tree; treat them as declared intent, not
   enforced contract.

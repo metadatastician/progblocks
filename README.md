@@ -112,7 +112,7 @@ automatically.
 ```sh
 just test    # bun test — the same command CI runs (`bun run test`)
 just check   # nickel export contracts.ncl — requires Nickel on PATH
-just a11y    # axe-core audit of index.html in Chromium — set CHROMIUM_PATH
+just a11y    # axe-core audit of index.html in Chromium — set CHROMIUM_PATH (CI runs it too)
 ```
 
 `tests/component.test.js` covers rendering safety, variants, variables, copy, embedding, the `persist` option and
