@@ -34,8 +34,9 @@ can-create-files = true
 #   model and has caused startup_failure elsewhere in the estate.
 # - Never claim in documentation that a feature the code does not
 #   implement exists. In particular, as of 2026-10-05: there is no
-#   code/preview toggle, no templating wizard (no storage, no forms, no
-#   wizard code anywhere in the tree), no linter, no split view, no smart
+#   code/preview toggle, no templating wizard (no wizard storage, no forms,
+#   no wizard code anywhere in the tree; the only storage is the opt-in
+#   `persist` variant name per group), no linter, no split view, no smart
 #   paste, no structured (JSON/CSV/Nickel) export, no inline code editing, and no syntax
 #   highlighting. The linter, split view, smart paste, structured export and the
 #   contenteditable editor were removed on 2026-10-05 as out of charter —

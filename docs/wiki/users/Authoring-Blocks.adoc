@@ -45,8 +45,14 @@ There is no platform auto-detection. Use:
 * `variant="Name"` to choose the initially selected variant (also a
   read/write `variant` property);
 * `group="name"` to keep every block on the page with the same group on
-  the same variant name. The choice is in memory only and is not
-  remembered across page loads;
+  the same variant name. By default the choice is in memory only;
+* `persist` (with `group`) to remember the reader's choice across page
+  loads. The variant name the reader selects is stored in `localStorage`
+  under `progblocks:variant:<group>` and restored on the next load, ahead
+  of `variant`. Only the name is stored, and only for selections the
+  reader makes. If storage is blocked, the group still syncs within the
+  page; a remembered name a block lacks leaves its first variant
+  selected. Other open tabs do not follow;
 * `label="…"` to name the tablist for assistive technology (default
   "Example variants").
 
@@ -70,7 +76,8 @@ This substitution is **not** backed by the A2ML parser
 commented out, and nothing imports it.
 
 From script: `block.getVariable(name)`, `block.setVariable(name, value)`,
-and `block.text` (the example exactly as the reader sees it). The block
+`block.text` (the example exactly as the reader sees it), and
+`block.refresh()` (re-read the authored content; see below). The block
 dispatches `progblocks:variable-change` `{ name, value }` and
 `progblocks:variant-change` `{ variant }`; both bubble and cross the
 shadow boundary.
@@ -96,5 +103,10 @@ There is **no UI toggle**; it is host-attribute-only.
   link:Feature-Status.adoc[Feature Status].
 * No syntax highlighting — `language="…"` only adds a `language-…`
   class to `<code>` for a host highlighter.
-* No live updates from the light DOM — templates are read once, when
-  the element first connects. Changing them afterwards has no effect.
+* ~~No live updates from the light DOM.~~ Since 2026-10-05 the block
+  watches its own children: adding, removing or editing templates or
+  text re-renders it (once per burst of changes), keeping the selected
+  variant and the reader's values. Two caveats: editing a template's
+  `.content` fragment directly is invisible to observers, so call
+  `block.refresh()` afterwards; and a re-render replaces the inputs, so
+  a reader focused inside the block loses focus.

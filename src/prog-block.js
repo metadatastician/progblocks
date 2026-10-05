@@ -12,6 +12,25 @@ const STYLESHEET_URL = new URL('./prog-block.css', import.meta.url).href;
 /** Blocks sharing a `group` attribute switch variant together. */
 const groups = new Map();
 let instanceCount = 0;
+const STORAGE_PREFIX = 'progblocks:variant:';
+
+/** Reads a remembered variant for a group; null when storage is unavailable or empty. */
+function recall(group) {
+  try {
+    return globalThis.localStorage?.getItem(STORAGE_PREFIX + group) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Remembers a group's variant; silently does nothing when storage is unavailable. */
+function remember(group, variant) {
+  try {
+    globalThis.localStorage?.setItem(STORAGE_PREFIX + group, variant);
+  } catch {
+    // Private mode, blocked storage or quota: persistence is a convenience only.
+  }
+}
 
 /**
  * Strips leading/trailing blank lines and the common indentation from an
@@ -80,16 +99,51 @@ export class ProgBlock extends HTMLElement {
       this._readLightDom();
       this._build();
       this._built = true;
-      const initial = this.getAttribute('variant');
+      const group = this.getAttribute('group');
+      const remembered = this.hasAttribute('persist') && group ? recall(group) : null;
+      const initial = remembered ?? this.getAttribute('variant');
       if (initial !== null) this._selectByName(initial, { notify: false });
       this._renderVariant();
     }
     this._joinGroup(this.getAttribute('group'));
+    this._observer ??= new MutationObserver(() => this._scheduleRefresh());
+    this._observer.observe(this, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['data-variant'] });
   }
 
-  /** Leaves any variant-sync group so detached blocks are not retained. */
+  /** Leaves any variant-sync group and stops watching authored content. */
   disconnectedCallback() {
     this._leaveGroup();
+    this._observer?.disconnect();
+  }
+
+  /**
+   * Re-reads the authored content and rebuilds the block, keeping the selected
+   * variant (by name) and the reader's values. Needed only after editing a
+   * template's `content` directly, which no observer can see.
+   */
+  refresh() {
+    if (!this._built) return;
+    const selected = this.variant;
+    this._defaults = new Map();
+    this._readLightDom();
+    this.shadowRoot.replaceChildren();
+    this._build();
+    this._activeIndex = Math.max(0, this._variants.findIndex((v) => v.name === selected));
+    this._renderVariant();
+    for (const [name, value] of this._values) {
+      const input = this._varInputs.get(name);
+      if (input) input.value = value;
+    }
+  }
+
+  /** Coalesces a burst of light-DOM mutations into one refresh per microtask. */
+  _scheduleRefresh() {
+    if (this._refreshQueued) return;
+    this._refreshQueued = true;
+    queueMicrotask(() => {
+      this._refreshQueued = false;
+      this.refresh();
+    });
   }
 
   /** Applies observed attribute changes as in-place DOM patches. */
@@ -304,6 +358,7 @@ export class ProgBlock extends HTMLElement {
         detail: { variant: this.variant },
       }));
       this._syncGroup();
+      if (this._group && this.hasAttribute('persist')) remember(this._group, this.variant);
     }
   }
 

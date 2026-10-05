@@ -13,6 +13,7 @@ This file is authoritative on what is *owed*.
 Last compiled: 2026-08-07, against `main` plus the stacked branches for PR #18
 (honest gates) and this documentation set. Code-debt and test-debt entries updated
 2026-10-05 for the render-core rewrite on branch `feat/render-core-variants-vars`.
+C14 and C15 cleared 2026-10-05 on branch `feat/persist-and-live-content`.
 
 toc::[]
 
@@ -362,7 +363,26 @@ Clearing it: file the defect against `launch-scaffolder` and regenerate. **Do no
 hand-edit the generated file** — it affects every generated launcher in the estate, so
 fixing it here would hide an estate-wide bug behind one repo's patch.
 
-=== C14 — Light-DOM changes after first connect are not observed *(OPEN, added 2026-10-05)*
+=== C14 — Light-DOM changes after first connect are not observed *(CLEARED 2026-10-05, branch `feat/persist-and-live-content`)*
+
+*Cleared.* `connectedCallback()` now attaches a `MutationObserver` to the host (`childList`,
+`subtree`, `characterData`, and the `data-variant` attribute). A mutation schedules
+`refresh()`, coalesced to one rebuild per microtask; `refresh()` re-reads the light DOM,
+replaces the shadow tree, and restores the selected variant by name and the reader's
+variable values. The observer disconnects in `disconnectedCallback()`. Evidence:
+`tests/component.test.js` › `authored content that changes after render` (4 tests:
+`replacing templates re-renders, keeping the variant and reader values`, `editing
+plain-text content is picked up`, `refresh() picks up edits inside template.content`, `a
+burst of mutations triggers one rebuild`). Mutation-checked by hand on 2026-10-05:
+disabling the observer failed 3 of them. Under happy-dom; also checked once by hand in headless Chromium on 2026-10-05 (a live template
+swap kept the variant and the typed value).
+
+Caveats that remain: an edit to a `<template>`'s `.content` fragment is invisible to any
+observer, so the host must call the public `refresh()` method after one; and a rebuild
+replaces the variable inputs, so focus inside the block is lost when authored content
+changes (host-driven, rare).
+
+The original finding, kept for the record:
 
 The authored `<template data-variant>` children (or the element's own text) are read once,
 in the first `connectedCallback`. Adding, removing or editing templates afterwards — for
@@ -378,7 +398,20 @@ Clearing it: observe the light DOM and rebuild the variant list and variable inp
 changes, preserving entered values for variables that survive. Until then, hosts must
 replace the whole `<prog-block>` element to change its content.
 
-=== C15 — Variant-group selection is not persisted *(ACCEPTED, added 2026-10-05)*
+=== C15 — Variant-group selection is not persisted *(CLEARED 2026-10-05 — opt-in `persist`)*
+
+*Cleared* as an opt-in. With the boolean `persist` attribute (effective only together with
+`group`), a reader-initiated selection is stored in `localStorage` under
+`progblocks:variant:<group>` and restored on the next page load, ahead of the `variant`
+attribute. Programmatic selections are not stored. Every storage access is in
+`try`/`catch`, so blocked or unavailable storage degrades silently to page-local group
+sync; a remembered name the block lacks leaves the first variant selected. Without
+`persist` nothing is stored, which keeps the original host-policy reasoning below intact
+as the default. No cross-tab sync: there is no `storage` event listener. Evidence:
+`tests/component.test.js` › `remembering the reader's variant` (4 tests). Mutation-checked
+by hand on 2026-10-05: removing the persist write failed 1 of them.
+
+The original finding, kept for the record:
 
 `group="name"` keeps every block on the page with that group on the same variant, but the
 registry is an in-memory `Map` (`const groups` in `src/prog-block.js`). The choice is lost on navigation or
@@ -417,10 +450,11 @@ Evidence: `.machine_readable/rsr-profile.a2ml` does not declare `formal-proofs`;
 
 === T2 — The test suite covers 4 of ~660 source lines' worth of behaviour *(PARTIALLY CLEARED 2026-10-05)*
 
-*Update 2026-10-05.* `bun test` now runs 29 tests across four files, all passing:
-`tests/component.test.js` (22 behavioural tests: rendering safety, variable substitution,
+*Update 2026-10-05.* `bun test` now runs 37 tests across four files, all passing:
+`tests/component.test.js` (30 behavioural tests: rendering safety, variable substitution,
 variant switching and the tabs keyboard model, group sync, both events, stylesheet resolution, copy, download,
-line numbers, and the `dedent`/`tokenize` helpers), `tests/registration.test.js` (1),
+line numbers, the opt-in `persist` storage, authored content that changes after render, and
+the `dedent`/`tokenize` helpers), `tests/registration.test.js` (1),
 `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2). The smart-paste
 tests (`tests/prog-block.test.js`) were deleted with the module. Coverage has not been
 measured, and every test runs under happy-dom, not a real browser. Still untested:
@@ -457,7 +491,7 @@ structural parts are asserted in `tests/component.test.js` under happy-dom.
 
 *Update 2026-10-05.* `just a11y` (`tools/a11y-audit.mjs`) runs axe-core (WCAG 2.0/2.1/2.2 A+AA
 and best practice) on `index.html` in headless Chromium, dark and light: 0 violations, 0 needing
-review, contrast passing on 38 nodes. Its one earlier finding (`aria-label` on a role-less `<pre>`)
+review, contrast passing on 39 nodes (38 before the demo gained `persist`). Its one earlier finding (`aria-label` on a role-less `<pre>`)
 was fixed with `role="group"`. Planted defects make it exit 1. It is not wired into CI.
 
 What is still missing, and why this entry stays open: no screen-reader session, and axe checks
@@ -687,7 +721,7 @@ fake-gate problem. The bar is reasonable for a component this small; the coverag
 wrong.
 
 Evidence: ruleset `code_coverage` parameters; `npm test` → 5 tests (2026-08-07). As of
-2026-10-05 the suite is 29 tests (T2), but coverage is still not measured, so whether the
+2026-10-05 the suite is 37 tests (T2), but coverage is still not measured, so whether the
 95% bar is met is unknown.
 
 Clearing it: raise real coverage as each defect in the Code debt section lands with a test.
@@ -773,3 +807,9 @@ checks were: reading the rewritten `src/prog-block.js` and `src/prog-block.css` 
 `bun test` → 27 pass, 0 fail; and the `grep` commands quoted in each entry. Still not
 done: a real-browser session, a screen-reader session, an automated accessibility audit,
 and a coverage measurement.
+
+*2026-10-05 update (branch `feat/persist-and-live-content`).* C14 and C15 were cleared by
+reading `src/prog-block.js` in full, `bun test` → 37 pass, 0 fail, and mutation-checking the
+new tests by hand (disabling the observer failed 3; removing the persist write failed 1).
+`just a11y` → 0 violations, 0 needing review, contrast passing on 39 nodes. Still not done:
+a real-browser session of the observer or the storage path, and a screen-reader session.

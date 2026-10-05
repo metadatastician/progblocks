@@ -38,11 +38,11 @@ runs the same command.
 
 == What the suite covers
 
-Four test files, 29 tests, all passing as of 2026-10-05. The DOM comes
+Four test files, 37 tests, all passing as of 2026-10-05. The DOM comes
 from happy-dom, registered once by `tests/helpers/dom.js` with a page URL
 of `/docs/deep/page.html` so that path-resolution bugs show up.
 
-* `tests/component.test.js` (22 tests) — the component's behaviour:
+* `tests/component.test.js` (30 tests) — the component's behaviour:
 ** *untrusted content is never rendered as markup* — escaped and
    unescaped markup in templates, markup typed into a variable input,
    markup in a tab label;
@@ -56,6 +56,15 @@ of `/docs/deep/page.html` so that path-resolution bugs show up.
    writing the personalised text and announcing it (clipboard stubbed),
    download saving it under the `filename` attribute,
    line-number count and `aria-hidden`;
+** *remembering the reader's variant* — with `group` and `persist` a
+   reader choice is stored in `localStorage` and restored on the next
+   mount; without `persist` nothing is stored; a remembered name the
+   block lacks falls back to the first variant; a throwing
+   `localStorage` leaves switching working;
+** *authored content that changes after render* — replacing templates
+   re-renders while keeping the variant and reader values; plain-text
+   edits are picked up; `refresh()` picks up edits inside
+   `template.content`; a burst of mutations triggers one rebuild;
 ** *pure helpers* — `dedent()` and `tokenize()`.
 * `tests/registration.test.js` (1 test) — imports `src/prog-block.js` and
   asserts `customElements.get('prog-block')` is defined and that a

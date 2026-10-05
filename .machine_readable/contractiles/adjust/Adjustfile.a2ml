@@ -58,13 +58,13 @@ is verification — no screen reader yet, and the axe-core audit
 - enforced-by: this probe
 
 ### focus-destroyed-on-keystroke (RESOLVED 2026-10-05)
-- description: Editing a variable input used to trigger a full shadowRoot.innerHTML rewrite, destroying the focused <input>. Fixed: the shadow tree is built once and patched in place. Kept as a regression guard
+- description: Editing a variable input used to trigger a full shadowRoot.innerHTML rewrite, destroying the focused <input>. Fixed: the shadow tree is built once and patched in place (since 2026-10-05 it is rebuilt only when the authored light DOM changes, never on typing). Kept as a regression guard
 - run: "! grep -q 'shadowRoot.innerHTML' src/prog-block.js"
 - severity: critical
 - enforced-by: tests/component.test.js ("typing keeps the same input element…") plus this probe — same defect tracked in ../bust/Bustfile.a2ml
 
 ### verification-missing
-- description: Accessibility is verified by structural unit tests and a local axe-core audit (just a11y: 0 violations, resting-state contrast on 38 nodes, 2026-10-05) — but there is no screen-reader session and the audit is not in CI
+- description: Accessibility is verified by structural unit tests and a local axe-core audit (just a11y: 0 violations, resting-state contrast on 39 nodes, 2026-10-05) — but there is no screen-reader session and the audit is not in CI
 - tolerance: known gap, tracked here; 0 tolerance for any claim that AA is met while this is open
 - corrective: run an automated audit in CI and test with at least one real screen reader
 - severity: advisory
