@@ -21,7 +21,7 @@ follows is what actually exists, not the pitch — for the itemised, evidence-ba
 **The core works and is tested.** As of 2026-10-05 the component builds its shadow tree once and patches
 it in place; every piece of author or reader text reaches the page through `textContent`, never
 `innerHTML`. That one change closed the injection surface, made variables typeable, and made the
-tablist accessible. `bun test` runs 29 tests, 0 failing, and `just a11y` (axe-core in a real Chromium) reports no
+tablist accessible. `bun test` runs 37 tests, 0 failing, and `just a11y` (axe-core in a real Chromium) reports no
 WCAG 2.2 AA violations on the demo. Nothing has been checked with a screen reader yet.
 
 **Scope was cut to the charter.** ProgBlocks renders code examples; it is not an editor, IDE or language
@@ -56,6 +56,7 @@ module's own URL, so the page can live at any depth.
 | `{{ name = default }}` | The same, pre-filled with `default` until the reader types |
 | `group="os"` | Every block in the page with that group switches variant together |
 | `variant="Linux"` | The initially selected variant |
+| `persist` (with `group`) | The reader's tab choice is remembered in `localStorage` (key `progblocks:variant:<group>`) and restored on the next page load, ahead of `variant`. Only the variant name is stored; if storage is blocked, the group still syncs within the page |
 | `label="Operating system"` | Accessible name of the tablist (default "Example variants") |
 | `line-numbers` | A line-number gutter, hidden from assistive technology and from copy |
 | `language="bash"` | `class="language-bash"` on the `<code>`, for an external highlighter |
@@ -63,7 +64,9 @@ module's own URL, so the page can live at any depth.
 | `glyph-mode` | A compact inline rendering with no header or inputs |
 
 **Script API:** `block.variant` (get/set), `block.text` (the personalised example),
-`block.getVariable(name)`, `block.setVariable(name, value)`.
+`block.getVariable(name)`, `block.setVariable(name, value)`, `block.refresh()` (re-reads authored content; only needed
+after editing a `<template>`'s `.content` directly, which no observer can see). Other light-DOM edits are picked up
+automatically.
 **Events** (bubbling, composed): `progblocks:variant-change` `{ variant }`,
 `progblocks:variable-change` `{ name, value }`.
 **Styling:** `--pb-*` custom properties, and `::part(header | tab | copy-button | download-button | variables | code | variable)`.
@@ -75,14 +78,14 @@ module's own URL, so the page can live at any depth.
 | Custom element registers | Works | Guarded by `tests/registration.test.js` |
 | Safe rendering of untrusted content | Works | No `innerHTML` in `src/`; tested for markup in variants, tab labels and typed values, mutation-checked once by hand on 2026-10-05 (not automated) |
 | Variant tabs | Works | Tabs pattern with roving `tabindex`, `aria-controls`/`aria-labelledby`, wrap-around arrows, Home/End |
-| Cross-block variant sync | Works | `group` attribute; page-local, not persisted across pages |
+| Cross-block variant sync | Works | `group` attribute; page-local by default. With `persist` the reader's choice is remembered across page loads in `localStorage`; no cross-tab sync |
 | Variable substitution | Works | Inline defaults; one input per variable across all variants; values survive variant switches; typing keeps focus |
 | Copy to clipboard | Works | Copies the personalised text; result announced via a `role=status` live region |
 | Download | Works | Saves the personalised text as plain text; `filename` attribute, default `example.txt` |
 | Line numbers | Works | `line-numbers` attribute |
 | Accessibility | Audited, not screen-reader tested | AA target. Labelled inputs, focus rings, forced-colours support, no colour-only state. axe-core: 0 violations (`just a11y`) |
 | Syntax highlighting | **Absent** | Out of scope for now; the `language-*` class lets a host highlighter hook in |
-| Reacting to light-DOM changes after connect | **Absent** | Authored content is read once |
+| Reacting to light-DOM changes after connect | Works | A `MutationObserver` rebuilds the block (one rebuild per microtask), keeping the selected variant and the reader's values; focus inside the block is lost when it rebuilds. Edits to a `<template>`'s `.content` need `block.refresh()` |
 | A2ML parser (tree-sitter/WASM) | **Absent** | `src/a2ml-parser.js` is a stub and is no longer imported; `assets/tree-sitter-a2ml.wasm` is a placeholder |
 | K9 / Nickel validation triad | **Absent** | `src/k9-validator.js` is no longer imported by the component |
 
@@ -112,7 +115,8 @@ just check   # nickel export contracts.ncl — requires Nickel on PATH
 just a11y    # axe-core audit of index.html in Chromium — set CHROMIUM_PATH
 ```
 
-`tests/component.test.js` covers rendering safety, variants, variables, copy and embedding;
+`tests/component.test.js` covers rendering safety, variants, variables, copy, embedding, the `persist` option and
+authored content that changes after render;
 `tests/registration.test.js` guards module loading; `tests/ci-config.test.js` and
 `tests/dependabot-config.test.js` guard the CI configuration.
 

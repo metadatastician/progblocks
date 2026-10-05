@@ -44,10 +44,11 @@ FACTS.md wins.
 - `index.html` — the demo page, several `<prog-block>` elements. Registers
   and renders (see Invariants below).
 - `tests/` — `bun test` files run under happy-dom: `component.test.js`
-  (rendering safety, variants, variables, copy, embedding),
+  (rendering safety, variants, variables, copy, embedding, opt-in
+  `persist`, authored content that changes after render),
   `registration.test.js` (asserts `customElements.get('prog-block')` is
   defined), plus `ci-config.test.js` and `dependabot-config.test.js`.
-  29 tests, all passing as of 2026-10-05, under happy-dom. `just a11y`
+  37 tests, all passing as of 2026-10-05, under happy-dom. `just a11y`
   runs an axe-core audit in a real Chromium (local only).
 - `contracts.ncl`, `package.k9` — self-description manifests. Neither is
   consumed by anything in this tree; treat them as declared intent, not
@@ -100,7 +101,9 @@ FACTS.md wins.
 - **Do not document features the code does not implement.** In particular:
   there is no code/preview toggle, no templating wizard, no linter, no
   split view, no smart paste, no structured (JSON/CSV/Nickel) export, no syntax highlighting, and
-  no reaction to light-DOM changes after the first connect. See
+  no cross-tab sync of a persisted variant. (Light-DOM changes after the first connect *are*
+  observed since 2026-10-05; edits to a template's `.content` need `refresh()`. The only storage
+  is the opt-in `persist` variant name per group.) See
   `.machine_readable/descriptiles/STATE.a2ml` and FACTS.md's "Feature
   reality" section before writing anything that reads as a capability
   claim.

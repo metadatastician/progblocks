@@ -74,9 +74,14 @@ nor inside `ddraig-ssg`, BerryWiki or any other consumer.
 
 Two other things to know before embedding:
 
-* The element reads its templates once, on first connect. If your site
-  changes the content of a `<prog-block>` after it has rendered, replace
-  the whole element instead.
+* Since 2026-10-05 the element re-renders when your site changes its
+  content after it has rendered (before then it read its templates once).
+  If your code edits a `<template>`'s `.content` fragment directly, call
+  `block.refresh()` afterwards: no observer can see that change.
+* The element stores nothing unless you add `persist` to a block that has
+  a `group`; then the reader's chosen variant name is kept in
+  `localStorage` under `progblocks:variant:<group>`. See
+  link:Authoring-Blocks.adoc[Authoring Blocks].
 * There is no syntax highlighting. The `language` attribute becomes a
   `language-…` class on the inner `<code>`, and parts (`::part(code)`,
   `::part(variable)` and others) are exposed for styling.

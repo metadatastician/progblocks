@@ -51,8 +51,11 @@ generic labels — no platform detection. Tests: `variant switching` group.
 
 |Cross-block sync (`group="…"`)
 |Works
-|Blocks sharing a group switch together. Page-local and in memory only —
-not persisted across page loads (`DEBT.adoc` C15).
+|Blocks sharing a group switch together, page-local by default. With
+`persist` the reader's choice is stored in `localStorage` and restored on
+the next page load (`DEBT.adoc` C15, cleared 2026-10-05); blocked storage
+degrades to page-local sync; no cross-tab sync. Tests: `remembering the
+reader's variant` group.
 
 |`{{ name }}` / `{{ name = default }}` substitution
 |Works
@@ -74,10 +77,10 @@ stubbed clipboard; the failure path is untested.
 `user-select: none`, and Copy never includes it. No UI toggle.
 
 |Events and script API
-|Partial
+|Works
 |`progblocks:variant-change` and `progblocks:variable-change` (bubbling,
-composed), `variant`, `text`, `getVariable()`, `setVariable()`. Only the
-`variable-change` event has a test; `variant-change` fires only for a
+composed), `variant`, `text`, `getVariable()`, `setVariable()`,
+`refresh()`. Both events have a test; `variant-change` fires only for a
 change the reader makes in that block.
 
 |Safe rendering of untrusted content
@@ -87,16 +90,20 @@ change the reader makes in that block.
 not rendered. Tests: `untrusted content is never rendered as markup`.
 
 |"Inject anywhere" embedding
-|Works (happy-dom only)
+|Works
 |The stylesheet URL is resolved with `new URL('./prog-block.css',
 import.meta.url)`, so the host page can live at any depth. Tested from a
-page at `/docs/deep/`; not yet checked in a real browser. See
+page at `/docs/deep/`, and loaded from two directories deep in headless
+Chromium on 2026-10-05. See
 link:Getting-Started.adoc[Getting Started].
 
 |Reacting to light-DOM changes after first connect
-|Absent
-|Content is read once; later edits to the templates are ignored
-(`DEBT.adoc` C14).
+|Works
+|A `MutationObserver` re-reads the content and rebuilds the block, once
+per burst, keeping the variant and the reader's values; focus inside the
+block is lost on rebuild. Edits to a template's `.content` need
+`block.refresh()`. Absent until 2026-10-05 (`DEBT.adoc` C14). Tests:
+`authored content that changes after render` group.
 
 |Syntax highlighting
 |Absent (out of scope)
@@ -136,7 +143,7 @@ returns `true`. Nothing imports `src/k9-validator.js`.
 
 |Templating wizards
 |Absent
-|No storage, no forms, no wizard code anywhere in the repository; no
+|No wizard storage, no forms, no wizard code anywhere in the repository; no
 longer advertised.
 
 |Inline code editing (`contenteditable`)

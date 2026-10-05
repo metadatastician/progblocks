@@ -217,6 +217,83 @@ describe('embedding', () => {
   });
 });
 
+describe('remembering the reader\'s variant', () => {
+  afterEach(() => localStorage.clear());
+  const OS_PERSIST = THREE_OS.replace('<prog-block>', '<prog-block group="os" persist>');
+
+  test('persist stores a reader choice and restores it on the next page', () => {
+    tabs(mount(OS_PERSIST))[2].click();
+    assert.equal(localStorage.getItem('progblocks:variant:os'), 'Linux');
+    document.body.replaceChildren();
+    assert.equal(mount(OS_PERSIST).variant, 'Linux');
+  });
+
+  test('without persist nothing is stored', () => {
+    tabs(mount(THREE_OS.replace('<prog-block>', '<prog-block group="os">')))[1].click();
+    assert.equal(localStorage.getItem('progblocks:variant:os'), null);
+  });
+
+  test('a remembered name the block lacks falls back to the first variant', () => {
+    localStorage.setItem('progblocks:variant:os', 'BeOS');
+    assert.equal(mount(OS_PERSIST).variant, 'macOS');
+  });
+
+  test('blocked storage degrades silently', () => {
+    const real = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, get() { throw new Error('SecurityError'); } });
+    try {
+      const block = mount(OS_PERSIST);
+      tabs(block)[1].click();
+      assert.equal(block.variant, 'Windows');
+    } finally {
+      Object.defineProperty(globalThis, 'localStorage', real);
+    }
+  });
+});
+
+describe('authored content that changes after render', () => {
+  const tick = () => new Promise((r) => setTimeout(r, 0));
+
+  test('replacing templates re-renders, keeping the variant and reader values', async () => {
+    const block = mount(THREE_OS);
+    tabs(block)[1].click();
+    block.setVariable('pkg', 'jq');
+    const fresh = document.createElement('template');
+    fresh.setAttribute('data-variant', 'Windows');
+    fresh.innerHTML = 'scoop install {{ pkg }}';
+    block.replaceChildren(fresh);
+    await tick();
+    assert.equal(tabs(block).length, 0, 'one variant now, so no tablist');
+    assert.equal(code(block), 'scoop install jq');
+    assert.equal(block.shadowRoot.querySelector('input').value, 'jq');
+  });
+
+  test('editing plain-text content is picked up', async () => {
+    const block = mount('<prog-block>echo one</prog-block>');
+    block.firstChild.data = 'echo two';
+    await tick();
+    assert.equal(code(block), 'echo two');
+  });
+
+  test('refresh() picks up edits inside template.content', () => {
+    const block = mount(THREE_OS);
+    block.querySelector('template').content.textContent = 'port install {{ pkg }}';
+    block.refresh();
+    assert.equal(code(block), 'port install {{ pkg }}');
+  });
+
+  test('a burst of mutations triggers one rebuild', async () => {
+    const block = mount(THREE_OS);
+    let builds = 0;
+    const original = block._build.bind(block);
+    block._build = () => { builds++; original(); };
+    for (const t of block.querySelectorAll('template')) t.setAttribute('data-variant', t.getAttribute('data-variant') + '!');
+    await tick();
+    assert.equal(builds, 1);
+    assert.equal(tabs(block)[0].textContent, 'macOS!');
+  });
+});
+
 describe('pure helpers', () => {
   test('dedent strips common indentation and blank edges', () => {
     assert.equal(dedent('\n    a\n      b\n    c\n  '), 'a\n  b\nc');

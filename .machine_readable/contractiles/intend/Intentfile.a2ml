@@ -99,7 +99,7 @@ If you are unsure whether a change is in scope, ask. Sensitive areas:
 ### Far Horizon
 
 #### templating-wizards
-- description: Storage-backed templating wizards — currently no storage, no forms, and no wizard code exists anywhere in the tree
+- description: Storage-backed templating wizards — currently no wizard storage, no forms, and no wizard code exists anywhere in the tree (the only storage is the opt-in `persist` variant name per group, added 2026-10-05)
 - horizon: far
 - status: declared
 
