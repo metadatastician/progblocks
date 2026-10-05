@@ -5,21 +5,27 @@ import { readFileSync } from 'node:fs';
 const repositoryRoot = new URL('../', import.meta.url);
 const readRepositoryFile = (path) => readFileSync(new URL(path, repositoryRoot), 'utf8');
 
-const dependabotConfig = readRepositoryFile('.github/dependabot.yml');
-const codeqlWorkflow = readRepositoryFile('.github/workflows/codeql.yml');
-const scorecardWorkflow = readRepositoryFile('.github/workflows/scorecard.yml');
+// Parsed, not pattern-matched: the workflows are KYAML (flow style, quoted
+// strings), and the earlier regexes assumed block-style YAML line by line.
+const dependabotConfig = Bun.YAML.parse(readRepositoryFile('.github/dependabot.yml'));
+const codeqlWorkflow = Bun.YAML.parse(readRepositoryFile('.github/workflows/codeql.yml'));
+const scorecardWorkflow = Bun.YAML.parse(readRepositoryFile('.github/workflows/scorecard.yml'));
 const actionsLock = readRepositoryFile('.github/workflows/actions.lock');
 
+/** Every `uses:` reference in a parsed workflow, job-level and step-level, in file order. */
 const actionReferences = (workflow) =>
-  [...workflow.matchAll(/^\s+uses:\s+([^\s#]+)(?:\s+#.*)?$/gm)].map((match) => match[1]);
+  Object.values(workflow.jobs ?? {}).flatMap((job) => [
+    ...(job.uses ? [job.uses] : []),
+    ...(job.steps ?? []).filter((step) => step.uses).map((step) => step.uses),
+  ]);
 
+/** The single step called `name` across a parsed workflow's jobs; fails if absent. */
 const namedStep = (workflow, name) => {
-  const lines = workflow.split('\n');
-  const start = lines.indexOf(`      - name: ${name}`);
-  assert.notStrictEqual(start, -1, `workflow should contain a named ${name} step`);
-
-  const nextStep = lines.findIndex((line, index) => index > start && line.startsWith('      - name:'));
-  return lines.slice(start, nextStep === -1 ? undefined : nextStep).join('\n');
+  const step = Object.values(workflow.jobs ?? {})
+    .flatMap((job) => job.steps ?? [])
+    .find((candidate) => candidate.name === name);
+  assert.ok(step, `workflow should contain a named ${name} step`);
+  return step;
 };
 
 const dependencyBlock = (action) => {
@@ -40,14 +46,14 @@ const lockedCommitFor = (action) => {
 
 describe('pull request CI configuration', () => {
   test('caps grouped GitHub Actions updates at two open pull requests', () => {
-    const githubActionsUpdate = dependabotConfig.match(
-      /^  - package-ecosystem:\s*["']github-actions["']\n(?:(?!^  - package-ecosystem:)[\s\S])*$/m,
+    const githubActionsUpdate = (dependabotConfig.updates ?? []).find(
+      (update) => update['package-ecosystem'] === 'github-actions',
     );
 
     assert.ok(githubActionsUpdate, 'Dependabot should configure the github-actions ecosystem');
-    assert.match(githubActionsUpdate[0], /^    directory:\s*["']\/["']$/m);
-    assert.match(githubActionsUpdate[0], /^    groups:\n      actions:\n        patterns:\n          - ["']\*["']$/m);
-    assert.match(githubActionsUpdate[0], /^    open-pull-requests-limit:\s*2$/m);
+    assert.strictEqual(githubActionsUpdate.directory, '/');
+    assert.deepStrictEqual(githubActionsUpdate.groups?.actions?.patterns, ['*']);
+    assert.strictEqual(githubActionsUpdate['open-pull-requests-limit'], 2);
   });
 
   test('pins every CodeQL workflow action to the version recorded in actions.lock', () => {
@@ -83,8 +89,7 @@ describe('pull request CI configuration', () => {
   test('does not persist checkout credentials in the CodeQL job', () => {
     const checkoutStep = namedStep(codeqlWorkflow, 'Checkout');
 
-    assert.match(checkoutStep, /^        with:\n          persist-credentials:\s*false$/m);
-    assert.doesNotMatch(checkoutStep, /persist-credentials:\s*["']?true["']?/);
+    assert.strictEqual(checkoutStep.with?.['persist-credentials'], false);
   });
 
   test('pins the Scorecard reusable workflow to the approved revision', () => {
