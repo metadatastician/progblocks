@@ -38,6 +38,9 @@
           run: "bun run test",
         },
       ],
+      permissions: {
+        contents: "read",
+      },
     },
     pins: {
       name: "action pins resolve",
