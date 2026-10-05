@@ -14,7 +14,7 @@ check:
 
 # Test the component
 test:
-	node --test
+	bun test
 
 # List the documentation tree
 docs:

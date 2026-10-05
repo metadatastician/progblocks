@@ -1,12 +1,12 @@
 # ProgBlocks
 
-**A dependency-free web component for rich code blocks in technical documentation — pre-alpha, and not currently functional.**
+**A dependency-free web component for variant-aware, personalisable code examples in technical documentation — pre-alpha.**
 
 ## What this is
 
-ProgBlocks is a single custom element, `<prog-block>`, meant to render variant-switchable,
-variable-substituted code blocks for documentation and wikis: pick an OS/shell/language tab, fill in
-`{{ variables }}`, paste in data and have it auto-detected as an array or matrix, export the result.
+ProgBlocks is a single custom element, `<prog-block>`, that renders variant-switchable,
+variable-substituted code examples for documentation: pick an OS/shell/language tab, fill in
+`{{ variables }}`, copy the result.
 Conceived for [BerryWiki](https://github.com/metadatastician/berrywiki) and decoupled by design so it
 can be injected into `ddraig-ssg` output, `nextgen-languages` previewers, or plain Markdown sites. What
 follows is what actually exists, not the pitch — for the itemised, evidence-backed version see
@@ -19,58 +19,71 @@ follows is what actually exists, not the pitch — for the itemised, evidence-ba
 anything yet: `package.k9` and `contracts.ncl` say `1.0.0`; `progblocks.launcher.a2ml` and
 `progblocks-launcher.sh` say `0.1.0`; `package.json` says `0.3.0`. Treat all three as noise.
 
-**The component registers.** `src/prog-block.js` used to import a name, `validateK9`, that
-`src/k9-validator.js` did not export (it exports `K9Validator` and `defaultValidator`). That was a
-link-time ES module error — loading the file threw before `customElements.define('prog-block', …)` was
-ever reached, so every `<prog-block>` on `index.html` was inert. The import has been fixed (it now
-imports `defaultValidator`) and a regression test guards against it recurring:
+**The core works and is tested.** As of 2026-10-05 the component builds its shadow tree once and patches
+it in place; every piece of author or reader text reaches the page through `textContent`, never
+`innerHTML`. That one change closed the injection surface, made variables typeable, and made the
+tablist accessible. `bun test` runs 27 tests, 0 failing. Nothing has yet been checked with a real screen
+reader or an automated accessibility audit; treat accessibility as *implemented and unit-tested*, not
+*verified*.
 
-```
-$ npm test
-✔ <prog-block> registers and constructs as a real HTMLElement
-ℹ tests 5
-ℹ pass 5
-ℹ fail 0
-```
-
-`tests/registration.test.js` asserts `customElements.get('prog-block')` is defined after the module
-loads — the class of bug that made every `<prog-block>` inert can no longer land silently.
-
-Several features claimed by earlier revisions of this README were never implemented and have been
-removed rather than left to rot unfixed: a code/preview toggle, templating wizards, a live linter, and
-WCAG **AAA** accessibility (the honest target is AA, and even that has gaps — see the table).
+**Scope was cut to the charter.** ProgBlocks renders code examples; it is not an editor, IDE or language
+server. The contenteditable editor, the placeholder linter, split view, smart paste and the
+JSON/CSV/Nickel export (whose encodings were not real) have been removed. A Copy button replaces export.
 
 ## Try it
 
-Open `index.html` in a browser.
+Open `index.html` in a browser, or embed it anywhere:
 
-**Stylesheet path caveat:** the component injects `<link rel="stylesheet" href="./src/prog-block.css">`
-into its own shadow root on every render. That relative path resolves against the *hosting document's*
-URL, not the component module's URL — so it only finds the stylesheet when the host page sits exactly
-one directory above a sibling `src/`, i.e. laid out like this repository's own `index.html`. Embed
-`<prog-block>` in a page at any other depth and the shadow tree renders unstyled, with no error. See
-[`ARCHITECTURE.md`](./ARCHITECTURE.md) for why.
+```html
+<script type="module" src="/path/to/progblocks/src/prog-block.js"></script>
+
+<prog-block group="os" line-numbers>
+  <template data-variant="macOS">brew install {{ package = ripgrep }}</template>
+  <template data-variant="Linux">sudo apt-get install {{ package = ripgrep }}</template>
+</prog-block>
+```
+
+Write example code inside `<template>` the way you would inside `<pre>`: escape `<` as `&lt;` and
+`&` as `&amp;`. Unescaped tags are dropped, never rendered. The stylesheet is resolved against the
+module's own URL, so the page can live at any depth.
+
+## Authoring reference
+
+| You write | You get |
+|---|---|
+| `<template data-variant="Name">…</template>` (two or more) | A tab per variant, WAI-ARIA tabs keyboard model (arrows, Home, End) |
+| Plain text, no templates | A single example; the `language` attribute is shown as its label |
+| `{{ name }}` | A labelled input; the value is substituted everywhere it appears, in every variant |
+| `{{ name = default }}` | The same, pre-filled with `default` until the reader types |
+| `group="os"` | Every block in the page with that group switches variant together |
+| `variant="Linux"` | The initially selected variant |
+| `label="Operating system"` | Accessible name of the tablist (default "Example variants") |
+| `line-numbers` | A line-number gutter, hidden from assistive technology and from copy |
+| `language="bash"` | `class="language-bash"` on the `<code>`, for an external highlighter |
+| `glyph-mode` | A compact inline rendering with no header or inputs |
+
+**Script API:** `block.variant` (get/set), `block.text` (the personalised example),
+`block.getVariable(name)`, `block.setVariable(name, value)`.
+**Events** (bubbling, composed): `progblocks:variant-change` `{ variant }`,
+`progblocks:variable-change` `{ name, value }`.
+**Styling:** `--pb-*` custom properties, and `::part(header | tab | copy-button | variables | code | variable)`.
 
 ## Features
 
 | Feature | Status | Notes |
 |---|---|---|
-| Custom element registers | Works | `customElements.define()` runs and `customElements.get('prog-block')` is defined; guarded by `tests/registration.test.js` — see Status above |
-| Variant tabs (OS/shell/language) | Partial | Generic tablist only: no OS/shell/language semantics, no platform detection, no cross-block sync, no persistence |
-| A2ML variable substitution | Partial | Plain regex over variant content, with generated `<input>`s; not backed by the A2ML parser (which is a stub — see below) |
-| Editing a variable value | **Broken** | Every keystroke triggers a full `shadowRoot.innerHTML` rewrite, destroying and recreating the `<input>` you're typing into — multi-character values are effectively untypeable |
-| Editing code inline | **Broken** | Typing in the code editor overwrites the variant source with *post-interpolation* text, permanently losing `{{ vars }}` (self-confessed in a code comment) |
-| Preview toggle (code view / preview view) | **Absent** | The advertised toggle does not exist |
-| Templating wizards | **Absent** | No storage, no forms, no wizard code anywhere |
-| Live linter | **Broken** | The rendered panel is the hardcoded string `<i>Linter ready</i>`; the real WebSocket/LSP code lives in `view-manager.js`, which nothing imports |
-| Split view (side-by-side / top-bottom) | **Broken** | CSS matches `:host([split-view="…"])`; the JS only stamps the value on an inner `<div>`, never on the host, so the selector never matches |
-| Smart paste | Partial | Detects JSON arrays and CSV/TSV matrices, falls back to plain text; no tuple support |
-| Export to file (JSON/CSV/Nickel/TXT) | Partial | Downloads a file, but "CSV" quotes each whole line as a single field (no delimiter splitting) and "JSON" just wraps the raw text in `{"block_content": "…"}` — neither is a real structured export |
-| Line numbers | Partial | Renders correctly (`user-select:none`, `aria-hidden`, clipboard-clean) via the `line-numbers` host attribute; no toggle control exists in the UI |
-| Accessibility | Partial | AA-target, not the previously-claimed AAA. Present: `role=tablist/tab`, `aria-selected`, `aria-pressed`, `aria-label`, `aria-hidden` line numbers, `:focus-visible`. Missing even for AA: roving `tabindex`/arrow-key tablist nav, `tabpanel`+`aria-controls` pairing, `aria-live` on state changes; inactive tabs sit at `opacity:0.7`, degrading contrast; a defined `.sr-only` CSS class is never referenced by any element |
-| A2ML parser (tree-sitter/WASM) | **Absent** | `assets/tree-sitter-a2ml.wasm` is a 118-byte text placeholder, not WebAssembly; the tree-sitter code path is commented out; the parse function is imported but never called |
-| K9 / Nickel validation triad | **Broken** | `validateNickel()` fakes a 50ms delay then always returns `valid:true`; `executeJustTask()` logs and returns `true` unconditionally; neither has a call site anywhere in the source |
-| Escaping / sanitising untrusted content | **Absent** | Variant content and variable values are interpolated as raw HTML with no escaping anywhere in the source — a live injection surface for a component whose job is rendering pasted documentation snippets |
+| Custom element registers | Works | Guarded by `tests/registration.test.js` |
+| Safe rendering of untrusted content | Works | No `innerHTML` in `src/`; tested for markup in variants, tab labels and typed values, with a mutation check |
+| Variant tabs | Works | Tabs pattern with roving `tabindex`, `aria-controls`/`aria-labelledby`, wrap-around arrows, Home/End |
+| Cross-block variant sync | Works | `group` attribute; page-local, not persisted across pages |
+| Variable substitution | Works | Inline defaults; one input per variable across all variants; values survive variant switches; typing keeps focus |
+| Copy to clipboard | Works | Copies the personalised text; result announced via a `role=status` live region |
+| Line numbers | Works | `line-numbers` attribute |
+| Accessibility | Implemented, not verified | AA target. Labelled inputs, focus rings, forced-colours support, no colour-only state. Not yet screen-reader or axe tested |
+| Syntax highlighting | **Absent** | Out of scope for now; the `language-*` class lets a host highlighter hook in |
+| Reacting to light-DOM changes after connect | **Absent** | Authored content is read once |
+| A2ML parser (tree-sitter/WASM) | **Absent** | `src/a2ml-parser.js` is a stub and is no longer imported; `assets/tree-sitter-a2ml.wasm` is a placeholder |
+| K9 / Nickel validation triad | **Absent** | `src/k9-validator.js` is no longer imported by the component |
 
 ## Documentation
 
@@ -93,14 +106,13 @@ one directory above a sibling `src/`, i.e. laid out like this repository's own `
 ## Development
 
 ```sh
-just test    # node --test — runs tests/prog-block.test.js and tests/registration.test.js
+just test    # bun test — the same command CI runs (`bun run test`)
 just check   # nickel export contracts.ncl — requires Nickel on PATH
-npm test     # same as `just test`, via package.json
 ```
 
-**`just test` can now fail honestly.** The recipe is `node --test` (`Justfile:17`) with no fallback —
-a failing test run exits non-zero. `tests/registration.test.js` is the test that would have caught the
-fatal import bug described in Status; it now runs as part of the suite (5 tests, all passing).
+`tests/component.test.js` covers rendering safety, variants, variables, copy and embedding;
+`tests/registration.test.js` guards module loading; `tests/ci-config.test.js` and
+`tests/dependabot-config.test.js` guard the CI configuration.
 
 ## Licence
 

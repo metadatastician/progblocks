@@ -2,47 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ProgBlocks Interactive UI Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ProgBlocks demo</title>
   <style>
-    body {
-      background: #121212;
-      color: #eee;
-      font-family: sans-serif;
-      padding: 2rem;
-    }
-    h1 { margin-bottom: 2rem; }
-    .test-case { margin-bottom: 3rem; }
+    body { background: #121212; color: #eee; font-family: system-ui, sans-serif; padding: 1rem; max-width: 60rem; margin: auto; }
+    section { margin-bottom: 2.5rem; }
+    code { color: #9cdcfe; }
   </style>
   <script type="module" src="./src/prog-block.js"></script>
 </head>
 <body>
-  <h1>ProgBlocks UI Validation</h1>
+  <h1>ProgBlocks demo</h1>
 
-  <div class="test-case">
-    <h2>1. Variant Switching & A2ML Variables</h2>
-    <prog-block line-numbers>
+  <section>
+    <h2>1. Variants and variables</h2>
+    <p>Both blocks share <code>group="os"</code>: choosing an OS in one switches the other.
+       Tabs are keyboard-operable with the arrow keys, Home and End.</p>
+    <prog-block group="os" line-numbers label="Operating system">
       <template data-variant="macOS">
-# Install on macOS
-brew install progblocks --font-size {{ size }}
+        # Install on macOS
+        brew install {{ package = ripgrep }}
       </template>
       <template data-variant="Windows">
-# Install on Windows
-choco install progblocks --font-size {{ size }}
+        # Install on Windows
+        winget install {{ package = ripgrep }}
       </template>
       <template data-variant="Linux">
-# Install on Linux
-apt-get install progblocks --font-size {{ size }}
+        # Install on Linux
+        sudo apt-get install {{ package = ripgrep }}
       </template>
     </prog-block>
-  </div>
+    <p>Later on the same page:</p>
+    <prog-block group="os" label="Operating system">
+      <template data-variant="macOS">brew upgrade {{ package = ripgrep }}</template>
+      <template data-variant="Windows">winget upgrade {{ package = ripgrep }}</template>
+      <template data-variant="Linux">sudo apt-get install --only-upgrade {{ package = ripgrep }}</template>
+    </prog-block>
+  </section>
 
-  <div class="test-case">
-    <h2>2. Glyph Mode (Dense Layout)</h2>
-    <prog-block glyph-mode>
-      <template data-variant="inline">
-const x = {{ density }} * 2;
-      </template>
+  <section>
+    <h2>2. Untrusted content stays text</h2>
+    <p>Type <code>&lt;img src=x onerror=alert(1)&gt;</code> into the field: it appears as text.</p>
+    <prog-block language="html">
+      <template data-variant="HTML">&lt;p&gt;Hello, {{ name }}&lt;/p&gt;</template>
     </prog-block>
-  </div>
+  </section>
+
+  <section>
+    <h2>3. Glyph mode</h2>
+    <p>Inline: <prog-block glyph-mode>const x = 2;</prog-block> inside a sentence.</p>
+  </section>
 </body>
 </html>

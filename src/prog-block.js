@@ -1,246 +1,367 @@
-// src/prog-block.js
-import { defaultValidator } from './k9-validator.js';
-import { exportBlockData } from './modules/exporter.js';
-import { parsePaste } from './modules/smart-paste.js';
+// SPDX-License-Identifier: MPL-2.0
+// src/prog-block.js — the <prog-block> custom element.
+//
+// Rendering model: the shadow tree is built ONCE with DOM APIs, then patched
+// in place. Author content and reader-entered values only ever reach the page
+// through `textContent` — never `innerHTML` — so a code example cannot inject
+// markup, and an <input> is never destroyed while someone is typing into it.
 
+const VAR_PATTERN = /\{\{\s*([\w:-]+)\s*(?:=\s*([^}]*?)\s*)?\}\}/g;
+const STYLESHEET_URL = new URL('./prog-block.css', import.meta.url).href;
+
+/** Blocks sharing a `group` attribute switch variant together. */
+const groups = new Map();
+let instanceCount = 0;
+
+/**
+ * Strips leading/trailing blank lines and the common indentation from an
+ * author's template text, so examples can be indented to match the host HTML.
+ */
+export function dedent(text) {
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+  while (lines.length && lines[0].trim() === '') lines.shift();
+  while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+  const indents = lines
+    .filter((line) => line.trim() !== '')
+    .map((line) => line.match(/^[ \t]*/)[0].length);
+  const common = indents.length ? Math.min(...indents) : 0;
+  return lines.map((line) => line.slice(common)).join('\n');
+}
+
+/**
+ * Splits example source into plain-text and variable segments. A variable is
+ * `{{ name }}` or `{{ name = default }}`.
+ */
+export function tokenize(source) {
+  const segments = [];
+  let last = 0;
+  for (const match of source.matchAll(VAR_PATTERN)) {
+    if (match.index > last) segments.push({ text: source.slice(last, match.index) });
+    segments.push({ name: match[1], fallback: match[2] ?? null, raw: match[0] });
+    last = match.index + match[0].length;
+  }
+  if (last < source.length) segments.push({ text: source.slice(last) });
+  return segments;
+}
+
+/**
+ * Creates an element with optional attributes and text content. Attribute
+ * values and text are set through DOM properties, never parsed as markup.
+ */
+function el(tag, attrs = {}, text) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+/** The <prog-block> element: variant-aware, personalisable code example. */
 export class ProgBlock extends HTMLElement {
+  /** Attributes whose changes are applied after first render. */
+  static get observedAttributes() {
+    return ['language', 'line-numbers', 'variant', 'group'];
+  }
+
+  /** Sets up empty state and the shadow root; the DOM is built on connect. */
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    
-    // Internal state that drives the UI
-    this._state = {
-      variants: [], // Array of { id, name, content }
-      activeVariantId: null,
-      variables: new Map(), // Map of A2ML variables { key: value }
-      language: this.getAttribute('language') || 'plaintext',
-      showLineNumbers: this.hasAttribute('line-numbers'),
-      splitView: this.getAttribute('split-view') || 'none',
-      linterEnabled: false,
-      lspSocket: null,
-      linterHtml: '<i>Linter ready</i>'
-    };
+    this._uid = `pb${++instanceCount}`;
+    this._variants = [];
+    this._activeIndex = 0;
+    this._values = new Map();
+    this._defaults = new Map();
+    this._built = false;
   }
 
+  /** Reads the authored light DOM and builds the shadow tree on first connect. */
   connectedCallback() {
-    this.parseLightDOM();
-    this.render();
+    if (!this._built) {
+      this._readLightDom();
+      this._build();
+      this._built = true;
+      const initial = this.getAttribute('variant');
+      if (initial !== null) this._selectByName(initial, { notify: false });
+      this._renderVariant();
+    }
+    this._joinGroup(this.getAttribute('group'));
   }
 
-  static get observedAttributes() {
-    return ['language', 'line-numbers', 'split-view', 'glyph-mode'];
+  /** Leaves any variant-sync group so detached blocks are not retained. */
+  disconnectedCallback() {
+    this._leaveGroup();
   }
 
+  /** Applies observed attribute changes as in-place DOM patches. */
   attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue !== newValue) {
-      if (name === 'line-numbers') {
-        this.updateState({ showLineNumbers: newValue !== null });
-      } else if (name === 'glyph-mode') {
-        if (newValue !== null) this.setAttribute('glyph-mode', '');
-      } else if (name === 'split-view') {
-        this.updateState({ splitView: newValue });
-      } else {
-        this.updateState({ [name]: newValue });
-      }
+    if (!this._built || oldValue === newValue) return;
+    if (name === 'variant' && newValue !== null) this._selectByName(newValue, { notify: false });
+    if (name === 'line-numbers') this._renderLineNumbers();
+    if (name === 'language') this._renderLanguage();
+    if (name === 'group') {
+      this._leaveGroup();
+      this._joinGroup(newValue);
     }
   }
 
-  updateState(newState) {
-    this._state = { ...this._state, ...newState };
-    this.render();
+  /** The active variant's name. Setting it switches variant without moving focus. */
+  get variant() {
+    return this._variants[this._activeIndex]?.name ?? null;
   }
 
-  // Reads the light DOM to find `<template>` tags for OS/Shell variants
-  parseLightDOM() {
-    const templates = Array.from(this.querySelectorAll('template[data-variant]'));
-    if (templates.length > 0) {
-      const variants = templates.map((t, i) => ({
-        id: `var-${i}`,
-        name: t.getAttribute('data-variant'),
-        content: t.innerHTML.trim()
-      }));
-      this._state.variants = variants;
-      this._state.activeVariantId = variants[0].id;
-      this.extractA2MLVariables(variants[0].content);
-    } else {
-      // Fallback to raw textContent if no templates provided
-      const content = this.innerHTML.trim();
-      this._state.variants = [{ id: 'default', name: 'Default', content }];
-      this._state.activeVariantId = 'default';
-      this.extractA2MLVariables(content);
-    }
+  /** Selects the variant with this name, if present. */
+  set variant(name) {
+    this._selectByName(String(name), { notify: false });
   }
 
-  // Pre-scan for variables like {{ font-size }} to build the UI panel
-  extractA2MLVariables(content) {
-    const regex = /\{\{\s*([\w:-]+)\s*\}\}/g;
-    let match;
-    const newVars = new Map(this._state.variables);
-    while ((match = regex.exec(content)) !== null) {
-      if (!newVars.has(match[1])) {
-        newVars.set(match[1], ''); // Default empty
-      }
-    }
-    this._state.variables = newVars;
+  /** The example text exactly as the reader currently sees it. */
+  get text() {
+    return this._resolve(this._variants[this._activeIndex]?.segments ?? []);
   }
 
-  // Replaces variables in content
-  interpolateContent(content) {
-    return content.replace(/\{\{\s*([\w:-]+)\s*\}\}/g, (match, key) => {
-      return this._state.variables.get(key) || match;
-    });
+  /** Returns a variable's current value (its default if the reader set none). */
+  getVariable(name) {
+    return this._values.get(name) || this._defaults.get(name) || '';
   }
 
-  handleVarChange(key, value) {
-    const newVars = new Map(this._state.variables);
-    newVars.set(key, value);
-    this.updateState({ variables: newVars });
+  /** Sets a variable's value, updating the input and every occurrence in the code. */
+  setVariable(name, value) {
+    if (!this._defaults.has(name)) return;
+    this._values.set(name, String(value));
+    const input = this._varInputs.get(name);
+    if (input && input.value !== String(value)) input.value = String(value);
+    this._renderValues(name);
+    this._renderLineNumbers();
+    this.dispatchEvent(new CustomEvent('progblocks:variable-change', {
+      bubbles: true,
+      composed: true,
+      detail: { name, value: String(value) },
+    }));
   }
 
-  handleTabClick(variantId) {
-    const variant = this._state.variants.find(v => v.id === variantId);
-    if (variant) {
-      this.extractA2MLVariables(variant.content);
-      this.updateState({ activeVariantId: variantId });
-    }
-  }
+  // --- light DOM ---------------------------------------------------------
 
-  handleExport() {
-    const select = this.shadowRoot.querySelector('#export-format');
-    const format = select ? select.value : 'json';
-    const content = this.shadowRoot.querySelector('.code-content').textContent;
-    exportBlockData(content, format);
-  }
+  /** Collects variants from `<template data-variant>` children, or the element's own text. */
+  _readLightDom() {
+    const templates = Array.from(this.querySelectorAll(':scope > template[data-variant]'));
+    const sources = templates.length
+      ? templates.map((t) => ({ name: t.getAttribute('data-variant') || 'Example', source: t.content.textContent }))
+      : [{ name: null, source: this.textContent }];
 
-  toggleLinter() {
-    this.updateState({ 
-      linterEnabled: !this._state.linterEnabled,
-      splitView: !this._state.linterEnabled ? 'side-by-side' : 'none'
-    });
-  }
-
-  handlePaste(e) {
-    const parsed = parsePaste(e);
-    if (parsed.handled) {
-      e.preventDefault();
-      const codeArea = this.shadowRoot.querySelector('.code-content');
-      codeArea.textContent = parsed.content;
-      // Update the active variant source to match what was pasted
-      const variantIndex = this._state.variants.findIndex(v => v.id === this._state.activeVariantId);
-      if (variantIndex > -1) {
-        this._state.variants[variantIndex].content = parsed.content;
-      }
-    }
-  }
-
-  render() {
-    const activeVariant = this._state.variants.find(v => v.id === this._state.activeVariantId) || { content: '' };
-    const interpolatedContent = this.interpolateContent(activeVariant.content);
-    const contentLines = interpolatedContent.split('\n');
-    
-    const lineNumbersHtml = this._state.showLineNumbers ? 
-      `<div class="line-numbers" aria-hidden="true">
-        ${contentLines.map((_, i) => `<div>${i + 1}</div>`).join('')}
-      </div>` : '';
-
-    const tabsHtml = this._state.variants.length > 1 ? `
-      <div class="tabs" role="tablist" aria-label="Code variants">
-        ${this._state.variants.map(v => `
-          <button class="tab ${v.id === this._state.activeVariantId ? 'active' : ''}" 
-                  role="tab" 
-                  aria-selected="${v.id === this._state.activeVariantId}"
-                  data-id="${v.id}">
-            ${v.name}
-          </button>
-        `).join('')}
-      </div>
-    ` : `<div class="tabs"><span class="tab active">${this._state.language}</span></div>`;
-
-    const varsHtml = this._state.variables.size > 0 ? `
-      <div class="a2ml-panel">
-        ${Array.from(this._state.variables.entries()).map(([key, val]) => `
-          <div class="a2ml-var">
-            <label for="var-${key}">${key}:</label>
-            <input type="text" id="var-${key}" data-key="${key}" value="${val}" placeholder="value...">
-          </div>
-        `).join('')}
-      </div>
-    ` : '';
-
-    const linterHtml = this._state.linterEnabled ? `
-      <div class="linter-panel">
-        ${this._state.linterHtml}
-      </div>
-    ` : '';
-
-    this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="./src/prog-block.css">
-      <div class="container" split-view="${this._state.splitView}">
-        <div class="main-view">
-          <header class="header">
-            ${tabsHtml}
-            <div class="controls">
-              <button class="linter-btn" aria-pressed="${this._state.linterEnabled}">Linter</button>
-              <select id="export-format" aria-label="Export format">
-                <option value="json">JSON</option>
-                <option value="txt">Plain Text</option>
-                <option value="csv">CSV</option>
-                <option value="nickel">Nickel</option>
-              </select>
-              <button class="export-btn" aria-label="Export code block">Export</button>
-            </div>
-          </header>
-          
-          ${varsHtml}
-          
-          <div class="content-area">
-            ${lineNumbersHtml}
-            <div class="code-content" contenteditable="true" aria-label="Code editor" role="textbox" aria-multiline="true">${interpolatedContent}</div>
-          </div>
-        </div>
-        
-        ${linterHtml}
-      </div>
-    `;
-
-    this.bindEvents();
-  }
-
-  bindEvents() {
-    // Tabs
-    const tabs = this.shadowRoot.querySelectorAll('.tab');
-    tabs.forEach(tab => {
-      tab.addEventListener('click', (e) => this.handleTabClick(e.target.getAttribute('data-id')));
-    });
-
-    // Variable inputs
-    const inputs = this.shadowRoot.querySelectorAll('.a2ml-var input');
-    inputs.forEach(input => {
-      input.addEventListener('input', (e) => this.handleVarChange(e.target.getAttribute('data-key'), e.target.value));
-    });
-
-    // Controls
-    const exportBtn = this.shadowRoot.querySelector('.export-btn');
-    if (exportBtn) exportBtn.addEventListener('click', () => this.handleExport());
-
-    const linterBtn = this.shadowRoot.querySelector('.linter-btn');
-    if (linterBtn) linterBtn.addEventListener('click', () => this.toggleLinter());
-
-    // Editor
-    const codeArea = this.shadowRoot.querySelector('.code-content');
-    if (codeArea) {
-      codeArea.addEventListener('paste', (e) => this.handlePaste(e));
-      codeArea.addEventListener('input', (e) => {
-        // Simple internal sync if user types
-        const variantIndex = this._state.variants.findIndex(v => v.id === this._state.activeVariantId);
-        if (variantIndex > -1) {
-          // Careful: if A2ML vars exist, typing over them destroys the template tag!
-          // For a true WYSIWYG A2ML editor, we need a deeper syncing layer.
-          this._state.variants[variantIndex].content = e.target.textContent;
+    this._variants = sources.map(({ name, source }) => ({ name, segments: tokenize(dedent(source)) }));
+    for (const { segments } of this._variants) {
+      for (const seg of segments) {
+        if (seg.name && (!this._defaults.has(seg.name) || (!this._defaults.get(seg.name) && seg.fallback))) {
+          this._defaults.set(seg.name, seg.fallback ?? '');
         }
+      }
+    }
+  }
+
+  // --- build (once) ------------------------------------------------------
+
+  /** Builds the entire shadow tree. Called exactly once per element. */
+  _build() {
+    const root = this.shadowRoot;
+    root.append(el('link', { rel: 'stylesheet', href: STYLESHEET_URL }));
+
+    const header = el('div', { class: 'header', part: 'header' });
+    this._tabs = [];
+    if (this._variants.length > 1) {
+      const tablist = el('div', { class: 'tabs', role: 'tablist', 'aria-label': this.getAttribute('label') || 'Example variants' });
+      this._variants.forEach((variant, i) => {
+        const tab = el('button', {
+          type: 'button',
+          class: 'tab',
+          role: 'tab',
+          part: 'tab',
+          id: `${this._uid}-tab-${i}`,
+          'aria-controls': `${this._uid}-panel`,
+        }, variant.name);
+        tab.addEventListener('click', () => this._select(i, { focus: false }));
+        tab.addEventListener('keydown', (e) => this._onTabKey(e, i));
+        tablist.append(tab);
+        this._tabs.push(tab);
       });
+      header.append(tablist);
+    } else {
+      this._languageLabel = el('span', { class: 'language' });
+      header.append(this._languageLabel);
+    }
+
+    this._copyButton = el('button', { type: 'button', class: 'copy', part: 'copy-button' }, 'Copy');
+    this._copyButton.addEventListener('click', () => this._copy());
+    header.append(this._copyButton);
+    root.append(header);
+
+    this._varInputs = new Map();
+    if (this._defaults.size > 0) {
+      const fieldset = el('fieldset', { class: 'vars', part: 'variables' });
+      fieldset.append(el('legend', { class: 'sr-only' }, 'Customise this example'));
+      for (const [name, fallback] of this._defaults) {
+        const id = `${this._uid}-var-${name}`;
+        const wrap = el('div', { class: 'var' });
+        const input = el('input', { type: 'text', id, spellcheck: 'false', autocomplete: 'off' });
+        input.placeholder = fallback || name;
+        input.addEventListener('input', () => this.setVariable(name, input.value));
+        wrap.append(el('label', { for: id }, name), input);
+        fieldset.append(wrap);
+        this._varInputs.set(name, input);
+      }
+      root.append(fieldset);
+    }
+
+    const body = el('div', { class: 'body' });
+    this._gutter = el('div', { class: 'line-numbers', 'aria-hidden': 'true' });
+    this._panel = el('pre', { class: 'code', part: 'code', id: `${this._uid}-panel`, tabindex: '0' });
+    if (this._tabs.length) this._panel.setAttribute('role', 'tabpanel');
+    else this._panel.setAttribute('aria-label', 'Code example');
+    this._code = el('code');
+    this._panel.append(this._code);
+    body.append(this._gutter, this._panel);
+    root.append(body);
+
+    this._status = el('div', { class: 'sr-only', role: 'status' });
+    root.append(this._status);
+
+    this._renderLanguage();
+  }
+
+  // --- in-place patches --------------------------------------------------
+
+  /** Replaces the code panel's content with the active variant. */
+  _renderVariant() {
+    const variant = this._variants[this._activeIndex];
+    this._tabs.forEach((tab, i) => {
+      const selected = i === this._activeIndex;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
+    if (this._tabs.length) this._panel.setAttribute('aria-labelledby', this._tabs[this._activeIndex].id);
+
+    this._varNodes = new Map();
+    const nodes = variant.segments.map((seg) => {
+      if (!seg.name) return document.createTextNode(seg.text);
+      const span = el('span', { class: 'var-value', part: 'variable', 'data-var': seg.name });
+      if (!this._varNodes.has(seg.name)) this._varNodes.set(seg.name, []);
+      this._varNodes.get(seg.name).push(span);
+      return span;
+    });
+    this._code.replaceChildren(...nodes);
+    for (const name of this._varNodes.keys()) this._renderValues(name);
+    this._renderLineNumbers();
+  }
+
+  /** Updates every occurrence of one variable in the visible code. */
+  _renderValues(name) {
+    const value = this._values.get(name) || this._defaults.get(name);
+    for (const span of this._varNodes.get(name) ?? []) {
+      span.textContent = value || `{{ ${name} }}`;
+      span.classList.toggle('unset', !value);
+    }
+  }
+
+  /** Shows or hides the line-number gutter, matching the active variant's line count. */
+  _renderLineNumbers() {
+    const show = this.hasAttribute('line-numbers');
+    this._gutter.hidden = !show;
+    if (!show) return;
+    const count = this.text.split('\n').length;
+    if (this._gutter.childElementCount === count) return;
+    this._gutter.replaceChildren(...Array.from({ length: count }, (_, i) => el('span', {}, String(i + 1))));
+  }
+
+  /** Mirrors the `language` attribute onto the label and a `language-*` class on <code>. */
+  _renderLanguage() {
+    const language = this.getAttribute('language') || '';
+    this._code.className = language ? `language-${language.replace(/[^\w-]/g, '')}` : '';
+    if (this._languageLabel) this._languageLabel.textContent = language;
+  }
+
+  // --- behaviour ---------------------------------------------------------
+
+  /** Substitutes current values into a variant's segments. */
+  _resolve(segments) {
+    return segments.map((seg) => (seg.name ? (this._values.get(seg.name) || this._defaults.get(seg.name) || seg.raw) : seg.text)).join('');
+  }
+
+  /** Activates variant `index`; optionally moves focus and notifies listeners and the group. */
+  _select(index, { focus = false, notify = true } = {}) {
+    if (index < 0 || index >= this._variants.length) return;
+    const changed = index !== this._activeIndex;
+    this._activeIndex = index;
+    if (changed) this._renderVariant();
+    if (focus) this._tabs[index]?.focus();
+    if (changed && notify) {
+      this.dispatchEvent(new CustomEvent('progblocks:variant-change', {
+        bubbles: true,
+        composed: true,
+        detail: { variant: this.variant },
+      }));
+      this._syncGroup();
+    }
+  }
+
+  /** Activates the variant with the given name, if this block has one. */
+  _selectByName(name, options) {
+    const index = this._variants.findIndex((v) => v.name === name);
+    if (index !== -1) this._select(index, options);
+  }
+
+  /** WAI-ARIA tabs keyboard pattern: arrows, Home and End, with automatic activation. */
+  _onTabKey(event, index) {
+    const last = this._tabs.length - 1;
+    const target = {
+      ArrowRight: index === last ? 0 : index + 1,
+      ArrowLeft: index === 0 ? last : index - 1,
+      Home: 0,
+      End: last,
+    }[event.key];
+    if (target === undefined) return;
+    event.preventDefault();
+    this._select(target, { focus: true });
+  }
+
+  /** Copies the personalised example to the clipboard and announces the outcome. */
+  async _copy() {
+    try {
+      await navigator.clipboard.writeText(this.text);
+      this._announce('Copied to clipboard');
+    } catch {
+      this._announce('Copy failed. Select the code and copy it manually.');
+    }
+  }
+
+  /** Writes a message to the polite live region (cleared first so repeats are re-read). */
+  _announce(message) {
+    this._status.textContent = '';
+    this._status.textContent = message;
+  }
+
+  // --- variant groups ----------------------------------------------------
+
+  /** Registers this block in a named sync group. */
+  _joinGroup(name) {
+    if (!name) return;
+    this._group = name;
+    if (!groups.has(name)) groups.set(name, new Set());
+    groups.get(name).add(this);
+  }
+
+  /** Removes this block from its sync group. */
+  _leaveGroup() {
+    if (!this._group) return;
+    groups.get(this._group)?.delete(this);
+    this._group = null;
+  }
+
+  /** Switches every other block in this block's group to the same variant name. */
+  _syncGroup() {
+    if (!this._group) return;
+    for (const peer of groups.get(this._group) ?? []) {
+      if (peer !== this) peer._selectByName(this.variant, { notify: false });
     }
   }
 }
 
-customElements.define('prog-block', ProgBlock);
+if (!customElements.get('prog-block')) customElements.define('prog-block', ProgBlock);
