@@ -28,7 +28,8 @@ reader or an automated accessibility audit; treat accessibility as *implemented 
 
 **Scope was cut to the charter.** ProgBlocks renders code examples; it is not an editor, IDE or language
 server. The contenteditable editor, the placeholder linter, split view, smart paste and the
-JSON/CSV/Nickel export (whose encodings were not real) have been removed. A Copy button replaces export.
+JSON/CSV/Nickel export (whose encodings were not real) have been removed; export is now a plain-text
+Download of the personalised example.
 
 ## Try it
 
@@ -60,13 +61,14 @@ module's own URL, so the page can live at any depth.
 | `label="Operating system"` | Accessible name of the tablist (default "Example variants") |
 | `line-numbers` | A line-number gutter, hidden from assistive technology and from copy |
 | `language="bash"` | `class="language-bash"` on the `<code>`, for an external highlighter |
+| `filename="install.sh"` | The Download button's file name (default `example.txt`) |
 | `glyph-mode` | A compact inline rendering with no header or inputs |
 
 **Script API:** `block.variant` (get/set), `block.text` (the personalised example),
 `block.getVariable(name)`, `block.setVariable(name, value)`.
 **Events** (bubbling, composed): `progblocks:variant-change` `{ variant }`,
 `progblocks:variable-change` `{ name, value }`.
-**Styling:** `--pb-*` custom properties, and `::part(header | tab | copy-button | variables | code | variable)`.
+**Styling:** `--pb-*` custom properties, and `::part(header | tab | copy-button | download-button | variables | code | variable)`.
 
 ## Features
 
@@ -78,6 +80,7 @@ module's own URL, so the page can live at any depth.
 | Cross-block variant sync | Works | `group` attribute; page-local, not persisted across pages |
 | Variable substitution | Works | Inline defaults; one input per variable across all variants; values survive variant switches; typing keeps focus |
 | Copy to clipboard | Works | Copies the personalised text; result announced via a `role=status` live region |
+| Download | Works | Saves the personalised text as plain text; `filename` attribute, default `example.txt` |
 | Line numbers | Works | `line-numbers` attribute |
 | Accessibility | Implemented, not verified | AA target. Labelled inputs, focus rings, forced-colours support, no colour-only state. Not yet screen-reader or axe tested |
 | Syntax highlighting | **Absent** | Out of scope for now; the `language-*` class lets a host highlighter hook in |

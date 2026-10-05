@@ -171,15 +171,18 @@ deleted as out of charter.
 
 *Evidence:* `ls src/modules tests/prog-block.test.js` → neither exists.
 
-== Export to file (JSON / CSV / Nickel / TXT)
+== Export to file
 
-*Claim (removed 2026-10-05):* one-click export of block content to JSON, CSV, Nickel, or plain text.
+*Claim:* a Download button saves the personalised example as a plain-text file. The JSON, CSV and
+Nickel formats were removed on 2026-10-05; their "CSV" and "JSON" were not real encodings
+(`DEBT.adoc` C8).
 
-*Implementation:* none. `src/modules/exporter.js` was deleted; its "CSV" and "JSON" were not real
-encodings (`DEBT.adoc` C8). The Copy button (above) replaces it.
+*Implementation:* `_download()` in `src/prog-block.js` builds a `text/plain` `Blob` from `text`, names
+it from the `filename` attribute (default `example.txt`, path and reserved characters replaced by
+`_`) and clicks a temporary `<a download>`, then announces the result in the status region.
 
-*Evidence:* `grep -rni export src/prog-block.js` → only the `export` keywords on `dedent`,
-`tokenize` and `ProgBlock`.
+*Evidence:* `tests/component.test.js` — "download saves the personalised text under the filename
+attribute".
 
 == Clipboard-safe line numbers
 

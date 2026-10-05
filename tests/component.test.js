@@ -190,6 +190,21 @@ describe('embedding', () => {
     assert.equal(block.shadowRoot.querySelector('[role="status"]').textContent, 'Copied to clipboard');
   });
 
+  test('download saves the personalised text under the filename attribute', async () => {
+    const created = [];
+    const origCreate = URL.createObjectURL;
+    URL.createObjectURL = (blob) => { created.push(blob); return 'blob:test'; };
+    const block = mount(THREE_OS.replace('<prog-block>', '<prog-block filename="../install.sh">'));
+    block.setVariable('pkg', 'jq');
+    let clicked;
+    block.shadowRoot.addEventListener('click', (e) => { if (e.target.tagName === 'A') { clicked = e.target.getAttribute('download'); e.preventDefault(); } });
+    block.shadowRoot.querySelector('.download').click();
+    URL.createObjectURL = origCreate;
+    assert.equal(clicked, '.._install.sh');
+    assert.equal(await created[0].text(), 'brew install jq');
+    assert.equal(block.shadowRoot.querySelector('a'), null, 'temporary link is removed');
+  });
+
   test('line numbers match the line count and are hidden from assistive tech', () => {
     const block = mount('<prog-block line-numbers><template data-variant="a">\n  one\n  two\n  three\n</template></prog-block>');
     const gutter = block.shadowRoot.querySelector('.line-numbers');

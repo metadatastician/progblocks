@@ -77,6 +77,8 @@ button, input { font: inherit; color: inherit; }
   color: var(--pb-muted);
 }
 
+.actions { display: flex; gap: 0.4rem; }
+
 .copy {
   margin: 0.3rem 0;
   background: transparent;

@@ -97,7 +97,7 @@ FACTS.md wins.
   assume it stays fixed without checking.
 - **Do not document features the code does not implement.** In particular:
   there is no code/preview toggle, no templating wizard, no linter, no
-  split view, no smart paste, no file export, no syntax highlighting, and
+  split view, no smart paste, no structured (JSON/CSV/Nickel) export, no syntax highlighting, and
   no reaction to light-DOM changes after the first connect. See
   `.machine_readable/descriptiles/STATE.a2ml` and FACTS.md's "Feature
   reality" section before writing anything that reads as a capability

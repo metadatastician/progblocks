@@ -18,7 +18,7 @@ read them as prior releases.
   `tabindex`, `tabpanel` with `aria-controls`/`aria-labelledby`; `variant`, `group` and `label`
   attributes; `group` keeps every block on a page showing the same variant.
 - Variable defaults with `{{ name = default }}`; one labelled input per variable shared across variants.
-- Copy button, with the outcome announced through a `role=status` live region.
+- Copy and Download (plain text, `filename` attribute) buttons, with the outcome announced through a `role=status` live region.
 - Embedding API: `variant`, `text`, `getVariable()`, `setVariable()`, the `progblocks:variant-change`
   and `progblocks:variable-change` events, and `::part()` names.
 - `tests/component.test.js` (20 behavioural tests) and `tests/helpers/dom.js`.
@@ -67,7 +67,8 @@ read them as prior releases.
 
 - Out of charter (ProgBlocks is not an editor, IDE or language server): contenteditable editing,
   the placeholder linter and its button, `split-view`, smart paste (`src/modules/smart-paste.js`),
-  export (`src/modules/exporter.js`, whose CSV/JSON were not structural), and the unreachable
+  JSON/CSV/Nickel export (`src/modules/exporter.js`, whose CSV/JSON were not structural; plain-text
+  Download is kept), and the unreachable
   `src/modules/view-manager.js`. The component no longer imports `k9-validator.js`.
 
 - Template leaks from the `squisher-corpus`/`paint-type` scaffolding sweep, including a

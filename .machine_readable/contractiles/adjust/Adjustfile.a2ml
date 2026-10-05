@@ -46,7 +46,7 @@ measurement (see verification-missing below).
 - severity: advisory
 
 ### aria-live-missing (PARTLY RESOLVED 2026-10-05)
-- description: There was no live region. Now a role="status" region announces the copy result (export was removed). A variant switch the reader makes is conveyed by focus moving to the newly selected tab; a switch caused by group sync from ANOTHER block is not announced
+- description: There was no live region. Now a role="status" region announces the copy and download results. A variant switch the reader makes is conveyed by focus moving to the newly selected tab; a switch caused by group sync from ANOTHER block is not announced
 - tolerance: known gap for group-synced changes, tracked here
 - corrective: decide whether group-synced switches need an announcement, and if so route them through the status region
 - severity: advisory

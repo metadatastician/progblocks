@@ -25,7 +25,7 @@ completion-percentage = 35   # NOT re-scored on 2026-10-05 — the rationale bel
                               # charter: variant tabs, group sync, variables,
                               # copy, line numbers and safe rendering work and are
                               # unit-tested under happy-dom; accessibility is
-                              # implemented but not verified; smart paste, export,
+                              # implemented but not verified; smart paste, structured export,
                               # the linter, split view and the inline editor were
                               # removed as out of charter. The owner should
                               # re-score this figure against the new table.

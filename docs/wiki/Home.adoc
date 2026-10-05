@@ -56,9 +56,9 @@ ProgBlocks is a dependency-free web component (`<prog-block>`) for
 variant-aware, personalisable code examples in technical documentation
 and wikis: variant tabs (e.g. OS or shell flavours of a command), kept in
 step across blocks with `group`, `{{ variable }}` substitution with
-optional inline defaults, and a Copy button that copies the personalised
+optional inline defaults, and Copy and Download buttons for the personalised
 text. It is not an editor, linter or data converter — the inline editor,
-placeholder linter, split view, smart paste and file export were removed
+placeholder linter, split view, smart paste and JSON/CSV/Nickel export were removed
 on 2026-10-05. It was conceived for BerryWiki
 (`metadatastician/berrywiki`) and decoupled by design so it can be
 dropped into other static sites — see

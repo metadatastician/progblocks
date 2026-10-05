@@ -36,8 +36,8 @@ can-create-files = true
 #   implement exists. In particular, as of 2026-10-05: there is no
 #   code/preview toggle, no templating wizard (no storage, no forms, no
 #   wizard code anywhere in the tree), no linter, no split view, no smart
-#   paste, no file export, no inline code editing, and no syntax
-#   highlighting. The linter, split view, smart paste, export and the
+#   paste, no structured (JSON/CSV/Nickel) export, no inline code editing, and no syntax
+#   highlighting. The linter, split view, smart paste, structured export and the
 #   contenteditable editor were removed on 2026-10-05 as out of charter —
 #   do not reintroduce them. Read FACTS.md's "Feature reality" section
 #   before writing anything that reads as a capability claim.

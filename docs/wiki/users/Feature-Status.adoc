@@ -157,10 +157,15 @@ used (`DEBT.adoc` C3).
 |Removed 2026-10-05
 |Out of charter; `src/modules/smart-paste.js` and its tests deleted.
 
-|Export to file (JSON / CSV / Nickel / TXT)
+|Export to file (JSON / CSV / Nickel)
 |Removed 2026-10-05
-|Out of charter; its "CSV" and "JSON" were not real encodings.
-`src/modules/exporter.js` deleted. Use the Copy button.
+|Its "CSV" and "JSON" were not real encodings; `src/modules/exporter.js`
+deleted.
+
+|Download as plain text
+|Works
+|Download button saves the personalised example; `filename` attribute
+names the file (default `example.txt`). Tested under happy-dom.
 |===
 
 == Legend

@@ -11,7 +11,7 @@ It has no runtime dependencies and needs no build step, no framework and no host
 Hosts couple to it only through the documented surface: attributes, four script members, two events,
 `--pb-*` custom properties and `::part()` names.
 
-Out of scope by charter: editing code, linting, language servers, export formats, persistence.
+Out of scope by charter: editing code, linting, language servers, structured export formats, persistence.
 
 ## Module map
 

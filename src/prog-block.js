@@ -191,7 +191,11 @@ export class ProgBlock extends HTMLElement {
 
     this._copyButton = el('button', { type: 'button', class: 'copy', part: 'copy-button' }, 'Copy');
     this._copyButton.addEventListener('click', () => this._copy());
-    header.append(this._copyButton);
+    this._downloadButton = el('button', { type: 'button', class: 'copy download', part: 'download-button' }, 'Download');
+    this._downloadButton.addEventListener('click', () => this._download());
+    const actions = el('div', { class: 'actions' });
+    actions.append(this._copyButton, this._downloadButton);
+    header.append(actions);
     root.append(header);
 
     this._varInputs = new Map();
@@ -330,6 +334,19 @@ export class ProgBlock extends HTMLElement {
     } catch {
       this._announce('Copy failed. Select the code and copy it manually.');
     }
+  }
+
+  /** Saves the personalised example as a plain-text file named by the `filename` attribute. */
+  _download() {
+    const name = (this.getAttribute('filename') || 'example.txt').replace(/[\\/:*?"<>|]/g, '_');
+    const url = URL.createObjectURL(new Blob([this.text], { type: 'text/plain;charset=utf-8' }));
+    const link = el('a', { href: url, download: name });
+    link.hidden = true;
+    this.shadowRoot.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    this._announce(`Downloaded ${name}`);
   }
 
   /** Writes a message to the polite live region (cleared first so repeats are re-read). */

@@ -35,7 +35,7 @@ This repository is NOT:
 - A full A2ML implementation — the parser is a stub
 - A vehicle for claiming a feature before the code implements it
 - A code editor, IDE, linter, or language-server client (the editor, the
-  placeholder linter, split view, smart paste and export were removed on
+  placeholder linter, split view, smart paste and structured export were removed on
   2026-10-05 for this reason)
 
 ## If In Doubt
