@@ -21,7 +21,7 @@ Nothing has been released. There is no tagged version and no published package; 
 - Embedding API: `variant`, `text`, `getVariable()`, `setVariable()`, `refresh()`, the `progblocks:variant-change`
   and `progblocks:variable-change` events, and `::part()` names.
 - `just a11y` (`tools/a11y-audit.mjs`): axe-core audit of the demo in a real Chromium, exiting 1 on
-  any violation. Dev dependencies `axe-core` and `playwright-core` (no bundled browser).
+  any violation; CI runs it in the `build` job. Dev dependencies `axe-core` and `playwright-core` (no bundled browser).
 - `persist` attribute (with `group`): the reader's variant choice is stored in `localStorage` under
   `progblocks:variant:<group>` and restored on the next page load, ahead of `variant`. Only
   reader-initiated selections are stored; blocked storage degrades silently to page-local sync; other

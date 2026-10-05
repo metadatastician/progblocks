@@ -56,7 +56,7 @@ milestones = [
   { name = "Live linter — removed as out of charter on 2026-10-05 (placeholder panel and view-manager.js deleted); not planned", completion = 0 },
   { name = "Split view — removed as out of charter on 2026-10-05; not planned", completion = 0 },
   { name = "Templating wizards — dropped from README and from scope; no code exists anywhere in the tree", completion = 0 },
-  { name = "Accessibility verified with an automated audit and a real screen reader (axe audit passes locally; no screen reader yet)", completion = 50 },
+  { name = "Accessibility verified with an automated audit and a real screen reader (axe audit passes and runs in CI; no screen reader yet)", completion = 50 },
 ]
 
 [blockers-and-issues]
@@ -78,7 +78,7 @@ blockers = [
 [critical-next-actions]
 actions = [
   "Land branch feat/render-core-variants-vars (XSS and focus fixes, scope cut to the charter) and confirm whether SonarCloud's security rating recovers on it (DEBT.adoc G2).",
-  "Test accessibility with at least one real screen reader, and run the axe audit in CI, before making any AA claim (B11).",
+  "Test accessibility with at least one real screen reader before making any AA claim (B11).",
   "Land branch feat/persist-and-live-content (opt-in persist, live authored content and refresh(); B10 fixed, DEBT.adoc C14/C15 cleared) and exercise both in a real browser.",
 ]
 
