@@ -22,10 +22,10 @@ against this page.
 [IMPORTANT]
 ====
 Status as of 2026-10-05, branch `feat/render-core-variants-vars`. "Works"
-below means implemented **and** covered by `tests/component.test.js`,
-which runs under happy-dom (`bun test`). None of it has been exercised in
-a real browser, with a screen reader, or by an automated accessibility
-audit during this review. Earlier history: `src/prog-block.js` once had a
+below means implemented **and** covered by the automated suite
+(`bun test`, under happy-dom). The demo page has also passed an axe-core
+audit in headless Chromium (`just a11y`); nothing has been checked with a
+screen reader. Earlier history: `src/prog-block.js` once had a
 fatal import bug that kept the element from registering at all; that was
 fixed and is guarded by `tests/registration.test.js`, and the file now
 imports nothing.
@@ -104,11 +104,11 @@ link:Getting-Started.adoc[Getting Started].
 highlighter; no highlighter integration has been tried (`DEBT.adoc` C16).
 
 |Accessibility — WCAG 2.1 AA target
-|Implemented, not verified
+|Audited, not screen-reader tested
 |Tabs pattern, labelled inputs in a fieldset, live region, focus-visible
 rings, `forced-colors` support, no opacity-dimmed tabs, focusable code
-panel. Structure unit-tested only; no screen reader, no axe, no measured
-contrast. See link:../developers/Accessibility.adoc[Accessibility].
+panel. Structure unit-tested; axe-core in headless Chromium (`just a11y`)
+reports 0 violations with contrast checked; no screen-reader session yet. See link:../developers/Accessibility.adoc[Accessibility].
 
 |Accessibility — AAA conformance tier
 |Absent

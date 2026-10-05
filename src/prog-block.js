@@ -219,7 +219,8 @@ export class ProgBlock extends HTMLElement {
     this._gutter = el('div', { class: 'line-numbers', 'aria-hidden': 'true' });
     this._panel = el('pre', { class: 'code', part: 'code', id: `${this._uid}-panel`, tabindex: '0' });
     if (this._tabs.length) this._panel.setAttribute('role', 'tabpanel');
-    else this._panel.setAttribute('aria-label', 'Code example');
+    else this._panel.setAttribute('role', 'group');
+    if (!this._tabs.length) this._panel.setAttribute('aria-label', this.getAttribute('label') || 'Code example');
     this._code = el('code');
     this._panel.append(this._code);
     body.append(this._gutter, this._panel);

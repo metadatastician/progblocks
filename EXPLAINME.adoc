@@ -8,8 +8,8 @@ that evidences it — or states plainly "no automated evidence" where none exist
 this was written (2026-10-05, branch `feat/render-core-variants-vars`); a line number is given only
 where it is stable. If the source has moved, re-verify rather than trust this table.
 
-Overall automated-test coverage: `bun test` runs **27** tests in four files, all passing.
-`tests/component.test.js` (20 tests) exercises the component's behaviour; `tests/registration.test.js`
+Overall automated-test coverage: `bun test` runs **29** tests in four files, all passing.
+`tests/component.test.js` (22 tests) exercises the component's behaviour; `tests/registration.test.js`
 (1) asserts the element registers; `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js`
 (2) guard CI configuration. Every component test runs under happy-dom (`tests/helpers/dom.js`), **not
 in a real browser**. `src/a2ml-parser.js` and `src/k9-validator.js` have no tests and are not imported
@@ -112,8 +112,8 @@ personalised text and announces it`. The failure path has no test.
 *Implementation:* `setVariable()` (variable) and `_select()` (variant), in `src/prog-block.js`. The variant event
 fires only for a change the reader makes in this block, not for programmatic or group-synced changes.
 
-*Evidence:* **Automated, under happy-dom, for `progblocks:variable-change` only** (`emits
-progblocks:variable-change`). No test covers `progblocks:variant-change`.
+*Evidence:* **Automated, under happy-dom:** `emits progblocks:variable-change` and `emits
+progblocks:variant-change for reader selection only`.
 
 == Editing code inline
 
@@ -202,15 +202,19 @@ assistive tech`. No test asserts the computed `user-select` style or a manual se
 
 *Implementation present:* the WAI-ARIA tabs pattern (see Variant switching); one `<label>` per variable
 input inside a `<fieldset>` with a `.sr-only` legend; a `role="status"` live region for copy
-results; a focusable code panel (`tabindex="0"`) so keyboard
+and download results; a single-variant code panel with `role="group"` and an `aria-label`; a focusable code panel (`tabindex="0"`) so keyboard
 users can scroll long lines; `aria-hidden` line numbers; `:focus-visible` rings
 (`src/prog-block.css`); selection shown by an underline bar and weight rather than colour
 or opacity (`.tab[aria-selected="true"]`); a `@media (forced-colors: active)` block.
 
 *Evidence:* **Structure automated, under happy-dom:** the tabs-pattern, label and line-number tests
-above. **Not verified:** no screen-reader session, no automated audit (axe or similar), and no measured
-contrast check — the CSS comment stating that the default colours meet AA contrast has not been
-measured. The live region announces copy results only; a variant change caused by `group` sync in
+above. **Automated audit in a real browser:** `just a11y` (`tools/a11y-audit.mjs`) runs axe-core with
+the WCAG 2.0/2.1/2.2 A and AA and best-practice rules against `index.html` in headless Chromium, dark
+and light colour schemes: 0 violations, 0 needing review, colour contrast passing on 38 nodes
+(2026-10-05). Planted defects (an unnamed button, a 1.5:1 colour pair) make it exit 1. It is not in
+CI and needs a local Chromium. **Not verified:** no screen-reader session; axe sees the default
+palette in its resting state only, not hover/focus states or host overrides. The live region announces
+copy and download results only; a variant change caused by `group` sync in
 another block is not announced. See `DEBT.adoc` T3.
 
 == A2ML parser (tree-sitter / WASM)

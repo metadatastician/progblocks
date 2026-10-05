@@ -37,7 +37,7 @@ These bind this repository and every sibling:
 | `tests/component.test.js`, four tests under happy-dom: escaped markup in a variant shows as literal text; unescaped markup in a template produces no element; markup typed into a variable input is inserted as text; markup in a tab label is text. `grep -n innerHTML src/` finds only a comment. (2026-10-05)
 
 | Variants, variables, copy, line numbers and stylesheet resolution behave as documented
-| `tests/component.test.js`, sixteen further tests under happy-dom: the tabs ARIA pattern and arrow/Home/End keys, the `variant` and `group` attributes, single-variant rendering, inline defaults, the same `<input>` surviving typing, values persisting across variant switches, every input labelled, the `progblocks:variable-change` event (`progblocks:variant-change` has no test), copy writing the personalised text and announcing it, line-number count and `aria-hidden`, the stylesheet URL resolving against the module from a page at `/docs/deep/`, and the `dedent`/`tokenize` helpers. (2026-10-05)
+| `tests/component.test.js`, eighteen further tests under happy-dom: the tabs ARIA pattern and arrow/Home/End keys, the `variant` and `group` attributes, single-variant rendering, inline defaults, the same `<input>` surviving typing, values persisting across variant switches, every input labelled, the `progblocks:variable-change` and `progblocks:variant-change` events, copy writing the personalised text and announcing it, download saving it under the `filename` attribute, line-number count and `aria-hidden`, the stylesheet URL resolving against the module from a page at `/docs/deep/`, and the `dedent`/`tokenize` helpers. (2026-10-05)
 
 | The test gate can fail
 | Demonstrated (2026-08-07) by breaking one assertion and observing `just test` exit 1, then restoring it and observing exit 0. `Justfile`'s `test` recipe is now a bare `bun test` with no error swallow; that the 2026-10-05 suite can fail has not been re-demonstrated by a planted break in this audit.
@@ -89,7 +89,7 @@ Recorded so that nothing later mistakes silence for modesty.
 
 * **No formal proofs.** This repository carries no proof assistant, no proof obligations, and does not declare the `formal-proofs` capability. Unlike some sibling repositories in this estate, there is no proof ledger here and none is planned.
 
-* **No WCAG conformance at any level.** WCAG 2.1 AA is a *target*, not an achievement. The repository historically claimed "AAA … Extreme compliance"; that claim was false and has been removed. Since 2026-10-05 the tabs pattern, labels, focus rings and live region are implemented and their structure is unit-tested, but nothing has been checked with a screen reader, an automated audit or a contrast measurement. See `DEBT.adoc` T3.
+* **No WCAG conformance at any level.** WCAG 2.1 AA is a *target*, not an achievement. The repository historically claimed "AAA … Extreme compliance"; that claim was false and has been removed. Since 2026-10-05 the tabs pattern, labels, focus rings and live region are implemented and their structure is unit-tested, and an axe-core audit in headless Chromium (`just a11y`, 2026-10-05) reports 0 violations with colour contrast checked; nothing has been checked with a screen reader. See `DEBT.adoc` T3.
 
 * **No release.** Nothing has been published to any registry. `package.json` is `private`. Version numbers appearing in the tree disagree with each other (`DEBT.adoc` L1) and none of them denotes a release.
 

@@ -38,11 +38,11 @@ runs the same command.
 
 == What the suite covers
 
-Four test files, 27 tests, all passing as of 2026-10-05. The DOM comes
+Four test files, 29 tests, all passing as of 2026-10-05. The DOM comes
 from happy-dom, registered once by `tests/helpers/dom.js` with a page URL
 of `/docs/deep/page.html` so that path-resolution bugs show up.
 
-* `tests/component.test.js` (20 tests) — the component's behaviour:
+* `tests/component.test.js` (22 tests) — the component's behaviour:
 ** *untrusted content is never rendered as markup* — escaped and
    unescaped markup in templates, markup typed into a variable input,
    markup in a tab label;
@@ -50,10 +50,11 @@ of `/docs/deep/page.html` so that path-resolution bugs show up.
    placeholders, inline defaults, values persisting across variants,
    every input labelled, the `progblocks:variable-change` event;
 ** *variant switching* — the WAI-ARIA tabs attributes, arrow/Home/End
-   keys with wrap, the `variant` attribute, `group` sync, single-variant
-   rendering;
+   keys with wrap, the `variant` attribute, `group` sync, the
+   `progblocks:variant-change` event, single-variant rendering;
 ** *embedding* — stylesheet URL resolved against the module, copy
    writing the personalised text and announcing it (clipboard stubbed),
+   download saving it under the `filename` attribute,
    line-number count and `aria-hidden`;
 ** *pure helpers* — `dedent()` and `tokenize()`.
 * `tests/registration.test.js` (1 test) — imports `src/prog-block.js` and
@@ -87,10 +88,10 @@ specifically to catch this class of regression. Since 2026-10-05
   rendering, an accessibility tree or a real clipboard. Every "works" in
   link:../users/Feature-Status.adoc[Feature Status] means "works under
   happy-dom".
-* **Accessibility verification** — no axe-core (or equivalent) check, no
-  screen reader, no contrast measurement. See
+* **Screen-reader verification** — none. The axe-core audit (`just a11y`)
+  runs in a real Chromium but is not part of `bun test` or CI. See
   link:Accessibility.adoc[Accessibility].
-* The `progblocks:variant-change` event, `glyph-mode` rendering, the
+* `glyph-mode` rendering, the
   copy-failure path, and attribute changes after first render
   (`attributeChangedCallback()`).
 * Coverage is not measured.

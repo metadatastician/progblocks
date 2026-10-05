@@ -21,7 +21,9 @@ read them as prior releases.
 - Copy and Download (plain text, `filename` attribute) buttons, with the outcome announced through a `role=status` live region.
 - Embedding API: `variant`, `text`, `getVariable()`, `setVariable()`, the `progblocks:variant-change`
   and `progblocks:variable-change` events, and `::part()` names.
-- `tests/component.test.js` (20 behavioural tests) and `tests/helpers/dom.js`.
+- `just a11y` (`tools/a11y-audit.mjs`): axe-core audit of the demo in a real Chromium, exiting 1 on
+  any violation. Dev dependencies `axe-core` and `playwright-core` (no bundled browser).
+- `tests/component.test.js` (22 behavioural tests) and `tests/helpers/dom.js`.
 
 - `.gitignore` and the MPL-2.0 `LICENSE` file (#15).
 - Secret scanning via gitleaks — this repository had none before (#16).
@@ -44,6 +46,9 @@ read them as prior releases.
 
 ### Fixed
 
+- Single-variant code panel: `aria-label` on a role-less `<pre>` (flagged by axe) now has
+  `role="group"`.
+
 - Rendering architecture: the shadow tree is built once and patched in place instead of being rebuilt
   with `innerHTML` on every state change. Variable inputs no longer lose focus on each keystroke.
 - Stylesheet path now resolves against the module URL, so `<prog-block>` is styled at any page depth.
@@ -64,6 +69,9 @@ read them as prior releases.
   `tests/registration.test.js`.
 
 ### Removed
+
+- `package-lock.json`: stale beside `bun.lock`; Bun is the runtime and CI installs with
+  `bun install --frozen-lockfile`.
 
 - Out of charter (ProgBlocks is not an editor, IDE or language server): contenteditable editing,
   the placeholder linter and its button, `split-view`, smart paste (`src/modules/smart-paste.js`),

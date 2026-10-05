@@ -55,7 +55,7 @@ milestones = [
   { name = "Live linter — removed as out of charter on 2026-10-05 (placeholder panel and view-manager.js deleted); not planned", completion = 0 },
   { name = "Split view — removed as out of charter on 2026-10-05; not planned", completion = 0 },
   { name = "Templating wizards — dropped from README and from scope; no code exists anywhere in the tree", completion = 0 },
-  { name = "Accessibility verified with an automated audit and a real screen reader (implemented and unit-tested; not verified)", completion = 0 },
+  { name = "Accessibility verified with an automated audit and a real screen reader (axe audit passes locally; no screen reader yet)", completion = 50 },
 ]
 
 [blockers-and-issues]
@@ -71,13 +71,13 @@ blockers = [
   { id = "B8", kind = "cicd", state = "fixed", detail = "package.json and bun.lock exist in this tree, so CI's `bun install --frozen-lockfile` / `bun run test` have something to install and run" },
   { id = "B9", kind = "docs", state = "fixed", detail = "README.md used to advertise a code/preview toggle, templating wizards, and split/glyph editor modes that did not exist. Its feature table was rewritten on 2026-10-05 to match the code; re-check it against FACTS.md before repeating any claim." },
   { id = "B10", kind = "code", state = "open", detail = "Light-DOM changes after first connect are not observed: templates are read once and the shadow tree is built once. See DEBT.adoc C14." },
-  { id = "B11", kind = "test", state = "open", detail = "Accessibility (WAI-ARIA tabs, labelled inputs, live region, focus rings, forced-colors) is implemented and its structure unit-tested under happy-dom, but has not been checked with a screen reader, an automated audit, or a contrast measurement. See DEBT.adoc T3." },
+  { id = "B11", kind = "test", state = "open", detail = "Accessibility (WAI-ARIA tabs, labelled inputs, live region, focus rings, forced-colors) is implemented and its structure unit-tested under happy-dom, and an axe-core audit in headless Chromium (just a11y) reports 0 violations with contrast checked; it has not been checked with a screen reader. See DEBT.adoc T3." },
 ]
 
 [critical-next-actions]
 actions = [
   "Land branch feat/render-core-variants-vars (XSS and focus fixes, scope cut to the charter) and confirm whether SonarCloud's security rating recovers on it (DEBT.adoc G2).",
-  "Verify accessibility with an automated audit and at least one real screen reader before making any AA claim (B11).",
+  "Test accessibility with at least one real screen reader, and run the axe audit in CI, before making any AA claim (B11).",
   "Decide whether to observe light-DOM changes after first connect (B10).",
   "Resolve the version-string drift (1.0.0 / 0.1.0 / 0.3.0 across three files) before any tag is cut.",
 ]

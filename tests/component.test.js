@@ -169,6 +169,9 @@ describe('variant switching', () => {
     const block = mount('<prog-block language="js">let x = 1;</prog-block>');
     assert.equal(block.shadowRoot.querySelector('[role="tablist"]'), null);
     assert.equal(block.shadowRoot.querySelector('code').className, 'language-js');
+    const panel = block.shadowRoot.querySelector('pre');
+    assert.equal(panel.getAttribute('role'), 'group', 'aria-label needs a role that supports naming');
+    assert.equal(panel.getAttribute('aria-label'), 'Code example');
   });
 });
 

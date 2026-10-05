@@ -417,15 +417,15 @@ Evidence: `.machine_readable/rsr-profile.a2ml` does not declare `formal-proofs`;
 
 === T2 — The test suite covers 4 of ~660 source lines' worth of behaviour *(PARTIALLY CLEARED 2026-10-05)*
 
-*Update 2026-10-05.* `bun test` now runs 27 tests across four files, all passing:
-`tests/component.test.js` (20 behavioural tests: rendering safety, variable substitution,
-variant switching and the tabs keyboard model, group sync, stylesheet resolution, copy,
+*Update 2026-10-05.* `bun test` now runs 29 tests across four files, all passing:
+`tests/component.test.js` (22 behavioural tests: rendering safety, variable substitution,
+variant switching and the tabs keyboard model, group sync, both events, stylesheet resolution, copy, download,
 line numbers, and the `dedent`/`tokenize` helpers), `tests/registration.test.js` (1),
 `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2). The smart-paste
 tests (`tests/prog-block.test.js`) were deleted with the module. Coverage has not been
 measured, and every test runs under happy-dom, not a real browser. Still untested:
 `src/a2ml-parser.js` and `src/k9-validator.js` (neither is imported by the component),
-`glyph-mode` rendering, the `progblocks:variant-change` event, and the copy-failure path.
+`glyph-mode` rendering and the copy-failure path.
 
 The original finding, kept for the record:
 
@@ -451,13 +451,17 @@ the tablist follows the WAI-ARIA tabs pattern (`role` tab/tablist/tabpanel,
 Home/End, automatic activation); the `opacity: 0.7` on inactive tabs was removed and
 selection is shown by an underline bar plus weight; every variable input has a `<label>`,
 inside a `<fieldset>` with a visually hidden legend; a `role="status"` region announces the
-copy result; `:focus-visible` rings and a `forced-colors` block exist; line numbers are
+copy and download results; `:focus-visible` rings and a `forced-colors` block exist; line numbers are
 `aria-hidden`; the code panel is focusable (`tabindex="0"`) for keyboard scrolling. The
 structural parts are asserted in `tests/component.test.js` under happy-dom.
 
-What is still missing, and why this entry stays open: no automated audit (axe or similar),
-no screen-reader session, and no measured contrast check of the default palette (the CSS
-comment claiming AA contrast is unverified). The status region announces only copy results:
+*Update 2026-10-05.* `just a11y` (`tools/a11y-audit.mjs`) runs axe-core (WCAG 2.0/2.1/2.2 A+AA
+and best practice) on `index.html` in headless Chromium, dark and light: 0 violations, 0 needing
+review, contrast passing on 38 nodes. Its one earlier finding (`aria-label` on a role-less `<pre>`)
+was fixed with `role="group"`. Planted defects make it exit 1. It is not wired into CI.
+
+What is still missing, and why this entry stays open: no screen-reader session, and axe checks
+only resting states of the default palette. The status region announces only copy and download results:
 a variant change driven by `group` sync in *another* block is not announced. AA remains a
 target, not a verified level.
 
@@ -472,9 +476,9 @@ Focus destruction (C2) is itself an accessibility defect, not merely a usability
 Evidence: `grep -rn "aria-\|role=" src/prog-block.js` shows the attributes present;
 `grep -rln "axe\|pa11y\|aria" tests/` returns nothing.
 
-Clearing it: add an automated accessibility check (axe-core under happy-dom is enough to
-catch the structural gaps), and test with at least one real screen reader. The tablist
-keyboard model was fixed on 2026-10-05.
+Clearing it: add an automated accessibility check (done locally 2026-10-05 as `just a11y`; not
+yet in CI), and test with at least one real screen reader. The tablist keyboard model was fixed
+on 2026-10-05.
 
 === T4 — `contracts.ncl` validates a self-description, not the repository *(OPEN, partially cleared)*
 
@@ -683,7 +687,7 @@ fake-gate problem. The bar is reasonable for a component this small; the coverag
 wrong.
 
 Evidence: ruleset `code_coverage` parameters; `npm test` → 5 tests (2026-08-07). As of
-2026-10-05 the suite is 27 tests (T2), but coverage is still not measured, so whether the
+2026-10-05 the suite is 29 tests (T2), but coverage is still not measured, so whether the
 95% bar is met is unknown.
 
 Clearing it: raise real coverage as each defect in the Code debt section lands with a test.

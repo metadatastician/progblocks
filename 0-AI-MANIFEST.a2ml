@@ -47,7 +47,8 @@ FACTS.md wins.
   (rendering safety, variants, variables, copy, embedding),
   `registration.test.js` (asserts `customElements.get('prog-block')` is
   defined), plus `ci-config.test.js` and `dependabot-config.test.js`.
-  27 tests, all passing as of 2026-10-05. Not run in a real browser.
+  29 tests, all passing as of 2026-10-05, under happy-dom. `just a11y`
+  runs an axe-core audit in a real Chromium (local only).
 - `contracts.ncl`, `package.k9` — self-description manifests. Neither is
   consumed by anything in this tree; treat them as declared intent, not
   enforced contract.
@@ -68,7 +69,8 @@ FACTS.md wins.
   `CODE_OF_CONDUCT.md`, `LICENSE` (MPL-2.0) — the human documentation set.
   As of 2026-10-05 README.md's feature table was rewritten to match the
   code; FACTS.md still wins on any disagreement. Accessibility is
-  implemented and unit-tested, **not** screen-reader- or axe-verified.
+  implemented, unit-tested and axe-audited (`just a11y`), **not**
+  screen-reader-tested.
 
 ## Invariants (read before editing)
 

@@ -13,8 +13,8 @@ to let a claim of AAA, or of AA fully met, creep into documentation that
 the markup does not back up. AAA IS NOT MET. AA is the target, and AA is
 not verified either. The structural gaps below were read from the source on
 2026-08-07 and fixed in the render-core rewrite on 2026-10-05; what remains
-is verification — no screen reader, no automated audit, no contrast
-measurement (see verification-missing below).
+is verification — no screen reader yet, and the axe-core audit
+(just a11y, 0 violations on 2026-10-05) is local only (see verification-missing below).
 @end
 
 ## Level Honesty
@@ -64,7 +64,7 @@ measurement (see verification-missing below).
 - enforced-by: tests/component.test.js ("typing keeps the same input element…") plus this probe — same defect tracked in ../bust/Bustfile.a2ml
 
 ### verification-missing
-- description: Nothing about accessibility has been verified beyond structural unit tests under happy-dom — no screen-reader session, no automated audit (axe or similar), no measured contrast check of the default --pb-* palette
+- description: Accessibility is verified by structural unit tests and a local axe-core audit (just a11y: 0 violations, resting-state contrast on 38 nodes, 2026-10-05) — but there is no screen-reader session and the audit is not in CI
 - tolerance: known gap, tracked here; 0 tolerance for any claim that AA is met while this is open
 - corrective: run an automated audit in CI and test with at least one real screen reader
 - severity: advisory

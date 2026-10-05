@@ -22,9 +22,8 @@ anything yet: `package.k9` and `contracts.ncl` say `1.0.0`; `progblocks.launcher
 **The core works and is tested.** As of 2026-10-05 the component builds its shadow tree once and patches
 it in place; every piece of author or reader text reaches the page through `textContent`, never
 `innerHTML`. That one change closed the injection surface, made variables typeable, and made the
-tablist accessible. `bun test` runs 27 tests, 0 failing. Nothing has yet been checked with a real screen
-reader or an automated accessibility audit; treat accessibility as *implemented and unit-tested*, not
-*verified*.
+tablist accessible. `bun test` runs 29 tests, 0 failing, and `just a11y` (axe-core in a real Chromium) reports no
+WCAG 2.2 AA violations on the demo. Nothing has been checked with a screen reader yet.
 
 **Scope was cut to the charter.** ProgBlocks renders code examples; it is not an editor, IDE or language
 server. The contenteditable editor, the placeholder linter, split view, smart paste and the
@@ -82,7 +81,7 @@ module's own URL, so the page can live at any depth.
 | Copy to clipboard | Works | Copies the personalised text; result announced via a `role=status` live region |
 | Download | Works | Saves the personalised text as plain text; `filename` attribute, default `example.txt` |
 | Line numbers | Works | `line-numbers` attribute |
-| Accessibility | Implemented, not verified | AA target. Labelled inputs, focus rings, forced-colours support, no colour-only state. Not yet screen-reader or axe tested |
+| Accessibility | Audited, not screen-reader tested | AA target. Labelled inputs, focus rings, forced-colours support, no colour-only state. axe-core: 0 violations (`just a11y`) |
 | Syntax highlighting | **Absent** | Out of scope for now; the `language-*` class lets a host highlighter hook in |
 | Reacting to light-DOM changes after connect | **Absent** | Authored content is read once |
 | A2ML parser (tree-sitter/WASM) | **Absent** | `src/a2ml-parser.js` is a stub and is no longer imported; `assets/tree-sitter-a2ml.wasm` is a placeholder |
@@ -111,6 +110,7 @@ module's own URL, so the page can live at any depth.
 ```sh
 just test    # bun test — the same command CI runs (`bun run test`)
 just check   # nickel export contracts.ncl — requires Nickel on PATH
+just a11y    # axe-core audit of index.html in Chromium — set CHROMIUM_PATH
 ```
 
 `tests/component.test.js` covers rendering safety, variants, variables, copy and embedding;

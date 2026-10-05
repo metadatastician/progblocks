@@ -43,8 +43,9 @@ On 2026-10-05 the component was rewritten (branch
 `textContent` (closing the former XSS surface), keeps focus while you
 type, resolves its stylesheet against its own module URL, and follows
 the WAI-ARIA tabs pattern. Its behaviour is unit-tested under happy-dom
-(`bun test`, 27 tests); it has **not** been verified in a real browser,
-with a screen reader, or by an automated accessibility audit.
+(`bun test`, 29 tests), and the demo passes an axe-core audit in
+headless Chromium (`just a11y`); it has **not** been checked with a
+screen reader.
 ====
 
 See link:users/Feature-Status.adoc[Feature Status] for a full,

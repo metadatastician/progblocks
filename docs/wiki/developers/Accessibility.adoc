@@ -34,12 +34,14 @@ Read directly from `src/prog-block.js` and `src/prog-block.css` as of
   `tabindex` gives the tablist a single tab stop; ArrowLeft/ArrowRight
   (wrapping), Home and End move and activate the selection (automatic
   activation). With one variant there is no tablist, and the code panel
-  has `aria-label="Code example"`.
+  has `role="group"` and `aria-label` (the `label` attribute, default
+  "Code example").
 * **Labelled inputs.** Each variable input has a `<label for>`, inside a
   `<fieldset>` whose `<legend>` ("Customise this example") is visually
   hidden with `.sr-only`.
 * **Live region.** A visually hidden `role="status"` region announces
-  "Copied to clipboard" or a copy-failure instruction.
+  "Copied to clipboard", a copy-failure instruction, or "Downloaded
+  <name>".
 * **Keyboard access to long lines.** The code panel is focusable
   (`tabindex="0"`) so keyboard users can scroll it horizontally.
 * **Line numbers** are `aria-hidden="true"` and `user-select: none`, and
@@ -61,19 +63,19 @@ numbers hidden, the status message after copy) are asserted by
 
 * **No screen-reader testing.** No session with NVDA, JAWS, VoiceOver,
   TalkBack or Orca has been run against the component.
-* **No automated audit.** No axe-core (or equivalent) check exists in
-  `tests/` or CI.
-* **No measured contrast.** `src/prog-block.css` states that the default
-  `--pb-*` colour pairs meet AA contrast; that has not been measured, and
-  host pages can override every colour.
-* **Not run in a real browser** during this review — happy-dom does not
-  implement layout, focus rings or the accessibility tree.
+* **Automated audit — local only.** `just a11y` (`tools/a11y-audit.mjs`,
+  `CHROMIUM_PATH` required) runs axe-core with WCAG 2.0/2.1/2.2 A+AA and
+  best-practice rules on `index.html` in headless Chromium, dark and
+  light. On 2026-10-05: 0 violations, 0 needing review, colour contrast
+  passing on 38 nodes; planted defects make it exit 1. It is not in CI.
+* **Contrast beyond the resting state is unmeasured** — hover and focus
+  states, and any host override of the `--pb-*` colours.
 
 == Known gaps
 
 * **Group-synced changes are not announced.** When a reader switches
   variant in one block, other blocks in the same `group` change silently;
-  only copy results go through the status region. A reader who switches
+  only copy and download results go through the status region. A reader who switches
   variant in the focused block hears the newly focused tab, which carries
   the change.
 * **Content changes after first connect are ignored**, so a host that
@@ -90,6 +92,6 @@ link:Architecture.adoc[Architecture]).
 ProgBlocks now implements the markup and keyboard behaviour that WCAG 2.1
 AA and the ARIA Authoring Practices tabs pattern call for, and its
 structure is unit-tested. That makes AA a credible *target*; it is **not**
-a verified conformance level until a screen reader, an automated audit
-and a contrast measurement have been run. AAA is not attempted and is not
+a verified conformance level until it has been tested with a screen
+reader; the automated audit and resting-state contrast check pass. AAA is not attempted and is not
 met.
