@@ -14,7 +14,7 @@ check:
 
 # Test the component
 test:
-	node --test
+	bun test
 
 # List the documentation tree
 docs:
@@ -31,3 +31,7 @@ probes:
 
 probes-strict:
 	./tools/run-probes.sh --strict
+
+# Accessibility audit: axe-core in a real Chromium (set CHROMIUM_PATH)
+a11y:
+	bun tools/a11y-audit.mjs

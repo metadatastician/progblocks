@@ -5,33 +5,30 @@
 :page-audience: All
 :page-maturity: VERIFIED
 :page-owner: Documentation workstream
-:page-last-reviewed: 2026-08-07
+:page-last-reviewed: 2026-10-05
 :page-next-review: 2026-11-07
 
 include::../_Status-Panel.adoc[]
 
 == Why this page exists
 
-`README.md` advertises a list of capabilities. Some of them exist and
-work; several do not exist at all. This page is the single place that
-states, per feature, what is actually true, with a pointer to the
-evidence. It is drawn directly from a source-reading audit of
-`src/` and must be updated whenever the underlying code changes —
+`README.md` lists what ProgBlocks does. This page is the single place that
+states, per feature, what is actually true and how strongly it is known,
+with a pointer to the evidence. It is drawn from reading `src/` and from
+the test suite, and must be updated whenever the underlying code changes —
 if this table and the code disagree, trust the code and file an issue
 against this page.
 
 [IMPORTANT]
 ====
-`src/prog-block.js` previously had a fatal import bug
-(`import { validateK9 }` against a module that exports only
-`K9Validator` and `defaultValidator`) that kept
-`customElements.define('prog-block', …)` from ever running, so none of
-the rows below actually rendered — the element itself never upgraded.
-That import has been fixed (it now imports `defaultValidator`), and
-`tests/registration.test.js` guards against it recurring, so every row
-below now describes real, observable behaviour. Check the live
-`src/prog-block.js` import line before trusting this table if you have
-reason to think the tree has moved since 2026-08-07.
+Status as of 2026-10-05, branch `feat/render-core-variants-vars`. "Works"
+below means implemented **and** covered by the automated suite
+(`bun test`, under happy-dom). The demo page has also passed an axe-core
+audit in headless Chromium (`just a11y`); nothing has been checked with a
+screen reader. Earlier history: `src/prog-block.js` once had a
+fatal import bug that kept the element from registering at all; that was
+fixed and is guarded by `tests/registration.test.js`, and the file now
+imports nothing.
 ====
 
 == Status table
@@ -40,92 +37,78 @@ reason to think the tree has moved since 2026-08-07.
 |===
 |Feature |Status |Evidence
 
+|Custom element registers
+|Works
+|`tests/registration.test.js`.
+
 |Variant tabs (`<template data-variant>`)
 |Works
-|`parseLightDOM()` builds one tab per template; generic only — no
-OS/shell/language/citation semantics, no platform detection, no
-cross-block sync, no persistence.
+|One tab per template; WAI-ARIA tabs pattern (roving `tabindex`,
+`aria-controls`/`aria-labelledby`, ArrowLeft/Right with wrap, Home/End,
+automatic activation); `variant` attribute/property picks the variant;
+`label` names the tablist; a single variant shows no tablist. Tabs are
+generic labels — no platform detection. Tests: `variant switching` group.
 
-|`{{ variable }}` substitution
-|Partial
-|Plain regex find-and-replace, not backed by the A2ML parser (which is
-a stub). Falsy values (`""`, `"0"`) render as the raw placeholder;
-variables accumulate across variant switches and are never pruned. See
-link:Authoring-Blocks.adoc[Authoring Blocks].
+|Cross-block sync (`group="…"`)
+|Works
+|Blocks sharing a group switch together. Page-local and in memory only —
+not persisted across page loads (`DEBT.adoc` C15).
 
-|Smart paste (array / matrix / text detection)
-|Partial
-|Detects JSON arrays and CSV/TSV matrices, falls back to text. No tuple
-support despite being advertised.
+|`{{ name }}` / `{{ name = default }}` substitution
+|Works
+|One labelled input per variable across all variants; values persist
+across variant switches; typing keeps the same `<input>` and focus; unset
+variables show `{{ name }}` styled as unset. A plain regex, not the A2ML
+parser. An empty value means "unset" and shows the default or
+placeholder (`DEBT.adoc` C4). Tests: `variable substitution` group.
 
-|Export to file (JSON / CSV / Nickel / TXT)
-|Partial
-|Download works. "JSON" wraps the whole block in
-`{"block_content": "…"}` rather than parsing and re-serialising
-structured data; "CSV" quotes each whole line as one field and never
-splits on delimiters (`src/modules/exporter.js:36-38`). Neither is a
-faithful format converter.
+|Copy button
+|Works
+|Copies the personalised text (`block.text`) via `navigator.clipboard`
+and announces the result in a `role="status"` region. Tested with a
+stubbed clipboard; the failure path is untested.
 
 |Line numbers
+|Works
+|`line-numbers` attribute; gutter is `aria-hidden` and
+`user-select: none`, and Copy never includes it. No UI toggle.
+
+|Events and script API
 |Partial
-|Renders correctly with `aria-hidden` / `user-select:none` for
-clean copy-paste. No UI toggle exists; host-attribute only.
+|`progblocks:variant-change` and `progblocks:variable-change` (bubbling,
+composed), `variant`, `text`, `getVariable()`, `setVariable()`. Only the
+`variable-change` event has a test; `variant-change` fires only for a
+change the reader makes in that block.
 
-|Preview toggle (code view vs. live preview view)
-|Absent
-|The README's flagship "toggle between code view and preview view" to
-interactively tweak variables and watch a live preview does not exist
-anywhere in `src/`.
-
-|Templating wizards
-|Absent
-|No storage, no forms, no wizard code anywhere in the repository.
-
-|Live linter
-|Broken
-|The rendered linter panel is the hardcoded string
-`'<i>Linter ready</i>'` (`src/prog-block.js:22`). The real
-WebSocket/LSP integration code exists in
-`src/modules/view-manager.js`, but that module is never imported by
-anything and is entirely dead code.
-
-|Split view (side-by-side / top-bottom)
-|Broken
-|`src/prog-block.css:37-45` styles key off
-`:host([split-view="…"])`, but the JS only ever sets the value on an
-inner `<div>` and never reflects it onto the host element's attribute,
-so the CSS selector never matches. Toggling the linter panel sets an
-internal `splitView` state that has no visible effect.
-
-|A2ML variable parser (tree-sitter)
-|Absent / stub
-|`assets/tree-sitter-a2ml.wasm` is a 118-byte ASCII placeholder file
-(literally reads "// Dummy WASM file placeholder"), not compiled
-WebAssembly. The tree-sitter load path in `src/a2ml-parser.js` is
-commented out and `parseA2ML()` is never called by the component.
-
-|K9 / Nickel validation
-|Absent / stub
-|`validateNickel()` fakes a 50 ms `setTimeout` then unconditionally
-returns `{valid: true, errors: []}`; `executeJustTask()` logs and
-returns `true`. Neither is called by anything. `checkMust()` **is**
-called from `connectedCallback()` but ignores its only parameter.
+|Safe rendering of untrusted content
+|Works
+|All author and reader text reaches the shadow tree via `textContent`; no
+`innerHTML` in `src/`. Unescaped tags inside a `<template>` are dropped,
+not rendered. Tests: `untrusted content is never rendered as markup`.
 
 |"Inject anywhere" embedding
-|Broken for most consumers
-|The shadow root loads `<link href="./src/prog-block.css">`, a
-document-relative path that only resolves for a consumer page sitting
-exactly one level above `src/`. See
+|Works (happy-dom only)
+|The stylesheet URL is resolved with `new URL('./prog-block.css',
+import.meta.url)`, so the host page can live at any depth. Tested from a
+page at `/docs/deep/`; not yet checked in a real browser. See
 link:Getting-Started.adoc[Getting Started].
 
+|Reacting to light-DOM changes after first connect
+|Absent
+|Content is read once; later edits to the templates are ignored
+(`DEBT.adoc` C14).
+
+|Syntax highlighting
+|Absent (out of scope)
+|Exposes `class="language-…"` on `<code>` and `::part()` names for a host
+highlighter; no highlighter integration has been tried (`DEBT.adoc` C16).
+
 |Accessibility — WCAG 2.1 AA target
-|Partial
-|`role=tablist/tab`, `aria-selected`, `aria-pressed`, `aria-label`,
-`aria-hidden` line numbers, `:focus-visible`, and `.sr-only` are
-present. Missing even for AA: roving `tabindex` / arrow-key tablist
-navigation, `tabpanel` + `aria-controls` pairing, `aria-live` for
-variant/export state changes. Inactive tabs render at `opacity:0.7`,
-degrading contrast. See link:../developers/Accessibility.adoc[Accessibility].
+|Audited, not screen-reader tested
+|Tabs pattern, labelled inputs in a fieldset, live region, focus-visible
+rings, `forced-colors` support, no opacity-dimmed tabs, focusable code
+panel. Structure unit-tested; axe-core in headless Chromium (`just a11y`)
+reports 0 violations with contrast checked; no screen-reader session yet. See link:../developers/Accessibility.adoc[Accessibility].
 
 |Accessibility — AAA conformance tier
 |Absent
@@ -134,29 +117,68 @@ elsewhere in the estate. See
 link:../developers/Accessibility.adoc[Accessibility] for the explicit
 statement.
 
-|XSS-safe rendering
-|Broken
-|Variant content is read via `t.innerHTML` and re-injected as HTML;
-variable values are interpolated unescaped into `value="${val}"`. No
-escaping exists anywhere in the render path. Scheduled for
-`fix/render-security`, not yet fixed.
+|A2ML variable parser (tree-sitter)
+|Absent / stub
+|`assets/tree-sitter-a2ml.wasm` is a 118-byte ASCII placeholder file
+(literally reads "// Dummy WASM file placeholder"), not compiled
+WebAssembly. The tree-sitter load path in `src/a2ml-parser.js` is
+commented out, and nothing imports the module.
 
-|Typing in variable inputs / editable code area
-|Broken
-|Every keystroke triggers a full `shadowRoot.innerHTML` rewrite,
-destroying and recreating the `<input>` (or the editable code area)
-mid-edit. Multi-character values are effectively untypeable in a real
-browser. See link:../developers/Architecture.adoc[Architecture].
+|K9 / Nickel validation
+|Absent / stub
+|`validateNickel()` fakes a 50 ms `setTimeout` then unconditionally
+returns `{valid: true, errors: []}`; `executeJustTask()` logs and
+returns `true`. Nothing imports `src/k9-validator.js`.
+
+|Preview toggle (code view vs. live preview view)
+|Absent
+|Never implemented; no longer advertised in `README.md`.
+
+|Templating wizards
+|Absent
+|No storage, no forms, no wizard code anywhere in the repository; no
+longer advertised.
+
+|Inline code editing (`contenteditable`)
+|Removed 2026-10-05
+|Out of charter. It also destroyed `{{ variable }}` placeholders when
+used (`DEBT.adoc` C3).
+
+|Live linter
+|Removed 2026-10-05
+|Out of charter. It was a hardcoded placeholder string; the unimported
+`src/modules/view-manager.js` was deleted with it.
+
+|Split view (side-by-side / top-bottom)
+|Removed 2026-10-05
+|Out of charter. It was never wired to the host attribute its CSS used.
+
+|Smart paste (array / matrix / text detection)
+|Removed 2026-10-05
+|Out of charter; `src/modules/smart-paste.js` and its tests deleted.
+
+|Export to file (JSON / CSV / Nickel)
+|Removed 2026-10-05
+|Its "CSV" and "JSON" were not real encodings; `src/modules/exporter.js`
+deleted.
+
+|Download as plain text
+|Works
+|Download button saves the personalised example; `filename` attribute
+names the file (default `example.txt`). Tested under happy-dom.
 |===
 
 == Legend
 
-* **Works** — behaves as advertised, no known defect blocking normal use.
+* **Works** — implemented and covered by the automated suite (under
+  happy-dom), no known defect blocking normal use. Not a claim of
+  real-browser verification.
 * **Partial** — the feature exists and does something, but has a
-  real, demonstrated defect or a materially narrower scope than
-  advertised.
+  real defect, a test gap, or a materially narrower scope than
+  described.
 * **Broken** — code exists for the feature but it does not function
   (wired incorrectly, hardcoded stub output, or destroyed by another
   code path).
-* **Absent** — no implementation exists at all, despite being
-  advertised in `README.md` or elsewhere.
+* **Absent** — no implementation exists.
+* **Removed** — existed in an earlier revision and was deliberately
+  deleted as outside the component's charter.

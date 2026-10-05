@@ -10,7 +10,8 @@ This document exists because claims are cheap and evidence is not. Its companion
 asserted, and what is deliberately not claimed at all.
 
 Last audited: 2026-08-07, against `main` plus the stacked branches for PR #18 and this
-documentation set.
+documentation set. Component rows updated 2026-10-05 for the render-core rewrite on branch
+`feat/render-core-variants-vars`.
 
 toc::[]
 
@@ -30,13 +31,16 @@ These bind this repository and every sibling:
 | Claim | How it is enforced
 
 | The custom element registers
-| `tests/registration.test.js` imports `src/prog-block.js` under happy-dom and asserts `customElements.get('prog-block')` is defined and that `document.createElement('prog-block')` is an instance of it. Runs in CI via `just test`.
+| `tests/registration.test.js` imports `src/prog-block.js` under happy-dom and asserts `customElements.get('prog-block')` is defined and that `document.createElement('prog-block')` is an instance of it. Runs in CI via `bun run test`.
 
-| Paste parsing detects arrays, CSV/TSV matrices, and falls back to text
-| `tests/prog-block.test.js`, three cases, asserting parsed **content** (values, rows, verbatim fallback), not merely the result shape.
+| Author content and reader input are rendered as text, never markup
+| `tests/component.test.js`, four tests under happy-dom: escaped markup in a variant shows as literal text; unescaped markup in a template produces no element; markup typed into a variable input is inserted as text; markup in a tab label is text. `grep -n innerHTML src/` finds only a comment. (2026-10-05)
+
+| Variants, variables, copy, line numbers and stylesheet resolution behave as documented
+| `tests/component.test.js`, eighteen further tests under happy-dom: the tabs ARIA pattern and arrow/Home/End keys, the `variant` and `group` attributes, single-variant rendering, inline defaults, the same `<input>` surviving typing, values persisting across variant switches, every input labelled, the `progblocks:variable-change` and `progblocks:variant-change` events, copy writing the personalised text and announcing it, download saving it under the `filename` attribute, line-number count and `aria-hidden`, the stylesheet URL resolving against the module from a page at `/docs/deep/`, and the `dedent`/`tokenize` helpers. (2026-10-05)
 
 | The test gate can fail
-| Demonstrated by breaking one assertion and observing `just test` exit 1, then restoring it and observing exit 0. `Justfile`'s `test` recipe is a bare `node --test` with no error swallow.
+| Demonstrated (2026-08-07) by breaking one assertion and observing `just test` exit 1, then restoring it and observing exit 0. `Justfile`'s `test` recipe is now a bare `bun test` with no error swallow; that the 2026-10-05 suite can fail has not been re-demonstrated by a planted break in this audit.
 
 | Actions are pinned, transitively and rename-immune
 | `.github/workflows/actions.lock` holds the SHAs; `gh actions-lock --verify-local` passes. Note the inversion this creates: the `uses:` lines legitimately carry *tag* refs, and re-inlining SHAs would **remove** those actions from the lockfile's coverage.
@@ -69,13 +73,11 @@ reason. Every gate listed above has been made to fail deliberately at least once
 Each of these is believed true on the basis of reading the source. None is enforced, so
 each can rot silently.
 
-* **Variant switching, variable substitution, line-number clipboard safety, and file export work.** Established by reading `src/prog-block.js` and `src/modules/exporter.js`, and by the demo page's construction. There is no test for any of them, and the component has not been exercised in a real browser during this audit.
+* **The component behaves in a real browser as it does under happy-dom.** The behaviour in the Verified table is tested only under happy-dom (2026-10-05). It has not been exercised in a real browser during this audit, and `navigator.clipboard` was stubbed in the copy test.
 
 * **The component has no runtime dependencies.** True by inspection — no imports outside `src/`. Not enforced by any check; a future `import` from a CDN would pass CI.
 
-* **The XSS surface described in `DEBT.adoc` C1 is real.** Asserted from the *absence* of escaping on a path that concatenates untrusted content into HTML (`src/prog-block.js:60,165,199`). It has **not** been demonstrated with a live payload.
-
-* **Focus is destroyed on every keystroke (`DEBT.adoc` C2).** Derived from the render path — `updateState` rewrites `shadowRoot.innerHTML` wholesale — not from an observed session.
+* **The XSS surface described in `DEBT.adoc` C1 was real.** Asserted from the *absence* of escaping in the pre-2026-10-05 render path. It was never demonstrated with a live payload. That render path no longer exists; see the Verified table for what replaced it.
 
 * **The generated launcher cannot start the server (`DEBT.adoc` C13).** Derived from reading the generated script; the failure mode was traced through the `[ -x "$candidate" ]` test that rejects every multi-word command in the search list. Not reproduced by running it.
 
@@ -87,19 +89,19 @@ Recorded so that nothing later mistakes silence for modesty.
 
 * **No formal proofs.** This repository carries no proof assistant, no proof obligations, and does not declare the `formal-proofs` capability. Unlike some sibling repositories in this estate, there is no proof ledger here and none is planned.
 
-* **No WCAG conformance at any level.** WCAG 2.1 AA is a *target*, not an achievement. The repository historically claimed "AAA … Extreme compliance"; that claim was false and has been removed. Known gaps are listed in `DEBT.adoc` T3.
+* **No WCAG conformance at any level.** WCAG 2.1 AA is a *target*, not an achievement. The repository historically claimed "AAA … Extreme compliance"; that claim was false and has been removed. Since 2026-10-05 the tabs pattern, labels, focus rings and live region are implemented and their structure is unit-tested, and an axe-core audit in headless Chromium (`just a11y`, 2026-10-05) reports 0 violations with colour contrast checked; nothing has been checked with a screen reader. See `DEBT.adoc` T3.
 
 * **No release.** Nothing has been published to any registry. `package.json` is `private`. Version numbers appearing in the tree disagree with each other (`DEBT.adoc` L1) and none of them denotes a release.
 
 * **No browser compatibility claim.** The component has not been tested in any browser. It uses custom elements and shadow DOM, so it requires a modern engine, but no support matrix has been established.
 
-* **No security review.** gitleaks proves no *secrets* are committed. It says nothing about the component's behaviour, and the known injection surface (C1) is unfixed.
+* **No security review.** gitleaks proves no *secrets* are committed. It says nothing about the component's behaviour. The known injection surface (C1) was closed on 2026-10-05 and has regression tests, but no independent review has been made.
 
 * **`contracts.ncl` does not validate the repository.** It type-checks a 20-line self-description. It does not verify that the files it names exist, and one of its own assertions (`accessibility_standard = "WCAG_AAA"`) is false.
 
 * **`package.k9` is not consumed by anything.** Its declarations are documentary. One of its `JUST` targets names a recipe that no longer exists.
 
-* **`k9-validator.js` validates nothing.** Two of its three methods return success unconditionally without inspecting anything, and none of the three is called. See `DEBT.adoc` C10.
+* **`k9-validator.js` validates nothing.** Two of its three methods return success unconditionally without inspecting anything, and none of the three is called. Since 2026-10-05 the component does not import it, and does not import `a2ml-parser.js` either. See `DEBT.adoc` C10.
 
 == Provenance of this audit
 
@@ -110,6 +112,13 @@ querying the GitHub API for Actions permissions, code-scanning configuration, an
 history; and cloning the GitHub wiki.
 
 The audit's own weakness, stated plainly: **no finding here was established in a browser.**
-Every rendering, focus, and accessibility statement is source-derived. A single afternoon
-with the demo page open would move several rows of this table from "asserted" to
-"verified" — or refute them.
+Every rendering, focus, and accessibility statement is source-derived or, since 2026-10-05,
+tested under happy-dom. A single afternoon with the demo page open would confirm or refute
+them in a real engine.
+
+The 2026-10-05 update read the rewritten `src/prog-block.js` and `src/prog-block.css` in full
+and ran `bun test` (27 pass, 0 fail), `./tools/run-probes.sh` (36 pass, 0 fail, after the
+contractile probes for the fixed defects were flipped into regression guards) and
+`./tools/check-wiki-health.sh` (pass). It did not re-run `just check`, `gh actions-lock`, or
+the GitHub API queries above, and it re-demonstrated non-vacuity only for the flipped probe
+patterns (each matched a planted string), not for the whole set.

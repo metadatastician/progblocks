@@ -9,9 +9,10 @@
 Trust boundaries and integrity checks for progblocks. A small, dependency-
 free browser component with no server component and no runtime
 dependencies — but its whole job is rendering untrusted documentation
-content, and it currently has a real, unescaped-innerHTML injection
-surface (see ../descriptiles/NEUROSYM.a2ml, ../contractiles/bust/Bustfile.a2ml).
-The trust model below reflects that.
+content. Until 2026-10-05 it had a real, unescaped-innerHTML injection
+surface; that was closed by rendering all author and reader text through
+textContent (see ../descriptiles/NEUROSYM.a2ml,
+../contractiles/bust/Bustfile.a2ml). The trust model below keeps it closed.
 @end
 
 ## Trust Level
@@ -20,10 +21,10 @@ Current trust level: standard
 
 - Agent may read and edit the component source, tests, and machine-readable
   metadata freely.
-- Agent must NOT "fix" the XSS defect by widening trust of variant content
-  (for example adding a sanitiser allowlist without review) without
-  flagging it — escaping and sanitisation choices here are security-
-  sensitive and reviewed, not silently patched in.
+- Agent must NOT widen trust of variant content or variable values (for
+  example rendering them as markup, or adding a sanitiser allowlist)
+  without flagging it — rendering and sanitisation choices here are
+  security-sensitive and reviewed, not silently patched in.
 - Never re-inline action SHAs that .github/workflows/actions.lock owns.
 - Never hand-edit progblocks-launcher.sh — it is generated.
 - Licence, org, and CLADE identity fields are maintainer-only.
@@ -70,4 +71,4 @@ Current trust level: standard
 - .github/workflows/actions.lock (the pin — do not re-inline SHAs)
 - progblocks-launcher.sh (generated — never hand-edit; fix progblocks.launcher.a2ml's source or the upstream launch-scaffolder instead)
 - .machine_readable/descriptiles/CLADE.a2ml (repo identity — never copy another repo's UUID/name)
-- src/prog-block.js's innerHTML paths (lines 61, 68, 165, 177) — the live XSS surface
+- src/prog-block.js's rendering path (el(), _readLightDom(), _renderVariant(), _renderValues()) — must stay textContent-only; it replaced the former innerHTML XSS surface
