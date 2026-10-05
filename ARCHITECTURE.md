@@ -8,10 +8,12 @@ reference and [`EXPLAINME.adoc`](./EXPLAINME.adoc) for claim-by-claim evidence.
 ProgBlocks is one custom element. It renders code examples with variants and reader-supplied values.
 It has no runtime dependencies and needs no build step, no framework and no host system. BerryWiki,
 `ddraig-ssg` or a plain HTML page adopt it the same way: load one ES module and write `<prog-block>`.
-Hosts couple to it only through the documented surface: attributes, four script members, two events,
+Hosts couple to it only through the documented surface: attributes, five script members, two events,
 `--pb-*` custom properties and `::part()` names.
 
-Out of scope by charter: editing code, linting, language servers, structured export formats, persistence.
+Out of scope by charter: editing code, linting, language servers, structured export formats. Persistence
+is limited to one opt-in item: with `persist` (and `group`), the reader's variant name is stored in
+`localStorage` under `progblocks:variant:<group>`. Nothing else is stored.
 
 ## Module map
 
@@ -25,7 +27,8 @@ Out of scope by charter: editing code, linting, language servers, structured exp
 
 ## Render model: build once, patch in place
 
-The shadow tree is built exactly once, in `_build()`, on first connect. Only DOM APIs are used:
+The shadow tree is built once, in `_build()`, on first connect, and rebuilt only when the authored
+content changes (see below). Only DOM APIs are used:
 `createElement`, `setAttribute` and `textContent`. There is no `innerHTML` anywhere in `src/`. Later
 changes patch the nodes they affect:
 
@@ -35,6 +38,7 @@ changes patch the nodes they affect:
 | Variant selected | `_renderVariant()` updates `aria-selected`/`tabindex` on the tabs and replaces the children of `<code>` with fresh text nodes and variable spans. |
 | `line-numbers` toggled | `_renderLineNumbers()` shows or hides the gutter and resizes it to the line count. |
 | `language` changed | `_renderLanguage()` updates the label and the `language-*` class. |
+| Authored light DOM changes (children, text, `data-variant`) | A `MutationObserver` on the host schedules `refresh()`, coalesced to one per microtask. `refresh()` re-reads the light DOM, replaces the shadow tree, then restores the selected variant by name and the reader's values. The inputs are new elements, so focus inside the block is lost; this is host-driven and rare. Edits to a `<template>`'s `.content` are invisible to observers; call `refresh()` after them. The observer disconnects on disconnect. |
 
 **Why this matters for security.** Variant content is read with `template.content.textContent`. The
 browser has already parsed the template, so any tags in it are dropped and only their text survives.
@@ -64,6 +68,12 @@ select the same variant *name*. Peers that lack that name ignore the request. Pr
 (`variant=`, `.variant =`) does not propagate, so blocks cannot ping-pong. Blocks leave their group on
 disconnect.
 
+With `persist`, a reader-initiated selection also writes the variant name to `localStorage` under
+`progblocks:variant:<group>`; on first connect a remembered name takes precedence over the `variant`
+attribute, and a name the block lacks leaves the first variant selected. Every storage access is in
+`try`/`catch`, so blocked storage degrades to page-local sync. There is no `storage` event listener, so
+other open tabs do not follow.
+
 ## Styling
 
 The stylesheet `<link>` href is `new URL('./prog-block.css', import.meta.url)`, which resolves against
@@ -71,7 +81,8 @@ the module rather than the hosting page. That makes it work at any page depth an
 
 ## Known limitations
 
-- Light-DOM changes after first connect are not observed.
-- Group selection is page-local; nothing is persisted.
+- ~~Light-DOM changes after first connect are not observed.~~ Observed since 2026-10-05; edits to a
+  `<template>`'s `.content` still need `refresh()`, and a rebuild loses focus inside the block.
+- Group selection is page-local unless `persist` is set; even then there is no cross-tab sync.
 - No syntax highlighting. A host highlighter can target `code.language-*` through `::part(code)`, but
   ProgBlocks does not run one.

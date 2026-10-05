@@ -67,7 +67,7 @@ numbers hidden, the status message after copy) are asserted by
   `CHROMIUM_PATH` required) runs axe-core with WCAG 2.0/2.1/2.2 A+AA and
   best-practice rules on `index.html` in headless Chromium, dark and
   light. On 2026-10-05: 0 violations, 0 needing review, colour contrast
-  passing on 38 nodes; planted defects make it exit 1. It is not in CI.
+  passing on 39 nodes; planted defects make it exit 1. It is not in CI.
 * **Contrast beyond the resting state is unmeasured** — hover and focus
   states, and any host override of the `--pb-*` colours.
 
@@ -78,9 +78,13 @@ numbers hidden, the status message after copy) are asserted by
   only copy and download results go through the status region. A reader who switches
   variant in the focused block hears the newly focused tab, which carries
   the change.
-* **Content changes after first connect are ignored**, so a host that
-  rewrites a block's templates leaves the rendered block (and what
-  assistive technology reads) stale. See `DEBT.adoc` C14.
+* ~~**Content changes after first connect are ignored**~~ — since
+  2026-10-05 the block re-renders when its authored content changes
+  (`DEBT.adoc` C14, cleared). The re-render replaces the variable
+  inputs, so a reader focused inside the block loses focus when the host
+  changes the content; this is host-driven and rare, and has not been
+  checked with assistive technology. Edits to a template's `.content`
+  still need `block.refresh()`.
 
 The focus-loss defect that used to dominate this page — every keystroke
 in a variable input destroyed and recreated the input — was fixed on

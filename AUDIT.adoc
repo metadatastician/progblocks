@@ -39,6 +39,12 @@ These bind this repository and every sibling:
 | Variants, variables, copy, line numbers and stylesheet resolution behave as documented
 | `tests/component.test.js`, eighteen further tests under happy-dom: the tabs ARIA pattern and arrow/Home/End keys, the `variant` and `group` attributes, single-variant rendering, inline defaults, the same `<input>` surviving typing, values persisting across variant switches, every input labelled, the `progblocks:variable-change` and `progblocks:variant-change` events, copy writing the personalised text and announcing it, download saving it under the `filename` attribute, line-number count and `aria-hidden`, the stylesheet URL resolving against the module from a page at `/docs/deep/`, and the `dedent`/`tokenize` helpers. (2026-10-05)
 
+| The opt-in `persist` choice is stored, restored and degrades safely
+| `tests/component.test.js` › `remembering the reader's variant`, four tests under happy-dom: a reader choice on a `group` + `persist` block is written to `localStorage` under `progblocks:variant:<group>` and restored on the next mount; without `persist` nothing is stored; a remembered name the block lacks falls back to the first variant; a `localStorage` getter that throws leaves tab switching working. Mutation-checked by hand: removing the persist write failed 1. No cross-tab sync is claimed. (2026-10-05)
+
+| Authored content that changes after render is picked up
+| `tests/component.test.js` › `authored content that changes after render`, four tests under happy-dom: replacing templates re-renders while keeping the variant and reader values; editing plain-text content is picked up; `refresh()` picks up edits inside `template.content`; a burst of mutations triggers one rebuild. Mutation-checked by hand: disabling the `MutationObserver` failed 3. (2026-10-05)
+
 | The test gate can fail
 | Demonstrated (2026-08-07) by breaking one assertion and observing `just test` exit 1, then restoring it and observing exit 0. `Justfile`'s `test` recipe is now a bare `bun test` with no error swallow; that the 2026-10-05 suite can fail has not been re-demonstrated by a planted break in this audit.
 
