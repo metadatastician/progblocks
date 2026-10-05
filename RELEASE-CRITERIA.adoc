@@ -4,7 +4,7 @@
 
 [cols="1,4"]
 |===
-| Status | *Proposed*: drafted 2026-10-05 for the owner to approve, amend or reject. Nothing below binds until the owner rules on it.
+| Status | *Adopted 2026-10-05* by owner ruling ("continue 1"), with the amendment recorded under <<rulings>>. The _(proposed)_ threshold is adopted at the value shown.
 | Related | link:AUDIT.adoc[AUDIT] (its hard rule: nothing may be called `v1.0.0` without a gate that passes and can fail), link:DEBT.adoc[DEBT], link:docs/wiki/users/Feature-Status.adoc[Feature Status], link:docs/wiki/developers/Accessibility.adoc[Accessibility]
 |===
 
@@ -70,7 +70,7 @@ require BerryWiki or any other consumer.
 |===
 | ID | Criterion | Evidence that satisfies it | Now
 
-| P1 | There is a way to obtain a release. | A tagged release with a signed artefact and checksums; `package.json` no longer `private`, if publishing is chosen (DEBT CI3). *Owner decision:* whether to publish to a registry or release from git tags only. | ❌
+| P1 | There is a way to obtain a release, by both routes. | Owner ruling 2026-10-05: *both* a package registry and git tags. Evidence: a signed git tag with a GitHub release carrying the artefact, `SHA256SUMS` and its signature; *and* the same version published to the npm registry (consumed through `bunx` and Bun) with provenance attestation; `package.json` no longer `private` (DEBT CI3). Both routes must serve byte-identical files. | ❌
 | P2 | The public API is frozen and documented. | A reference for every attribute, event, method and CSS custom property, marked as the v1 contract, with a test that fails if any of them changes undocumented. | ❌
 | P3 | A versioning policy is published. | A SemVer statement saying what counts as breaking. | ❌
 |===
@@ -90,9 +90,11 @@ require BerryWiki or any other consumer.
 
 Syntax highlighting (out of scope by ruling), AAA conformance, an A2ML parser.
 
-== Open owner decisions
+[[rulings]]
+== Owner rulings (2026-10-05)
 
-. Approve, amend or reject this bar.
-. Set the mutation threshold (T3).
-. Publish to a registry, or release from git tags only (P1).
-. Run the screen-reader script (A1). No agent can.
+. The bar is adopted as written, including the _(proposed)_ threshold.
+. Release route (P1): both a package registry *and* git tags.
+
+Still with the owner, and no agent can close it: run the screen-reader script
+(A1).
