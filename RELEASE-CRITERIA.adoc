@@ -1,0 +1,98 @@
+// SPDX-License-Identifier: MPL-2.0
+= ProgBlocks v1.0: release criteria
+:toc: preamble
+
+[cols="1,4"]
+|===
+| Status | *Proposed*: drafted 2026-10-05 for the owner to approve, amend or reject. Nothing below binds until the owner rules on it.
+| Related | link:AUDIT.adoc[AUDIT] (its hard rule: nothing may be called `v1.0.0` without a gate that passes and can fail), link:DEBT.adoc[DEBT], link:docs/wiki/users/Feature-Status.adoc[Feature Status], link:docs/wiki/developers/Accessibility.adoc[Accessibility]
+|===
+
+Nothing defined "v1" before this document. ProgBlocks is pre-alpha at `0.3.0`,
+with no tag and no published package. Every criterion below names the evidence
+that satisfies it, so each one is a check that can fail. A criterion is *met*
+only by evidence produced at the candidate commit or after it; it is *waived*
+only by a recorded owner ruling. Numbers marked _(proposed)_ are the owner's to
+set.
+
+Independence is a standing condition, not a criterion: ProgBlocks must never
+require BerryWiki or any other consumer.
+
+== R: real-world verification
+
+[cols="1,4,4,1", options="header"]
+|===
+| ID | Criterion | Evidence that satisfies it | Now
+
+| R1 | The component works in real browsers, not only in happy-dom. | The behaviour suite runs in Chromium, Firefox and WebKit (Playwright is already a dev dependency) in CI, with a stated support matrix. | ❌ (happy-dom only)
+| R2 | At least one real page outside this repository embeds it. | A named consumer page and the commit it runs at. BerryWiki cannot be that consumer until its ADR-0007 script-provenance gate exists; a plain Markdown or static site can. | ❌
+|===
+
+== S: security and adversarial robustness
+
+[cols="1,4,4,1", options="header"]
+|===
+| ID | Criterion | Evidence that satisfies it | Now
+
+| S1 | A short threat model covers every surface: authored template text, `{{variable}}` substitution, attributes, `localStorage` and `storage` events, the download filename. | A section in `ARCHITECTURE.md`, or its own file. | ❌
+| S2 | Hostile authored content stays inert in real browsers. | A real-browser test (R1) that injects markup and handlers through templates, variant labels, variable names and values, and asserts no element and no execution; with a planted negative that uses `innerHTML` and is caught. | 🟡 happy-dom only
+| S3 | No input can make rendering slow. | `VAR_PATTERN` rewritten without overlapping quantifiers, plus a time-bounded test on the known quadratic input (`{{a=` followed by many spaces and no closing braces). | ❌
+| S4 | Downloaded filenames cannot spoof. | Sanitisation of control and bidi characters (for example U+202E), leading dots, reserved names (such as `CON`) and length, each with a test. | ❌
+| S5 | A hostile same-origin `storage` event cannot inject state. | Tests for hostile `group` and `persist` values arriving through the event. | ❌
+| S6 | Parsing and rendering are property-tested. | Generated inputs over `tokenize` and rendering, asserting round-trip text and no element creation. | ❌
+|===
+
+== T: tests and gates that can fail
+
+[cols="1,4,4,1", options="header"]
+|===
+| ID | Criterion | Evidence that satisfies it | Now
+
+| T1 | Every gate has a planted negative in CI. | The axe audit, `run-probes.sh` (run with `--strict`), the JCS check and the pins check each shown to reject a known-bad input. | ❌
+| T2 | Nothing pretends to validate. | `src/k9-validator.js` (DEBT C10, always "valid") is implemented or deleted, and `contracts.ncl` (T4) validates something outside itself or is removed. | ❌
+| T3 | The suite catches real defects. | Mutation testing with a tool that runs under Bun (choice open), with a caught rate of at least _(proposed)_ 85%; surviving mutants are killed or justified. | ❌
+|===
+
+== A: accessibility
+
+[cols="1,4,4,1", options="header"]
+|===
+| ID | Criterion | Evidence that satisfies it | Now
+
+| A1 | The screen-reader script has been run by a person. | The NVDA and VoiceOver script in `docs/wiki/developers/Accessibility.adoc`, executed with results recorded (DEBT T3). *Owner-only.* | ❌
+| A2 | A change of variant made by group sync is announced. | A live-region announcement plus a test (DEBT T3 detail). | ❌
+| A3 | Accessibility is checked in interactive states, not only at rest. | axe runs after switching tabs, editing variables and syncing groups, in both colour schemes. | 🟡 resting state only
+|===
+
+== P: packaging and the public contract
+
+[cols="1,4,4,1", options="header"]
+|===
+| ID | Criterion | Evidence that satisfies it | Now
+
+| P1 | There is a way to obtain a release. | A tagged release with a signed artefact and checksums; `package.json` no longer `private`, if publishing is chosen (DEBT CI3). *Owner decision:* whether to publish to a registry or release from git tags only. | ❌
+| P2 | The public API is frozen and documented. | A reference for every attribute, event, method and CSS custom property, marked as the v1 contract, with a test that fails if any of them changes undocumented. | ❌
+| P3 | A versioning policy is published. | A SemVer statement saying what counts as breaking. | ❌
+|===
+
+== D: documentation and governance
+
+[cols="1,4,4,1", options="header"]
+|===
+| ID | Criterion | Evidence that satisfies it | Now
+
+| D1 | Key decisions are recorded. | ADRs for safe rendering (`textContent` only), persistence, and the independence rule (DEBT D3). | ❌
+| D2 | No document outruns the code. | AUDIT's version-drift line corrected (stale since the 0.3.0 alignment); the GitHub wiki is no longer a stub (DEBT D2). | ❌
+| D3 | Required governance checks are achievable. | Each required check either passes or is removed by owner ruling (DEBT G2, G3, CI1b). | ❌
+|===
+
+== Not required for v1
+
+Syntax highlighting (out of scope by ruling), AAA conformance, an A2ML parser.
+
+== Open owner decisions
+
+. Approve, amend or reject this bar.
+. Set the mutation threshold (T3).
+. Publish to a registry, or release from git tags only (P1).
+. Run the screen-reader script (A1). No agent can.
