@@ -21,8 +21,11 @@ repo-specific things that guide does not cover.
 == Repo-specific notes
 
 SPDX header placement::
-Every `.a2ml` file in this repository must carry
-`# SPDX-License-Identifier: MPL-2.0` on **line 1**, exactly. A linter
+Every `.deed` file and contractile `.ncl` file in this repository must
+carry its SPDX identifier (`;; SPDX-License-Identifier: MPL-2.0` in a
+deed, `# SPDX-License-Identifier: MPL-2.0` in Nickel) on **line 1**,
+exactly. A2ML is retired (2026-10-05): do not add `.a2ml` files.
+The `machine-readable-spdx-headers` probe (`just probes`) checks both. A linter
 that checks for the header greps only the first line, so a correct
 header placed on line 2 or later reads as *missing* and can trigger a
 duplicate header being added on top of it. If you are adding or fixing
@@ -31,7 +34,7 @@ rather than blindly prepending a new one.
 
 Never hand-edit `progblocks-launcher.sh`::
 That file is **generated** by `launch-scaffolder` from
-`progblocks.launcher.a2ml` and is marked "do not edit" in its own
+`progblocks.launcher_praxis.deed` and is marked "do not edit" in its own
 header. It currently does not work — see
 link:../developers/CI-CD.adoc[CI/CD] for the concrete defects — but the
 fix belongs upstream, in `launch-scaffolder` itself, followed by

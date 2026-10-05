@@ -1,0 +1,33 @@
+;; SPDX-License-Identifier: MPL-2.0
+;;
+;; progblocks.launcher_praxis.deed — the per-app launcher descriptor for
+;; ProgBlocks, in the form ruled by launch-scaffolder
+;; docs/per-app-launcher-descriptor-deed.adoc (#42). It replaces
+;; progblocks.launcher.a2ml (A2ML retired, owner decision 2026-10-05).
+;;
+;; progblocks-launcher.sh is GENERATED from this file by launch-scaffolder;
+;; never hand-edit the .sh. The former pid-file, log-file and version-output
+;; keys are not carried: the launcher standard owns runtime paths
+;; (launch-scaffolder 7bcc971), not the per-app descriptor.
+(praxis-deed
+  :schema-version  "1.0.0"
+  :canonical-name  "progblocks"
+  :beholding-chora #u5"estate/chora"
+
+  (compliance :standard-version "0.4.0")
+
+  (project :name "progblocks" :display "ProgBlocks"
+           :description "Variant-aware, personalisable code examples for technical documentation"
+           :categories ("Development" "Utility" "Documentation")
+           :version "0.3.0" :license "MPL-2.0")
+
+  ;; Resolved at runtime from the launcher script location; never hardcode.
+  (repo :path "")
+
+  ;; A static demo page served from the repository root.
+  (runtime :kind "server-url" :port 8080
+           :url "http://localhost:8080"
+           :startup-command-search ("{repo-dir}/scripts/run.sh" "python3 -m http.server" "http-server")
+           :wait-for-url-timeout-seconds 10)
+
+  (icon :source "{repo-dir}/assets/icon-256.png"))

@@ -15,7 +15,7 @@
 *.hs    text eol=lf
 *.chpl  text eol=lf
 *.scm   text eol=lf
-*.a2ml  text eol=lf linguist-language=TOML
+*.deed  text eol=lf linguist-language=Scheme
 *.ncl   text eol=lf
 *.nix   text eol=lf
 *.zig   text eol=lf

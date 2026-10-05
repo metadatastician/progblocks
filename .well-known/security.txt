@@ -11,7 +11,8 @@ Contact: https://github.com/metadatastician/progblocks/security/advisories/new
 Expires: 2027-08-07T23:59:59.000Z
 Preferred-Languages: en
 # No GitHub Pages deployment exists for this repo (no docs-site capability —
-# see .machine_readable/rsr-profile.a2ml), so Canonical points at the raw
+# see the (rsr-profile ...) clause of
+# .machine_readable/descriptiles/progblocks_chora.deed), so Canonical points at the raw
 # file on the default branch rather than a fabricated Pages URL.
 Canonical: https://raw.githubusercontent.com/metadatastician/progblocks/main/.well-known/security.txt
 Policy: https://github.com/metadatastician/progblocks/blob/main/SECURITY.md

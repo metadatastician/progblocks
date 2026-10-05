@@ -21,7 +21,7 @@ follows is what actually exists, not the pitch — for the itemised, evidence-ba
 **The core works and is tested.** As of 2026-10-05 the component builds its shadow tree once and patches
 it in place; every piece of author or reader text reaches the page through `textContent`, never
 `innerHTML`. That one change closed the injection surface, made variables typeable, and made the
-tablist accessible. `bun test` runs 39 tests, 0 failing, and `just a11y` (axe-core in a real Chromium) reports no
+tablist accessible. `bun test` runs 49 tests, 0 failing, and `just a11y` (axe-core in a real Chromium) reports no
 WCAG 2.2 AA violations on the demo. Nothing has been checked with a screen reader yet.
 
 **Scope was cut to the charter.** ProgBlocks renders code examples; it is not an editor, IDE or language
@@ -86,7 +86,7 @@ automatically.
 | Accessibility | Audited, not screen-reader tested | AA target. Labelled inputs, focus rings, forced-colours support, no colour-only state. axe-core: 0 violations (`just a11y`) |
 | Syntax highlighting | **Absent** | Out of scope for now; the `language-*` class lets a host highlighter hook in |
 | Reacting to light-DOM changes after connect | Works | A `MutationObserver` rebuilds the block (one rebuild per microtask), keeping the selected variant and the reader's values; focus inside the block is lost when it rebuilds. Edits to a `<template>`'s `.content` need `block.refresh()` |
-| A2ML parser (tree-sitter/WASM) | **Absent** | `src/a2ml-parser.js` is a stub and is no longer imported; `assets/tree-sitter-a2ml.wasm` is a placeholder |
+| Grammar-backed variable parser | **Not planned** | Template variables are a regular expression in `tokenize()`. A2ML is retired (2026-10-05); the unimported `src/a2ml-parser.js` stub and the placeholder `assets/tree-sitter-a2ml.wasm` were deleted |
 | K9 / Nickel validation triad | **Absent** | `src/k9-validator.js` is no longer imported by the component |
 
 ## Documentation
@@ -103,8 +103,7 @@ automatically.
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | How to work on this repo |
 | [`GOVERNANCE.md`](./GOVERNANCE.md) | How decisions get made |
 | [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) | Expected conduct and how to report a problem |
-| [`0-AI-MANIFEST.a2ml`](./0-AI-MANIFEST.a2ml) | Machine-readable entry point for agents |
-| [`.machine_readable/descriptiles/STATE.a2ml`](./.machine_readable/descriptiles/STATE.a2ml) | Machine-readable current-state descriptile |
+| [`.machine_readable/descriptiles/progblocks_chora.deed`](./.machine_readable/descriptiles/progblocks_chora.deed) | The repo deed: the machine-readable record of the repo and the entry point for agents (`(manifest …)` clause); current state is its `(maturity …)` clause |
 | [`docs/wiki/Home.adoc`](./docs/wiki/Home.adoc) | The in-repo wiki landing page — canonical; the GitHub wiki for this repo is a 32-byte stub that should point here |
 
 ## Development
@@ -123,7 +122,7 @@ authored content that changes after render;
 ## Licence
 
 [MPL-2.0](./LICENSE). Historic conflicting licence claims — AGPL in a stray `settings.yml`, CC-BY-SA in
-the launcher A2ML — were resolved to MPL-2.0 in PR #15. SPDX headers estate-wide are MPL-2.0.
+the launcher descriptor (then `progblocks.launcher.a2ml`, now `progblocks.launcher_praxis.deed`) — were resolved to MPL-2.0 in PR #15. SPDX headers estate-wide are MPL-2.0.
 
 ## Origin
 

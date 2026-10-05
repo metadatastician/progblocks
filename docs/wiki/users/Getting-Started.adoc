@@ -93,4 +93,4 @@ model, variables, groups and the script API, and
 link:Feature-Status.adoc[Feature Status] for the full table, including
 the features that were removed as out of charter (inline editing, the
 linter, split view, smart paste and JSON/CSV/Nickel export) and those that never existed
-(preview toggle, templating wizards, the A2ML parser).
+(preview toggle, templating wizards, an A2ML parser — A2ML is retired).

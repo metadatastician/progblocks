@@ -15,6 +15,11 @@
       ],
     },
   },
+  # Read-only default for every job (Scorecard TokenPermissions); each job
+  # also declares its own.
+  permissions: {
+    contents: "read",
+  },
   jobs: {
     build: {
       runs-on: "ubuntu-latest",
@@ -40,6 +45,12 @@
         # axe-core (WCAG 2.0-2.2 A/AA + best practice) against index.html in the
         # runner's preinstalled Google Chrome; exits non-zero on any violation
         # or item needing review. No third-party action, so no new pin.
+        # Every tracked .json file must be RFC 8785 (JCS) canonical and RFC 7493
+        # I-JSON. Fix locally with: bun tools/jcs.mjs fix $(git ls-files '*.json')
+        {
+          name: "JSON is JCS canonical",
+          run: "bun tools/jcs.mjs check $(git ls-files '*.json')",
+        },
         {
           name: "Accessibility audit",
           run: "CHROMIUM_PATH=\"$(command -v google-chrome)\" bun tools/a11y-audit.mjs",
