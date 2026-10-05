@@ -238,6 +238,25 @@ describe('remembering the reader\'s variant', () => {
     assert.equal(mount(OS_PERSIST).variant, 'macOS');
   });
 
+  test('a choice persisted in another tab is followed here, without echo', () => {
+    const block = mount(OS_PERSIST);
+    const plain = mount(THREE_OS.replace('<prog-block>', '<prog-block group="os">'));
+    let events = 0;
+    document.addEventListener('progblocks:variant-change', () => events++);
+    window.dispatchEvent(new StorageEvent('storage', { key: 'progblocks:variant:os', newValue: 'Linux' }));
+    assert.equal(block.variant, 'Linux');
+    assert.equal(plain.variant, 'macOS', 'blocks without persist ignore other tabs');
+    assert.equal(events, 0);
+    assert.equal(localStorage.getItem('progblocks:variant:os'), null, 'no write-back echo');
+  });
+
+  test('unrelated storage keys are ignored', () => {
+    const block = mount(OS_PERSIST);
+    window.dispatchEvent(new StorageEvent('storage', { key: 'other', newValue: 'Linux' }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'progblocks:variant:os', newValue: null }));
+    assert.equal(block.variant, 'macOS');
+  });
+
   test('blocked storage degrades silently', () => {
     const real = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
     Object.defineProperty(globalThis, 'localStorage', { configurable: true, get() { throw new Error('SecurityError'); } });

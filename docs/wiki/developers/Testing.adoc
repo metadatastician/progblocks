@@ -38,11 +38,11 @@ runs the same command.
 
 == What the suite covers
 
-Four test files, 37 tests, all passing as of 2026-10-05. The DOM comes
+Four test files, 39 tests, all passing as of 2026-10-05. The DOM comes
 from happy-dom, registered once by `tests/helpers/dom.js` with a page URL
 of `/docs/deep/page.html` so that path-resolution bugs show up.
 
-* `tests/component.test.js` (30 tests) — the component's behaviour:
+* `tests/component.test.js` (32 tests) — the component's behaviour:
 ** *untrusted content is never rendered as markup* — escaped and
    unescaped markup in templates, markup typed into a variable input,
    markup in a tab label;
@@ -60,7 +60,8 @@ of `/docs/deep/page.html` so that path-resolution bugs show up.
    reader choice is stored in `localStorage` and restored on the next
    mount; without `persist` nothing is stored; a remembered name the
    block lacks falls back to the first variant; a throwing
-   `localStorage` leaves switching working;
+   `localStorage` leaves switching working; another tab's `storage`
+   event is followed without echo, and unrelated keys are ignored;
 ** *authored content that changes after render* — replacing templates
    re-renders while keeping the variant and reader values; plain-text
    edits are picked up; `refresh()` picks up edits inside

@@ -71,8 +71,9 @@ disconnect.
 With `persist`, a reader-initiated selection also writes the variant name to `localStorage` under
 `progblocks:variant:<group>`; on first connect a remembered name takes precedence over the `variant`
 attribute, and a name the block lacks leaves the first variant selected. Every storage access is in
-`try`/`catch`, so blocked storage degrades to page-local sync. There is no `storage` event listener, so
-other open tabs do not follow.
+`try`/`catch`, so blocked storage degrades to page-local sync. A single `storage` event listener,
+installed with the first `persist` block, lets other open tabs follow: it selects the stored name
+in every `persist` block of that group without notifying or writing back, so tabs cannot echo.
 
 ## Styling
 
@@ -83,6 +84,6 @@ the module rather than the hosting page. That makes it work at any page depth an
 
 - ~~Light-DOM changes after first connect are not observed.~~ Observed since 2026-10-05; edits to a
   `<template>`'s `.content` still need `refresh()`, and a rebuild loses focus inside the block.
-- Group selection is page-local unless `persist` is set; even then there is no cross-tab sync.
+- Group selection is page-local unless `persist` is set.
 - No syntax highlighting. A host highlighter can target `code.language-*` through `::part(code)`, but
   ProgBlocks does not run one.

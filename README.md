@@ -21,7 +21,7 @@ follows is what actually exists, not the pitch — for the itemised, evidence-ba
 **The core works and is tested.** As of 2026-10-05 the component builds its shadow tree once and patches
 it in place; every piece of author or reader text reaches the page through `textContent`, never
 `innerHTML`. That one change closed the injection surface, made variables typeable, and made the
-tablist accessible. `bun test` runs 37 tests, 0 failing, and `just a11y` (axe-core in a real Chromium) reports no
+tablist accessible. `bun test` runs 39 tests, 0 failing, and `just a11y` (axe-core in a real Chromium) reports no
 WCAG 2.2 AA violations on the demo. Nothing has been checked with a screen reader yet.
 
 **Scope was cut to the charter.** ProgBlocks renders code examples; it is not an editor, IDE or language
@@ -78,7 +78,7 @@ automatically.
 | Custom element registers | Works | Guarded by `tests/registration.test.js` |
 | Safe rendering of untrusted content | Works | No `innerHTML` in `src/`; tested for markup in variants, tab labels and typed values, mutation-checked once by hand on 2026-10-05 (not automated) |
 | Variant tabs | Works | Tabs pattern with roving `tabindex`, `aria-controls`/`aria-labelledby`, wrap-around arrows, Home/End |
-| Cross-block variant sync | Works | `group` attribute; page-local by default. With `persist` the reader's choice is remembered across page loads in `localStorage`; no cross-tab sync |
+| Cross-block variant sync | Works | `group` attribute; page-local by default. With `persist` the reader's choice is remembered across page loads in `localStorage`, and other open tabs follow |
 | Variable substitution | Works | Inline defaults; one input per variable across all variants; values survive variant switches; typing keeps focus |
 | Copy to clipboard | Works | Copies the personalised text; result announced via a `role=status` live region |
 | Download | Works | Saves the personalised text as plain text; `filename` attribute, default `example.txt` |

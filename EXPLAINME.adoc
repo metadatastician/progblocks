@@ -8,8 +8,8 @@ that evidences it — or states plainly "no automated evidence" where none exist
 this was written (2026-10-05, branch `feat/render-core-variants-vars`); a line number is given only
 where it is stable. If the source has moved, re-verify rather than trust this table.
 
-Overall automated-test coverage: `bun test` runs **37** tests in four files, all passing.
-`tests/component.test.js` (30 tests) exercises the component's behaviour; `tests/registration.test.js`
+Overall automated-test coverage: `bun test` runs **39** tests in four files, all passing.
+`tests/component.test.js` (32 tests) exercises the component's behaviour; `tests/registration.test.js`
 (1) asserts the element registers; `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js`
 (2) guard CI configuration. Every component test runs under happy-dom (`tests/helpers/dom.js`), **not
 in a real browser**. `src/a2ml-parser.js` and `src/k9-validator.js` have no tests and are not imported
@@ -65,14 +65,17 @@ not`. By default the selection is in memory only. Persisting it across page load
 is remembered across page loads in `localStorage` and restored ahead of the `variant` attribute. Only
 reader-initiated selections are stored; blocked or unavailable storage degrades silently to
 page-local group sync; a remembered name the block lacks falls back to the first variant. Without
-`persist` nothing is stored. There is no cross-tab sync.
+`persist` nothing is stored. With `persist`, other open tabs of the same site follow through the `storage` event.
 
 *Implementation:* `recall()` and `remember()` near the top of `src/prog-block.js`, both reading or
 writing the key `progblocks:variant:<group>` (`STORAGE_PREFIX`) inside `try`/`catch`.
 `connectedCallback()` calls `recall()` on first connect when `persist` and `group` are both set, and
 prefers the result over the `variant` attribute; `_selectByName()` ignores a name the block lacks.
-`_select()` calls `remember()` only on the `notify` path, i.e. for a reader-initiated change. No
-`storage` event listener exists, so other open tabs do not follow.
+`_select()` calls `remember()` only on the `notify` path, i.e. for a reader-initiated change. `listenAcrossTabs()`
+adds one `storage` listener that selects the new name in this tab's `persist` blocks of that group,
+without notifying or writing back. Evidence adds `a choice persisted in another tab is followed here,
+without echo` and `unrelated storage keys are ignored`; checked once by hand with two headless
+Chromium tabs on 2026-10-05.
 
 *Evidence:* **Automated, under happy-dom:** `tests/component.test.js` › `remembering the reader's
 variant` — `persist stores a reader choice and restores it on the next page`, `without persist nothing

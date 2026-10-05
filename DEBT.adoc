@@ -404,8 +404,8 @@ attribute. Programmatic selections are not stored. Every storage access is in
 `try`/`catch`, so blocked or unavailable storage degrades silently to page-local group
 sync; a remembered name the block lacks leaves the first variant selected. Without
 `persist` nothing is stored, which keeps the original host-policy reasoning below intact
-as the default. No cross-tab sync: there is no `storage` event listener. Evidence:
-`tests/component.test.js` › `remembering the reader's variant` (4 tests). Mutation-checked
+as the default. Since 2026-10-05 other open tabs of the same site follow through the `storage` event.
+Evidence: `tests/component.test.js` › `remembering the reader's variant` (6 tests). Mutation-checked
 by hand on 2026-10-05: removing the persist write failed 1 of them.
 
 The original finding, kept for the record:
@@ -447,8 +447,8 @@ Evidence: `.machine_readable/rsr-profile.a2ml` does not declare `formal-proofs`;
 
 === T2 — The test suite covers 4 of ~660 source lines' worth of behaviour *(PARTIALLY CLEARED 2026-10-05)*
 
-*Update 2026-10-05.* `bun test` now runs 37 tests across four files, all passing:
-`tests/component.test.js` (30 behavioural tests: rendering safety, variable substitution,
+*Update 2026-10-05.* `bun test` now runs 39 tests across four files, all passing:
+`tests/component.test.js` (32 behavioural tests: rendering safety, variable substitution,
 variant switching and the tabs keyboard model, group sync, both events, stylesheet resolution, copy, download,
 line numbers, the opt-in `persist` storage, authored content that changes after render, and
 the `dedent`/`tokenize` helpers), `tests/registration.test.js` (1),
@@ -718,7 +718,7 @@ fake-gate problem. The bar is reasonable for a component this small; the coverag
 wrong.
 
 Evidence: ruleset `code_coverage` parameters; `npm test` → 5 tests (2026-08-07). As of
-2026-10-05 the suite is 37 tests (T2), but coverage is still not measured, so whether the
+2026-10-05 the suite is 39 tests (T2), but coverage is still not measured, so whether the
 95% bar is met is unknown.
 
 Clearing it: raise real coverage as each defect in the Code debt section lands with a test.

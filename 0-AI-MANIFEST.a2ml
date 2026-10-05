@@ -48,7 +48,7 @@ FACTS.md wins.
   `persist`, authored content that changes after render),
   `registration.test.js` (asserts `customElements.get('prog-block')` is
   defined), plus `ci-config.test.js` and `dependabot-config.test.js`.
-  37 tests, all passing as of 2026-10-05, under happy-dom. `just a11y`
+  39 tests, all passing as of 2026-10-05, under happy-dom. `just a11y`
   runs an axe-core audit in a real Chromium (local only).
 - `contracts.ncl`, `package.k9` — self-description manifests. Neither is
   consumed by anything in this tree; treat them as declared intent, not
@@ -100,8 +100,7 @@ FACTS.md wins.
   assume it stays fixed without checking.
 - **Do not document features the code does not implement.** In particular:
   there is no code/preview toggle, no templating wizard, no linter, no
-  split view, no smart paste, no structured (JSON/CSV/Nickel) export, no syntax highlighting, and
-  no cross-tab sync of a persisted variant. (Light-DOM changes after the first connect *are*
+  split view, no smart paste, no structured (JSON/CSV/Nickel) export, no syntax highlighting, . (Light-DOM changes after the first connect *are*
   observed since 2026-10-05; edits to a template's `.content` need `refresh()`. The only storage
   is the opt-in `persist` variant name per group.) See
   `.machine_readable/descriptiles/STATE.a2ml` and FACTS.md's "Feature
