@@ -22,11 +22,9 @@ If the two ever disagree, `docs/wiki/` wins.
 
 [IMPORTANT]
 ====
-ProgBlocks is **pre-alpha**. Nothing has been released. Version numbers
-disagree across the repo (`package.k9`/`contracts.ncl` say `1.0.0`;
-`progblocks.launcher.a2ml`/`progblocks-launcher.sh` say `0.1.0`;
-`package.json` says `0.3.0`). Treat every version string as unreliable
-and treat the component itself as experimental.
+ProgBlocks is **pre-alpha**. Nothing has been released. Every version
+field says `0.3.0`, a pre-release number with no tag behind it. Treat
+the component itself as experimental.
 
 `src/prog-block.js` previously carried a fatal named-import mismatch
 (`import { validateK9 }` from a module that exports only

@@ -15,9 +15,8 @@ follows is what actually exists, not the pitch — for the itemised, evidence-ba
 
 ## Status
 
-**Pre-alpha. Nothing has been released.** Version numbers disagree with each other and none of them mean
-anything yet: `package.k9` and `contracts.ncl` say `1.0.0`; `progblocks.launcher.a2ml` and
-`progblocks-launcher.sh` say `0.1.0`; `package.json` says `0.3.0`. Treat all three as noise.
+**Pre-alpha. Nothing has been released.** Every version field in the repository says `0.3.0`
+(aligned 2026-10-05). It is a pre-release number, not a release: there is no tag and no published package.
 
 **The core works and is tested.** As of 2026-10-05 the component builds its shadow tree once and patches
 it in place; every piece of author or reader text reaches the page through `textContent`, never

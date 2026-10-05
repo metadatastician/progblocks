@@ -30,17 +30,14 @@ Severity reflects consequence, not effort.
 
 == Licence debt
 
-=== L1 — Version metadata disagrees across four files *(OPEN)*
+=== L1 — Version metadata disagreed across four files *(CLEARED 2026-10-05)*
 
-`package.k9` and `contracts.ncl` declare `1.0.0`; `progblocks.launcher.a2ml` and
-`progblocks-launcher.sh` declare `0.1.0`; `package.json` declares `0.3.0`. Nothing has
-ever been released, so `1.0.0` is the most misleading of the three.
+`package.k9` and `contracts.ncl` declared `1.0.0`; `progblocks.launcher.a2ml` and
+`progblocks-launcher.sh` declared `0.1.0`; `package.json` declared `0.3.0`. The owner
+chose `0.3.0`, and every one of those fields now says it. Nothing has been released;
+`0.3.0` is a pre-release number.
 
 Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" package.k9 contracts.ncl progblocks.launcher.a2ml package.json`
-
-Clearing it: pick one pre-release version (`0.1.0` is the honest floor) and align all
-four, or delete the version field from the files that do not need one. Blocked on
-nothing; deferred only because a release process does not exist yet.
 
 === L2 — `progblocks.launcher.a2ml` licence was changed without upstream coordination *(FLAG-ONLY)*
 

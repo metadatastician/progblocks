@@ -6,7 +6,7 @@
 
 [metadata]
 project = "ProgBlocks"
-version = "0.1.0"   # per progblocks.launcher.a2ml; see [notes] on version drift below
+version = "0.3.0"   # every version field agrees (aligned 2026-10-05)
 last-updated = "2026-10-05"
 status = "active"
 
@@ -79,7 +79,6 @@ actions = [
   "Land branch feat/render-core-variants-vars (XSS and focus fixes, scope cut to the charter) and confirm whether SonarCloud's security rating recovers on it (DEBT.adoc G2).",
   "Test accessibility with at least one real screen reader, and run the axe audit in CI, before making any AA claim (B11).",
   "Decide whether to observe light-DOM changes after first connect (B10).",
-  "Resolve the version-string drift (1.0.0 / 0.1.0 / 0.3.0 across three files) before any tag is cut.",
 ]
 
 [maintenance-status]

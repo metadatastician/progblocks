@@ -45,9 +45,9 @@ wired up than actually is.
 
 ## Version Drift
 
-### version-string-disagreement
-- description: package.k9 and contracts.ncl say 1.0.0; progblocks.launcher.a2ml and progblocks-launcher.sh say 0.1.0; package.json says 0.3.0 — nothing has actually been released under any of these
-- run: grep -q '"1.0.0"' contracts.ncl && grep -q '0.1.0' progblocks.launcher.a2ml
+### version-string-disagreement (RESOLVED 2026-10-05 — all fields aligned on 0.3.0)
+- description: package.k9 and contracts.ncl said 1.0.0; progblocks.launcher.a2ml and progblocks-launcher.sh said 0.1.0; package.json said 0.3.0. The run line now detects a regression: it matches only if a field has drifted off 0.3.0 again
+- run: grep -qE '"(1\.0\.0|0\.1\.0)"' contracts.ncl package.k9 progblocks.launcher.a2ml progblocks-launcher.sh
 - severity: warning
 - enforced-by: not yet automated (documentary)
 - notes: Resolve to one version before any tag is cut — see ../descriptiles/PLAYBOOK.a2ml release-process.
