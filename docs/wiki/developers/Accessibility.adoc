@@ -5,7 +5,7 @@
 :page-audience: Developers and users/integrators
 :page-maturity: VERIFIED
 :page-owner: Documentation workstream
-:page-last-reviewed: 2026-10-05
+:page-last-reviewed: 2026-10-06
 :page-next-review: 2026-11-07
 
 include::../_Status-Panel.adoc[]
@@ -40,8 +40,11 @@ Read directly from `src/prog-block.js` and `src/prog-block.css` as of
   `<fieldset>` whose `<legend>` ("Customise this example") is visually
   hidden with `.sr-only`.
 * **Live region.** A visually hidden `role="status"` region announces
-  "Copied to clipboard", a copy-failure instruction, or "Downloaded
-  <name>".
+  "Copied to clipboard", a copy-failure instruction, "Downloaded
+  <name>", or a group-sync change: "Also switched 1 other example to
+  Windows" in the block the reader used, or "Switched 2 examples to
+  Linux to match another tab" when a choice made in another tab is
+  followed. Programmatic and restored changes are not announced.
 * **Keyboard access to long lines.** The code panel is focusable
   (`tabindex="0"`) so keyboard users can scroll it horizontally.
 * **Line numbers** are `aria-hidden="true"` and `user-select: none`, and
@@ -76,11 +79,11 @@ numbers hidden, the status message after copy) are asserted by
 
 == Known gaps
 
-* **Group-synced changes are not announced.** When a reader switches
-  variant in one block, other blocks in the same `group` change silently;
-  only copy and download results go through the status region. A reader who switches
-  variant in the focused block hears the newly focused tab, which carries
-  the change.
+* ~~**Group-synced changes are not announced.**~~ — since 2026-10-06 the
+  block the reader used announces how many other examples followed
+  (RELEASE-CRITERIA A2). Because tabs activate automatically, each arrow
+  key queues one polite announcement; whether that is chatty in practice
+  is a question for the screen-reader run (step 8).
 * ~~**Content changes after first connect are ignored**~~ — since
   2026-10-05 the block re-renders when its authored content changes
   (`DEBT.adoc` C14, cleared). The re-render replaces the variable
@@ -126,10 +129,10 @@ was actually announced.
   is announced without moving focus.
 . *Download.* Tab to "Download" and press Enter. Expected: "Downloaded
   example.txt" is announced.
-. *Group sync (known gap).* Change the tab in the first example, then
-  navigate to the second example. Expected today: the second example
-  shows the same variant, but nothing announced the change when it
-  happened. Record whether this is confusing in practice.
+. *Group sync.* Change the tab in the first example. Expected: after the
+  tab, "Also switched 1 other example to <name>" is announced; the second
+  example shows the same variant. Then press Right Arrow a few times and
+  record whether one announcement per key is too chatty.
 . *High contrast.* In Windows High Contrast (or forced colours), confirm
   that the selected tab and substituted values are still distinguishable.
 

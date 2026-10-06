@@ -465,6 +465,7 @@ describe('a hostile storage event cannot inject state (RELEASE-CRITERIA S5)', ()
     assert.equal(block.shadowRoot.querySelectorAll('*').length, before, 'no element was created');
     assert.equal(events, 0);
     assert.equal(localStorage.getItem('progblocks:variant:os'), null, 'nothing was written back');
+    assert.equal(block.shadowRoot.querySelector('[role="status"]').textContent, '', 'nothing was announced');
   });
 
   test('hostile group keys reach no block', () => {
@@ -488,5 +489,71 @@ describe('a hostile storage event cannot inject state (RELEASE-CRITERIA S5)', ()
     const block = mount(OS_PERSIST);
     assert.equal(block.variant, 'macOS');
     assert.equal(block.shadowRoot.querySelector('script'), null);
+  });
+});
+
+describe('a variant change made by group sync is announced (RELEASE-CRITERIA A2)', () => {
+  afterEach(() => localStorage.clear());
+  /** Returns a block's live-region text. */
+  const status = (block) => block.shadowRoot.querySelector('[role="status"]').textContent;
+  /** Mounts THREE_OS with the given attributes on the <prog-block>. */
+  const os = (attrs) => mount(THREE_OS.replace('<prog-block>', `<prog-block ${attrs}>`));
+
+  test('one reader selection gives one announcement, in the block the reader used', () => {
+    const a = os('group="os"');
+    const b = os('group="os"');
+    const c = os('group="other"');
+    tabs(a)[1].click();
+    assert.equal(status(a), 'Also switched 1 other example to Windows');
+    assert.equal(status(b), '', 'a follower does not announce');
+    assert.equal(status(c), '', 'another group does not announce');
+    os('group="os"');
+    tabs(b)[2].click();
+    assert.equal(status(b), 'Also switched 2 other examples to Linux');
+  });
+
+  test('nothing that changes no other block is announced', () => {
+    const a = os('group="os"');
+    os('group="os"');
+    tabs(a)[0].click();
+    assert.equal(status(a), '', 'the tab already active');
+    const lone = os('');
+    tabs(lone)[1].click();
+    assert.equal(status(lone), '', 'a block with no group');
+    const x = os('group="js"');
+    mount('<prog-block group="js"><template data-variant="Node">node</template><template data-variant="Bun">bun</template></prog-block>');
+    tabs(x)[1].click();
+    assert.equal(status(x), '', 'peers that lack the variant do not follow');
+    const y = os('group="win"');
+    const already = os('group="win"');
+    already.variant = 'Windows';
+    tabs(y)[1].click();
+    assert.equal(status(y), '', 'a peer already showing the variant has not changed');
+  });
+
+  test('programmatic changes and restored choices are silent', () => {
+    const a = os('group="os"');
+    const b = os('group="os"');
+    a.variant = 'Linux';
+    assert.equal(status(a), '');
+    assert.equal(status(b), '');
+    document.body.replaceChildren();
+    localStorage.setItem('progblocks:variant:os', 'Windows');
+    const restored = os('group="os" persist');
+    assert.equal(restored.variant, 'Windows');
+    assert.equal(status(restored), '');
+  });
+
+  test('a choice followed from another tab is announced once, by name', () => {
+    const p = os('group="os" persist');
+    const q = os('group="os" persist');
+    const plain = os('group="os"');
+    window.dispatchEvent(new StorageEvent('storage', { key: 'progblocks:variant:os', newValue: 'Linux' }));
+    const said = [p, q, plain].map(status);
+    assert.deepEqual(said.filter(Boolean), ['Switched 2 examples to Linux to match another tab']);
+    assert.equal(status(plain), '');
+    for (const block of [p, q]) block.shadowRoot.querySelector('[role="status"]').textContent = '';
+    window.dispatchEvent(new StorageEvent('storage', { key: 'progblocks:variant:os', newValue: 'Linux' }));
+    assert.deepEqual([p, q].map(status), ['', ''], 'a repeat that changes nothing is not announced');
   });
 });

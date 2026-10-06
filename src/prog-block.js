@@ -40,7 +40,9 @@ function recall(group) {
 /**
  * Follows variant choices persisted by other tabs of the same site: a
  * `storage` event for `progblocks:variant:<group>` switches every `persist`
- * block in that group here. Installed once, on the first persisted block.
+ * block in that group here, and announces the change once through the first
+ * switched block's live region. The announcement names the block's own
+ * variant, never the raw storage value. Installed once, on the first persisted block.
  */
 let listeningAcrossTabs = false;
 function listenAcrossTabs() {
@@ -50,8 +52,14 @@ function listenAcrossTabs() {
     if (!event.key?.startsWith(STORAGE_PREFIX) || typeof event.newValue !== 'string') return;
     if (event.storageArea && event.storageArea !== localStore()) return;
     const group = event.key.slice(STORAGE_PREFIX.length);
+    const switched = [];
     for (const block of groups.get(group) ?? []) {
-      if (block.hasAttribute('persist')) block._selectByName(event.newValue, { notify: false });
+      if (block.hasAttribute('persist') && block._selectByName(event.newValue, { notify: false })) switched.push(block);
+    }
+    // One announcement for the whole group, not one per block.
+    if (switched.length) {
+      const what = switched.length === 1 ? 'an example' : `${switched.length} examples`;
+      switched[0]._announce(`Switched ${what} to ${switched[0].variant} to match another tab`);
     }
   });
 }
@@ -416,9 +424,12 @@ export class ProgBlock extends HTMLElement {
     return segments.map((seg) => (seg.name ? (this._values.get(seg.name) || this._defaults.get(seg.name) || seg.raw) : seg.text)).join('');
   }
 
-  /** Activates variant `index`; optionally moves focus and notifies listeners and the group. */
+  /**
+   * Activates variant `index`; optionally moves focus and notifies listeners
+   * and the group. Returns whether the active variant changed.
+   */
   _select(index, { focus = false, notify = true } = {}) {
-    if (index < 0 || index >= this._variants.length) return;
+    if (index < 0 || index >= this._variants.length) return false;
     const changed = index !== this._activeIndex;
     this._activeIndex = index;
     if (changed) this._renderVariant();
@@ -432,12 +443,13 @@ export class ProgBlock extends HTMLElement {
       this._syncGroup();
       if (this._group && this.hasAttribute('persist')) remember(this._group, this.variant);
     }
+    return changed;
   }
 
-  /** Activates the variant with the given name, if this block has one. */
+  /** Activates the variant with the given name, if this block has one; returns whether it changed. */
   _selectByName(name, options) {
     const index = this._variants.findIndex((v) => v.name === name);
-    if (index !== -1) this._select(index, options);
+    return index !== -1 && this._select(index, options);
   }
 
   /** WAI-ARIA tabs keyboard pattern: arrows, Home and End, with automatic activation. */
@@ -501,11 +513,20 @@ export class ProgBlock extends HTMLElement {
     this._group = null;
   }
 
-  /** Switches every other block in this block's group to the same variant name. */
+  /**
+   * Switches every other block in this block's group to the same variant name,
+   * and announces how many followed through this block's live region, once,
+   * so a screen reader hears one message rather than one per block.
+   */
   _syncGroup() {
     if (!this._group) return;
+    let followed = 0;
     for (const peer of groups.get(this._group) ?? []) {
-      if (peer !== this) peer._selectByName(this.variant, { notify: false });
+      if (peer !== this && peer._selectByName(this.variant, { notify: false })) followed++;
+    }
+    if (followed) {
+      const what = followed === 1 ? '1 other example' : `${followed} other examples`;
+      this._announce(`Also switched ${what} to ${this.variant}`);
     }
   }
 }

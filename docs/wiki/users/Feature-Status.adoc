@@ -54,8 +54,10 @@ generic labels — no platform detection. Tests: `variant switching` group.
 |Blocks sharing a group switch together, page-local by default. With
 `persist` the reader's choice is stored in `localStorage` and restored on
 the next page load (`DEBT.adoc` C15, cleared 2026-10-05); blocked storage
-degrades to page-local sync; other open tabs follow. Tests: `remembering the
-reader's variant` group.
+degrades to page-local sync; other open tabs follow. A change that switches
+other blocks is announced once to screen readers (RELEASE-CRITERIA A2). Tests:
+`remembering the reader's variant` and `a variant change made by group sync is
+announced` groups.
 
 |`{{ name }}` / `{{ name = default }}` substitution
 |Works
