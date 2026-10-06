@@ -103,6 +103,8 @@ Nothing has been released. There is no tagged version and no published package; 
 
 ### Removed
 
+- `package.k9`, a K9 manifest that nothing in the tree consumed and whose `just build` target named a
+  deleted recipe (DEBT D4).
 - `src/k9-validator.js`, whose `validateNickel()` returned "valid" unconditionally, and
   `contracts.ncl`, which type-checked only its own self-description; with them the `just check`
   recipe and `package.k9`'s `NICKEL validate` line (RELEASE-CRITERIA T2; DEBT C10, T4).

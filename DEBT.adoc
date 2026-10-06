@@ -42,8 +42,9 @@ chose `0.3.0`, and every one of those fields now says it. Nothing has been relea
 `0.3.0` is a pre-release number. On 2026-10-05 `progblocks.launcher.a2ml` was replaced by
 `progblocks.launcher_praxis.deed` (A2ML retired), which carries `:version "0.3.0"`.
 
-Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" package.k9 progblocks.launcher_praxis.deed package.json`
+Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" progblocks.launcher_praxis.deed package.json`
 (the deed's `:schema-version "1.0.0"` is the deed format's version, not the package's).
+`package.k9` and `contracts.ncl` no longer exist (D4, T4).
 
 === L2 — The launcher descriptor's licence was changed without upstream coordination *(FLAG-ONLY)*
 
@@ -109,7 +110,7 @@ otherwise re-litigate. The A2ML-parser deferral no longer needs one: A2ML was re
 estate-wide on 2026-10-05 (owner decision), so no A2ML parser is planned and the regex
 substitution of template variables is the design, not a stand-in.
 
-=== D4 — `package.k9` documents an interface nothing consumes *(OPEN)*
+=== D4 — `package.k9` documented an interface nothing consumed *(CLEARED 2026-10-06)*
 
 The manifest declares `MUST require: browser_environment / custom_elements`, points `JUST`
 targets at `just build` / `just test`, and until 2026-10-06 pointed `NICKEL` at `contracts.ncl`. No code,
@@ -117,11 +118,14 @@ script, or workflow reads it — and its `just build` target now names a recipe 
 deleted as unbuildable.
 
 Evidence: `grep -rn "package.k9" --include="*.js" --include="*.yml" --include="Justfile" .`
-returns nothing outside documentation. `grep -n build package.k9` names a deleted recipe.
+returned nothing outside documentation, and `grep -n build package.k9` named a deleted recipe.
 
 Clearing it: either wire a K9 validation step into CI, or mark the file explicitly as a
 declaration-only artefact, or delete it. A manifest that documents a non-existent recipe
 is worse than no manifest.
+
+Cleared 2026-10-06 by deletion, the smallest of the three. Evidence: `test ! -e package.k9`;
+`git grep -n package.k9` finds only history-tense lines.
 
 == Code debt
 

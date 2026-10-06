@@ -100,9 +100,7 @@ Recorded so that nothing later mistakes silence for modesty.
 
 * **No security review.** gitleaks proves no *secrets* are committed. It says nothing about the component's behaviour. The known injection surface (C1) was closed on 2026-10-05 and has regression tests, but no independent review has been made.
 
-* **`package.k9` is not consumed by anything.** Its declarations are documentary. One of its `JUST` targets names a recipe that no longer exists.
-
-* **Nothing pretends to validate.** The always-"valid" `src/k9-validator.js` stub and the self-describing `contracts.ncl` were deleted on 2026-10-06 (RELEASE-CRITERIA T2; `DEBT.adoc` C10 and T4). `package.k9` remains documentary, as above.
+* **Nothing pretends to validate.** The always-"valid" `src/k9-validator.js` stub and the self-describing `contracts.ncl` were deleted on 2026-10-06 (RELEASE-CRITERIA T2; `DEBT.adoc` C10 and T4). `package.k9`, a manifest nothing consumed, was deleted the same day (`DEBT.adoc` D4).
 
 == Provenance of this audit
 

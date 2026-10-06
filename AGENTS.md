@@ -7,7 +7,7 @@ and is guarded by `tests/registration.test.js`. Read the repo deed
 `.machine_readable/descriptiles/progblocks_chora.deed` (its `(manifest …)` and `(maturity …)` clauses
 first), then `README.md`,
 then `DEBT.adoc` before touching anything. `README.md`'s Features table and `ARCHITECTURE.md`'s
-"intended vs. actual" section are the fastest way to learn which claims in `package.k9` are
+"intended vs. actual" section are the fastest way to learn which documented claims are
 aspirational rather than true.
 
 Do not hand-edit the generated `progblocks-launcher.sh` — it is produced from
