@@ -13,6 +13,8 @@ const REPO_BLOB = 'https://github.com/metadatastician/progblocks/blob/main/';
 const INCLUDE = /^include::([^\[\s]+)\[\]$/gm;
 const LINK = /link:([^\[\s]+)\[/g;
 const MAX_INCLUDE_DEPTH = 4;
+// The wiki lists `.asciidoc` pages; it silently ignores `.adoc` (seen 2026-10-06).
+export const PAGE_EXT = '.asciidoc';
 
 /** Lists every `.adoc` file under `root`, as POSIX paths relative to it. */
 export function listPages(root, sub = '') {
@@ -80,7 +82,7 @@ export function buildWiki(wikiRoot, { repoRoot = resolve(wikiRoot, '../..'), sou
     if (!/^= /m.test(raw)) continue;
     let text = transform(raw, rel);
     if (pageName(rel) !== '_Sidebar') text = addBanner(text, `${prefix}/${rel}`, source);
-    out.set(`${pageName(rel)}.adoc`, text);
+    out.set(pageName(rel) + PAGE_EXT, text);
   }
   return out;
 }
@@ -96,10 +98,10 @@ function addBanner(text, sourcePath, source) {
   return text.slice(0, headerEnd + 2) + note + '\n' + text.slice(headerEnd + 2);
 }
 
-/** Writes the built pages into `outDir`, first removing its top-level `.md` and `.adoc` pages so a deleted page does not linger. */
+/** Writes the built pages into `outDir`, first removing its top-level `.md`, `.adoc` and `.asciidoc` pages so a deleted page does not linger. */
 export function writeWiki(outDir, pages) {
   for (const entry of readdirSync(outDir, { withFileTypes: true })) {
-    if (entry.isFile() && /\.(md|adoc)$/.test(entry.name)) rmSync(join(outDir, entry.name));
+    if (entry.isFile() && /\.(md|adoc|asciidoc)$/.test(entry.name)) rmSync(join(outDir, entry.name));
   }
   for (const [name, text] of pages) writeFileSync(join(outDir, name), text);
 }
