@@ -60,7 +60,7 @@ module's own URL, so the page can live at any depth.
 | `label="Operating system"` | Accessible name of the tablist (default "Example variants") |
 | `line-numbers` | A line-number gutter, hidden from assistive technology and from copy |
 | `language="bash"` | `class="language-bash"` on the `<code>`, for an external highlighter |
-| `filename="install.sh"` | The Download button's file name (default `example.txt`) |
+| `filename="install.sh"` | The Download button's file name (default `example.txt`). Control and bidi characters, path separators, leading dots and Windows device names are removed or neutralised, and it is capped at 120 characters |
 | `glyph-mode` | A compact inline rendering with no header or inputs |
 
 **Script API:** `block.variant` (get/set), `block.text` (the personalised example),

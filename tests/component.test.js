@@ -6,9 +6,10 @@ import './helpers/dom.js';
 
 let dedent;
 let tokenize;
+let safeFilename;
 
 beforeAll(async () => {
-  ({ dedent, tokenize } = await import('../src/prog-block.js'));
+  ({ dedent, tokenize, safeFilename } = await import('../src/prog-block.js'));
 });
 
 afterEach(() => {
@@ -203,7 +204,7 @@ describe('embedding', () => {
     block.shadowRoot.addEventListener('click', (e) => { if (e.target.tagName === 'A') { clicked = e.target.getAttribute('download'); e.preventDefault(); } });
     block.shadowRoot.querySelector('.download').click();
     URL.createObjectURL = origCreate;
-    assert.equal(clicked, '.._install.sh');
+    assert.equal(clicked, '_install.sh');
     assert.equal(await created[0].text(), 'brew install jq');
     assert.equal(block.shadowRoot.querySelector('a'), null, 'temporary link is removed');
   });
@@ -337,14 +338,36 @@ describe('rendering time grows linearly with input size (RELEASE-CRITERIA S3)', 
     'many variables': (n) => '{{ v = x }} '.repeat(Math.floor(n / 12)).padEnd(n),
   };
 
-  /** Returns the fastest of three runs of `fn`, in milliseconds. */
-  function fastest(fn) {
+  // The criterion's 250 ms bound is for CI. On a loaded workstation timings swing 3x, so the
+  // local bound is 2500 ms; the quadratic and cubic patterns this guards against take minutes.
+  const RENDER_BOUND_MS = process.env.CI ? 250 : 2500;
+  const TRIES = 5;
+
+  /** Times one call of `fn`, in milliseconds. */
+  function time(fn) {
+    const start = performance.now();
+    fn();
+    return performance.now() - start;
+  }
+
+  /**
+   * Returns the lowest large/small time ratio over up to five interleaved pairs, each pair
+   * measured back to back so a load spike hits both sizes alike. Stops at the first pair that meets `limit`. A 1 ms floor
+   * keeps timer jitter on a fast small case from inflating the ratio.
+   */
+  function bestRatio(small, large, limit) {
     let best = Infinity;
-    for (let i = 0; i < 3; i++) {
-      const start = performance.now();
-      fn();
-      best = Math.min(best, performance.now() - start);
+    for (let i = 0; i < TRIES && best > limit; i++) {
+      const smallMs = time(small);
+      best = Math.min(best, time(large) / Math.max(smallMs, 1));
     }
+    return best;
+  }
+
+  /** Returns the fastest of up to five runs of `fn`, stopping at the first within `bound`. */
+  function fastestWithin(fn, bound) {
+    let best = Infinity;
+    for (let i = 0; i < TRIES && best > bound; i++) best = Math.min(best, time(fn));
     return best;
   }
 
@@ -357,16 +380,15 @@ describe('rendering time grows linearly with input size (RELEASE-CRITERIA S3)', 
   }
 
   for (const [label, make] of Object.entries(ADVERSARIAL)) {
-    test(`${label}: 64 KiB costs at most 6x 16 KiB and renders within 250 ms`, () => {
+    test(`${label}: 64 KiB costs at most 6x 16 KiB and renders within the bound`, () => {
       const small = make(16 * KIB);
       const large = make(64 * KIB);
       assert.equal(large.length, 64 * KIB);
-      // A 1 ms floor keeps timer jitter on a fast small case from failing the ratio.
-      const ratio = fastest(() => tokenize(large)) / Math.max(fastest(() => tokenize(small)), 1);
+      const ratio = bestRatio(() => tokenize(small), () => tokenize(large), 6);
       assert.ok(ratio <= 6, `tokenize grew ${ratio.toFixed(1)}x for 4x the input`);
-      const renderMs = fastest(() => renderSource(large));
-      assert.ok(renderMs <= 250, `64 KiB rendered in ${renderMs.toFixed(0)} ms`);
-    });
+      const renderMs = fastestWithin(() => renderSource(large), RENDER_BOUND_MS);
+      assert.ok(renderMs <= RENDER_BOUND_MS, `64 KiB rendered in ${renderMs.toFixed(0)} ms (bound ${RENDER_BOUND_MS})`);
+    }, 60_000);
   }
 
   test('a default is trimmed and stops at a brace', () => {
@@ -374,5 +396,97 @@ describe('rendering time grows linearly with input size (RELEASE-CRITERIA S3)', 
       { name: 'a', fallback: 'spaced out', raw: '{{ a =   spaced out  }}' },
     ]);
     assert.deepEqual(tokenize('{{ a = {b} }}'), [{ text: '{{ a = {b} }}' }]);
+  });
+});
+
+describe('downloaded filenames cannot spoof (RELEASE-CRITERIA S4)', () => {
+  test('bidi overrides and invisible format characters are removed', () => {
+    // "invoice‮txt.exe" displays as "invoiceexe.txt" while saving as .exe.
+    assert.equal(safeFilename('invoice‮txt.exe'), 'invoicetxt.exe');
+    assert.equal(safeFilename('a​b⁦c⁩﻿.txt'), 'abc.txt');
+  });
+
+  test('control characters are removed', () => {
+    assert.equal(safeFilename('in\u0000st\nall\u007F\u009B.sh'), 'install.sh');
+  });
+
+  test('path separators and reserved punctuation are replaced', () => {
+    assert.equal(safeFilename('a/b\\c:d*e?f"g<h>i|j.txt'), 'a_b_c_d_e_f_g_h_i_j.txt');
+  });
+
+  test('leading and trailing dots and spaces are removed', () => {
+    assert.equal(safeFilename('.bashrc'), 'bashrc');
+    assert.equal(safeFilename('  ..hidden.sh. . '), 'hidden.sh');
+  });
+
+  test('Windows device names are prefixed, with or without an extension', () => {
+    for (const reserved of ['CON', 'con.txt', 'Nul', 'aux.tar.gz', 'COM1.sh', 'lpt9']) {
+      assert.equal(safeFilename(reserved), '_' + reserved);
+    }
+    assert.equal(safeFilename('console.log'), 'console.log', 'only exact device names');
+  });
+
+  test('length is capped at 120 characters and a short extension survives', () => {
+    const long = safeFilename('x'.repeat(500) + '.sh');
+    assert.equal([...long].length, 120);
+    assert.ok(long.endsWith('.sh'));
+    assert.equal([...safeFilename('😀'.repeat(200))].length, 120, 'counted in characters, not code units');
+    const cutAtDot = safeFilename('a'.repeat(119) + '.' + 'b'.repeat(20));
+    assert.equal(cutAtDot, 'a'.repeat(119), 'a dot left at the cut is trimmed');
+  });
+
+  test('nothing usable falls back to example.txt', () => {
+    for (const empty of [null, '', '...', ' ‮ ', '\u0000']) assert.equal(safeFilename(empty), 'example.txt');
+  });
+
+  test('a long run of dots is trimmed in linear time', () => {
+    const start = performance.now();
+    safeFilename('a' + '.'.repeat(64 * 1024) + 'b' + '.'.repeat(64 * 1024));
+    assert.ok(performance.now() - start < 250);
+  });
+});
+
+describe('a hostile storage event cannot inject state (RELEASE-CRITERIA S5)', () => {
+  afterEach(() => localStorage.clear());
+  const OS_PERSIST = THREE_OS.replace('<prog-block>', '<prog-block group="os" persist>');
+
+  /** Dispatches a cross-tab storage event as a same-origin attacker could. */
+  const fire = (init) => window.dispatchEvent(new StorageEvent('storage', init));
+
+  test('hostile variant names select nothing and create nothing', () => {
+    const block = mount(OS_PERSIST);
+    const before = block.shadowRoot.querySelectorAll('*').length;
+    let events = 0;
+    document.addEventListener('progblocks:variant-change', () => events++);
+    for (const newValue of ['<img src=x onerror=alert(1)>', '__proto__', 'constructor', 'linux', ' Linux', 'x'.repeat(1 << 20), '']) {
+      fire({ key: 'progblocks:variant:os', newValue });
+    }
+    assert.equal(block.variant, 'macOS');
+    assert.equal(block.shadowRoot.querySelectorAll('*').length, before, 'no element was created');
+    assert.equal(events, 0);
+    assert.equal(localStorage.getItem('progblocks:variant:os'), null, 'nothing was written back');
+  });
+
+  test('hostile group keys reach no block', () => {
+    const block = mount(OS_PERSIST);
+    for (const key of ['progblocks:variant:__proto__', 'progblocks:variant:constructor', 'progblocks:variant:', 'progblocks:variant:os:extra', 'PROGBLOCKS:variant:os']) {
+      fire({ key, newValue: 'Linux' });
+    }
+    assert.equal(block.variant, 'macOS');
+  });
+
+  test('sessionStorage events are ignored', () => {
+    const block = mount(OS_PERSIST);
+    fire({ key: 'progblocks:variant:os', newValue: 'Linux', storageArea: sessionStorage });
+    assert.equal(block.variant, 'macOS');
+    fire({ key: 'progblocks:variant:os', newValue: 'Linux', storageArea: localStorage });
+    assert.equal(block.variant, 'Linux', 'the same event from localStorage is followed');
+  });
+
+  test('a hostile remembered value at first connect falls back safely', () => {
+    localStorage.setItem('progblocks:variant:os', '<script>alert(1)</script>');
+    const block = mount(OS_PERSIST);
+    assert.equal(block.variant, 'macOS');
+    assert.equal(block.shadowRoot.querySelector('script'), null);
   });
 });
