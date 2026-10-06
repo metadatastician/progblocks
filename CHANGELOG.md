@@ -13,6 +13,10 @@ Nothing has been released. There is no tagged version and no published package; 
 
 ### Added
 
+- Group-sync announcements: a reader's variant change that switches other blocks in the same `group` is
+  announced once through the `role=status` region of the block they used ("Also switched 1 other example
+  to Windows"), and a choice followed from another tab is announced once by the first block that
+  followed. Programmatic and restored changes stay silent (RELEASE-CRITERIA A2).
 - `tests/property.test.js`: seeded property tests (in-file mulberry32 generator, no new dependency)
   over `tokenize()` and rendering — round-trip text, segment shape, and a code panel holding exactly
   the substituted text with no authored element, and a generator-oracle check that one variable

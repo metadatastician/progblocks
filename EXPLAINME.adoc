@@ -8,8 +8,8 @@ that evidences it — or states plainly "no automated evidence" where none exist
 this was written (2026-10-05, branch `feat/render-core-variants-vars`); a line number is given only
 where it is stable. If the source has moved, re-verify rather than trust this table.
 
-Overall automated-test coverage (2026-10-06): `bun test` runs **82** tests in seven files, all passing.
-`tests/component.test.js` (49) exercises the component's behaviour; `tests/property.test.js` (4) checks
+Overall automated-test coverage (2026-10-06): `bun test` runs **86** tests in seven files, all passing.
+`tests/component.test.js` (53) exercises the component's behaviour; `tests/property.test.js` (4) checks
 `tokenize` and rendering over 500 seeded generated inputs each; `tests/registration.test.js` (1) asserts
 the element registers; `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2) guard CI
 configuration; `tests/jcs.test.js` (10) and `tests/publish-wiki.test.js` (12) cover the tools. Every
@@ -262,8 +262,9 @@ and light colour schemes: 0 violations, 0 needing review, colour contrast passin
 (2026-10-05; the demo now uses `persist`). Planted defects (an unnamed button, a 1.5:1 colour pair) make it exit 1. It is not in
 CI and needs a local Chromium. **Not verified:** no screen-reader session; axe sees the default
 palette in its resting state only, not hover/focus states or host overrides. The live region announces
-copy and download results only; a variant change caused by `group` sync in
-another block is not announced. See `DEBT.adoc` T3.
+copy and download results, and a variant change made by `group` sync (once per change,
+from the block the reader used, or from the first block that followed another tab).
+See `DEBT.adoc` T3.
 
 == A2ML parser (tree-sitter / WASM) — claim withdrawn
 

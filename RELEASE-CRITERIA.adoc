@@ -60,7 +60,7 @@ require BerryWiki or any other consumer.
 | ID | Criterion | Evidence that satisfies it | Now
 
 | A1 | The screen-reader script has been run by a person. | The NVDA and VoiceOver script in `docs/wiki/developers/Accessibility.adoc`, executed with results recorded (DEBT T3). *Owner-only.* | 🟡 Owner ran it on 2026-10-06 and reported "it works, on read and write at least": reading the code and editing a variable pass. Copy, download, group sync and high contrast, and which reader and browser were used, are not yet recorded
-| A2 | A change of variant made by group sync is announced. | A live-region announcement plus a test (DEBT T3 detail). | ❌
+| A2 | A change of variant made by group sync is announced. | A live-region announcement plus a test (DEBT T3 detail). | ✅ the block the reader used announces "Also switched N other examples to <variant>"; a change followed from another tab is announced once. Tests under "a variant change made by group sync is announced": one announcement per selection, silence when nothing else changed, silence for programmatic and restored changes, cross-tab. Planted negatives: announcing in every peer, `_select` always reporting a change, dropping the no-change guard, announcing in every followed block, no announcement, and speaking the raw storage value each fail a test. Under happy-dom: whether a screen reader speaks it is A1
 | A3 | Accessibility is checked in interactive states, not only at rest. | axe runs after switching tabs, editing variables and syncing groups, in both colour schemes. | 🟡 resting state only
 |===
 

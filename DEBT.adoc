@@ -535,8 +535,9 @@ review, contrast passing on 39 nodes (38 before the demo gained `persist`). Its 
 was fixed with `role="group"`. Planted defects make it exit 1. Since 2026-10-05 the `build` job in `ci.yml` also runs it on every push and PR, against the runner's Google Chrome.
 
 What is still missing, and why this entry stays open: no screen-reader session, and axe checks
-only resting states of the default palette. The status region announces only copy and download results:
-a variant change driven by `group` sync in *another* block is not announced. AA remains a
+only resting states of the default palette. Since 2026-10-06 the status region also announces
+a variant change made by `group` sync (RELEASE-CRITERIA A2); that it is spoken is not yet
+verified with a reader. AA remains a
 target, not a verified level.
 
 The original finding, kept for the record:
