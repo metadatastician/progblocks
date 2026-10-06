@@ -33,7 +33,7 @@ function mulberry32(seed) {
 }
 
 const NAMES = ['pkg', 'host', 'a', 'x-y', 'ns:key', 'v_2'];
-const DEFAULTS = ['', 'latest', '  spaced  ', '8080', '<b>bold</b>', 'a = b', '"q"'];
+const DEFAULTS = ['', 'latest', '  spaced  ', '8080', '<b>bold</b>', '<span class="var-value">x</span>', 'a = b', '"q"'];
 const FRAGMENTS = [
   'brew install ', '\n', '  ', '\t', 'echo "hi"; ', 'x = 1\n',
   // near-misses that must stay plain text
@@ -82,6 +82,12 @@ function expectedCode(segments) {
   return segments.map((seg) => (seg.name ? defaults.get(seg.name) || `{{ ${seg.name} }}` : seg.text)).join('');
 }
 
+/**
+ * Single-line text with no braces and no leading whitespace, so it can sit
+ * around one variable without forming another and `dedent()` leaves it intact.
+ */
+const SURROUNDS = ['', 'brew install ', 'echo "hi"; ', '<script>alert(1)</script>', '</code>', '&lt;', '‮', '🚀 ', 'a = b '];
+
 /** The only elements the component itself puts in its shadow tree. */
 const BUILT_TAGS = new Set(['link', 'div', 'span', 'button', 'fieldset', 'legend', 'label', 'input', 'pre', 'code']);
 
@@ -109,6 +115,40 @@ describe('tokenize properties', () => {
   });
 });
 
+describe('recognition properties', () => {
+  test('one variable between plain text is recognised and substituted', () => {
+    // The oracle here is the generator, not tokenize(): it knows the name and
+    // default it wrote, so a tokenizer that misses variables fails.
+    const rand = mulberry32(SEED);
+    const pad = () => pick(rand, ['', ' ', '  ', '\t']);
+    for (let i = 0; i < CASES; i++) {
+      const label = `seed ${SEED.toString(16)} case ${i}`;
+      const name = pick(rand, NAMES);
+      const withDefault = rand() < 0.5;
+      const value = pick(rand, DEFAULTS);
+      const before = pick(rand, SURROUNDS);
+      const after = pick(rand, SURROUNDS);
+      const raw = withDefault ? `{{${pad()}${name}${pad()}=${value}}}` : `{{${pad()}${name}${pad()}}}`;
+      const source = before + raw + after;
+
+      const vars = tokenize(source).filter((seg) => seg.name);
+      assert.equal(vars.length, 1, `${label}: ${JSON.stringify(source)}`);
+      assert.deepEqual(vars[0], { name, fallback: withDefault ? value.trim() : null, raw }, label);
+
+      const block = document.createElement('prog-block');
+      block.textContent = source;
+      document.body.append(block);
+      const shown = (withDefault && value.trim()) || `{{ ${name} }}`;
+      const codeEl = block.shadowRoot.querySelector('code');
+      assert.equal(codeEl.textContent, before + shown + after, label);
+      const spans = codeEl.querySelectorAll('span.var-value');
+      assert.equal(spans.length, 1, label);
+      assert.equal(spans[0].textContent, shown, label);
+      block.remove();
+    }
+  });
+});
+
 describe('rendering properties', () => {
   test('the code panel shows exactly the substituted text and creates no authored elements', () => {
     forAll((source, label) => {
@@ -125,6 +165,7 @@ describe('rendering properties', () => {
       }
       for (const child of codeEl.children) {
         assert.ok(child.localName === 'span' && child.classList.contains('var-value'), `${label}: <${child.localName}> in code`);
+        assert.equal(child.children.length, 0, `${label}: element inside a variable span`);
       }
       assert.equal(root.querySelectorAll('script, img, iframe, a').length, 0, label);
       assert.equal(block.children.length, 0, `${label}: authored text became light-DOM elements`);

@@ -42,8 +42,7 @@ chose `0.3.0`, and every one of those fields now says it. Nothing has been relea
 `0.3.0` is a pre-release number. On 2026-10-05 `progblocks.launcher.a2ml` was replaced by
 `progblocks.launcher_praxis.deed` (A2ML retired), which carries `:version "0.3.0"`.
 
-Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" package.k9 contracts.ncl progblocks.launcher_praxis.deed package.json`
-(`contracts.ncl` was deleted on 2026-10-06; drop it from the command.)
+Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" package.k9 progblocks.launcher_praxis.deed package.json`
 (the deed's `:schema-version "1.0.0"` is the deed format's version, not the package's).
 
 === L2 — The launcher descriptor's licence was changed without upstream coordination *(FLAG-ONLY)*
@@ -494,7 +493,7 @@ the `dedent`/`tokenize` helpers), `tests/registration.test.js` (1),
 `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2). The smart-paste
 tests (`tests/prog-block.test.js`) were deleted with the module. Coverage has not been
 measured, and every test runs under happy-dom, not a real browser. Since 2026-10-06 `tests/property.test.js` adds
-three seeded property tests over `tokenize` and rendering (RELEASE-CRITERIA S6). Still untested:
+four seeded property tests over `tokenize` and rendering (RELEASE-CRITERIA S6). Still untested:
 `glyph-mode` rendering and the copy-failure path.
 
 The original finding, kept for the record:

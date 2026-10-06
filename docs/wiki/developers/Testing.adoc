@@ -38,7 +38,7 @@ runs the same command.
 
 == What the suite covers
 
-Seven test files, 81 tests, all passing as of 2026-10-06. The DOM comes
+Seven test files, 82 tests, all passing as of 2026-10-06. The DOM comes
 from happy-dom, registered once by `tests/helpers/dom.js` with a page URL
 of `/docs/deep/page.html` so that path-resolution bugs show up.
 
@@ -71,13 +71,16 @@ of `/docs/deep/page.html` so that path-resolution bugs show up.
    edits are picked up; `refresh()` picks up edits inside
    `template.content`; a burst of mutations triggers one rebuild;
 ** *pure helpers* — `dedent()` and `tokenize()`.
-* `tests/property.test.js` (3 tests) — seeded property tests (mulberry32,
+* `tests/property.test.js` (4 tests) — seeded property tests (mulberry32,
   fixed seed, 500 generated sources each, mixing variables, near-miss
   braces, markup, control, bidi and astral characters): `tokenize()`
   segments reproduce the source; text segments are never empty or
   adjacent and names are well formed; the rendered code panel shows
   exactly the substituted text and the shadow tree holds only the
-  elements the component builds. A failure names the seed and case.
+  elements the component builds, with no element inside a variable span; and
+  a single variable placed between brace-free text is recognised with the
+  name and default the generator wrote, and rendered as that value — an
+  oracle independent of `tokenize()`. A failure names the seed and case.
 * `tests/registration.test.js` (1 test) — imports `src/prog-block.js` and
   asserts `customElements.get('prog-block')` is defined and that a
   constructed `<prog-block>` is a real `HTMLElement` instance.

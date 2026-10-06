@@ -8,8 +8,8 @@ that evidences it — or states plainly "no automated evidence" where none exist
 this was written (2026-10-05, branch `feat/render-core-variants-vars`); a line number is given only
 where it is stable. If the source has moved, re-verify rather than trust this table.
 
-Overall automated-test coverage (2026-10-06): `bun test` runs **81** tests in seven files, all passing.
-`tests/component.test.js` (49) exercises the component's behaviour; `tests/property.test.js` (3) checks
+Overall automated-test coverage (2026-10-06): `bun test` runs **82** tests in seven files, all passing.
+`tests/component.test.js` (49) exercises the component's behaviour; `tests/property.test.js` (4) checks
 `tokenize` and rendering over 500 seeded generated inputs each; `tests/registration.test.js` (1) asserts
 the element registers; `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2) guard CI
 configuration; `tests/jcs.test.js` (10) and `tests/publish-wiki.test.js` (12) cover the tools. Every

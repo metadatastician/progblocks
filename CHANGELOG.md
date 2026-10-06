@@ -15,7 +15,8 @@ Nothing has been released. There is no tagged version and no published package; 
 
 - `tests/property.test.js`: seeded property tests (in-file mulberry32 generator, no new dependency)
   over `tokenize()` and rendering — round-trip text, segment shape, and a code panel holding exactly
-  the substituted text with no authored element (RELEASE-CRITERIA S6).
+  the substituted text with no authored element, and a generator-oracle check that one variable
+  between plain text is recognised and substituted (RELEASE-CRITERIA S6).
 - Repo deed `.machine_readable/descriptiles/progblocks_chora.deed` (DEED grammar, linted with
   `deed_lint.py`): the single machine-readable record of the repo, replacing every `.a2ml` file.
   Its identity carries a UUID v8 profile C twin (`3a8b147b-7006-8d01-9edb-c29c4d6551bb`,
