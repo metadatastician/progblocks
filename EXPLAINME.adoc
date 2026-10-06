@@ -8,13 +8,14 @@ that evidences it — or states plainly "no automated evidence" where none exist
 this was written (2026-10-05, branch `feat/render-core-variants-vars`); a line number is given only
 where it is stable. If the source has moved, re-verify rather than trust this table.
 
-Overall automated-test coverage: `bun test` runs **49** tests in five files, all passing; `tests/jcs.test.js` (10) covers `tools/jcs.mjs`.
-`tests/component.test.js` (32 tests) exercises the component's behaviour; `tests/registration.test.js`
-(1) asserts the element registers; `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js`
-(2) guard CI configuration. Every component test runs under happy-dom (`tests/helpers/dom.js`), **not
-in a real browser**. `src/k9-validator.js` has no tests and is not imported by the component.
-(`src/a2ml-parser.js`, likewise untested and unimported, was deleted on 2026-10-05 when A2ML was
-retired estate-wide.)
+Overall automated-test coverage (2026-10-06): `bun test` runs **81** tests in seven files, all passing.
+`tests/component.test.js` (49) exercises the component's behaviour; `tests/property.test.js` (3) checks
+`tokenize` and rendering over 500 seeded generated inputs each; `tests/registration.test.js` (1) asserts
+the element registers; `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2) guard CI
+configuration; `tests/jcs.test.js` (10) and `tests/publish-wiki.test.js` (12) cover the tools. Every
+component test runs under happy-dom (`tests/helpers/dom.js`), **not in a real browser**. All of `src/`
+is now the component: the unimported stubs `src/a2ml-parser.js` and `src/k9-validator.js` were deleted
+on 2026-10-05 and 2026-10-06.
 
 == The component registers as a custom element
 
@@ -281,15 +282,16 @@ contractile's `a2ml-parser-stub` and `wasm-placeholder` probes, `just probes`).
 
 == K9 / Nickel validation triad
 
-*Claim:* the block's state is validated against Nickel contracts via a "Must-Just-Nickel" triad
-(`src/k9-validator.js:4-7`'s own docstring).
+*Claim (retired):* the block's state was said to be validated against Nickel contracts via a
+"Must-Just-Nickel" triad, in the docstring of `src/k9-validator.js`.
 
-*Implementation:* `K9Validator.checkMust()` (`:17-24`) does a trivial feature check.
-`validateNickel()` (`:31-42`) awaits a `setTimeout(resolve, 50)` then unconditionally returns
-`{ valid: true, errors: [] }`. `executeJustTask()` (`:48-51`) `console.log`s and returns `true`.
+*Implementation:* none. `validateNickel()` awaited a `setTimeout(resolve, 50)` and then returned
+`{ valid: true, errors: [] }` unconditionally, and nothing called it. On 2026-10-06 the module was
+deleted, together with `contracts.ncl` and its `just check` recipe (RELEASE-CRITERIA T2). ProgBlocks
+makes no validation claim.
 
-*Evidence:* No automated evidence. Since 2026-10-05 nothing imports `k9-validator.js` at all
-(`grep -rn k9-validator src/ index.html` → only the file's own header). No validation happens.
+*Evidence:* `test ! -e src/k9-validator.js && test ! -e contracts.ncl` (the Dust contractile's
+`fake-validator-methods` probe checks the first, `just probes`).
 
 == Escaping / sanitising untrusted content
 

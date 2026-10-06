@@ -87,7 +87,7 @@ automatically.
 | Syntax highlighting | **Absent** | Out of scope for now; the `language-*` class lets a host highlighter hook in |
 | Reacting to light-DOM changes after connect | Works | A `MutationObserver` rebuilds the block (one rebuild per microtask), keeping the selected variant and the reader's values; focus inside the block is lost when it rebuilds. Edits to a `<template>`'s `.content` need `block.refresh()` |
 | Grammar-backed variable parser | **Not planned** | Template variables are a regular expression in `tokenize()`. A2ML is retired (2026-10-05); the unimported `src/a2ml-parser.js` stub and the placeholder `assets/tree-sitter-a2ml.wasm` were deleted |
-| K9 / Nickel validation triad | **Absent** | `src/k9-validator.js` is no longer imported by the component |
+| K9 / Nickel validation triad | **Removed** | The unused `src/k9-validator.js` stub (which always reported "valid") and the self-describing `contracts.ncl` were deleted on 2026-10-06 (RELEASE-CRITERIA T2) |
 
 ## Documentation
 
@@ -104,13 +104,12 @@ automatically.
 | [`GOVERNANCE.md`](./GOVERNANCE.md) | How decisions get made |
 | [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) | Expected conduct and how to report a problem |
 | [`.machine_readable/descriptiles/progblocks_chora.deed`](./.machine_readable/descriptiles/progblocks_chora.deed) | The repo deed: the machine-readable record of the repo and the entry point for agents (`(manifest …)` clause); current state is its `(maturity …)` clause |
-| [`docs/wiki/Home.adoc`](./docs/wiki/Home.adoc) | The in-repo wiki landing page — canonical; the GitHub wiki for this repo is a 32-byte stub that should point here |
+| [`docs/wiki/Home.adoc`](./docs/wiki/Home.adoc) | The in-repo wiki landing page — canonical; the GitHub wiki is generated from `docs/wiki/` by `tools/publish-wiki.mjs` |
 
 ## Development
 
 ```sh
 just test    # bun test — the same command CI runs (`bun run test`)
-just check   # nickel export contracts.ncl — requires Nickel on PATH
 just a11y    # axe-core audit of index.html in Chromium — set CHROMIUM_PATH (CI runs it too)
 ```
 

@@ -3,9 +3,10 @@ import assert from 'node:assert';
 import './helpers/dom.js';
 
 test('<prog-block> registers and constructs as a real HTMLElement', async () => {
-  // This import would have thrown at link time if the named-import mismatch
-  // against k9-validator.js (validateK9 vs defaultValidator) had not been
-  // fixed — customElements.define('prog-block', ...) would never run.
+  // Guards against any link-time import failure: src/prog-block.js once
+  // imported a name its dependency did not export, so the module never
+  // evaluated and customElements.define('prog-block', ...) never ran. It now
+  // imports nothing; this test fails if a broken import ever returns.
   await import('../src/prog-block.js');
 
   const ProgBlockCtor = customElements.get('prog-block');

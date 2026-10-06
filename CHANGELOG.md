@@ -13,6 +13,9 @@ Nothing has been released. There is no tagged version and no published package; 
 
 ### Added
 
+- `tests/property.test.js`: seeded property tests (in-file mulberry32 generator, no new dependency)
+  over `tokenize()` and rendering — round-trip text, segment shape, and a code panel holding exactly
+  the substituted text with no authored element (RELEASE-CRITERIA S6).
 - Repo deed `.machine_readable/descriptiles/progblocks_chora.deed` (DEED grammar, linted with
   `deed_lint.py`): the single machine-readable record of the repo, replacing every `.a2ml` file.
   Its identity carries a UUID v8 profile C twin (`3a8b147b-7006-8d01-9edb-c29c4d6551bb`,
@@ -95,6 +98,9 @@ Nothing has been released. There is no tagged version and no published package; 
 
 ### Removed
 
+- `src/k9-validator.js`, whose `validateNickel()` returned "valid" unconditionally, and
+  `contracts.ncl`, which type-checked only its own self-description; with them the `just check`
+  recipe and `package.k9`'s `NICKEL validate` line (RELEASE-CRITERIA T2; DEBT C10, T4).
 - Every `.a2ml` file, `src/a2ml-parser.js` (a stub nothing imported) and
   `assets/tree-sitter-a2ml.wasm` (a 118-byte text placeholder): A2ML is retired, so no A2ML
   parser is planned. `contracts.ncl` no longer declares an A2ML dialect.
