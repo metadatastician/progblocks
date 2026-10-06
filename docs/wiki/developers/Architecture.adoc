@@ -42,10 +42,6 @@ host-page depth.
 |Demo page with several `<prog-block>` elements, including a `group`
 pair and an inline `glyph-mode` example.
 
-|`package.k9`
-|20
-|Declarative K9 manifest. Nothing in the repository consumes it.
-
 |`progblocks-launcher.sh`
 |466
 |**Generated** by `launch-scaffolder` from `progblocks.launcher_praxis.deed`;

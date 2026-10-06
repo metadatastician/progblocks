@@ -48,7 +48,7 @@
         {
           level = 3,
           heading = "version-string-disagreement (RESOLVED 2026-10-05 — all fields aligned on 0.3.0)",
-          fields = [{ key = "description", value = "package.k9 and contracts.ncl (deleted 2026-10-06) said 1.0.0; progblocks.launcher.a2ml (now progblocks.launcher_praxis.deed) and progblocks-launcher.sh said 0.1.0; package.json said 0.3.0. The run line now detects a regression: it matches only if a field has drifted off 0.3.0 again" }, { key = "run", value = "! grep -qE '\"(1\\.0\\.0|0\\.1\\.0)\"' package.k9 progblocks-launcher.sh && grep -q ':version \"0.3.0\"' progblocks.launcher_praxis.deed" }, { key = "severity", value = "warning" }, { key = "enforced-by", value = "not yet automated (documentary)" }, { key = "notes", value = "Resolve to one version before any tag is cut — see the repo deed's (playbook (release-process …)) clause." }],
+          fields = [{ key = "description", value = "package.k9 and contracts.ncl (both deleted 2026-10-06) said 1.0.0; progblocks.launcher.a2ml (now progblocks.launcher_praxis.deed) and progblocks-launcher.sh said 0.1.0; package.json said 0.3.0. The run line now detects a regression: it matches only if a field has drifted off 0.3.0 again" }, { key = "run", value = "! grep -qE '\"(1\\.0\\.0|0\\.1\\.0)\"' progblocks-launcher.sh && grep -q ':version \"0.3.0\"' progblocks.launcher_praxis.deed" }, { key = "severity", value = "warning" }, { key = "enforced-by", value = "not yet automated (documentary)" }, { key = "notes", value = "Resolve to one version before any tag is cut — see the repo deed's (playbook (release-process …)) clause." }],
           text = [""],
         },
       ],
