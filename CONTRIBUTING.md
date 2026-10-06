@@ -11,7 +11,7 @@ toolbox enter progblocks-dev
 # Install dependencies manually
 
 # Verify setup
-just check   # or: cargo check / mix compile / etc.
+just a11y    # axe-core audit (needs CHROMIUM_PATH)
 just test    # Run test suite
 ```
 

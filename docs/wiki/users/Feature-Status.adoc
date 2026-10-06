@@ -5,7 +5,7 @@
 :page-audience: All
 :page-maturity: VERIFIED
 :page-owner: Documentation workstream
-:page-last-reviewed: 2026-10-05
+:page-last-reviewed: 2026-10-06
 :page-next-review: 2026-11-07
 
 include::../_Status-Panel.adoc[]
@@ -21,7 +21,7 @@ against this page.
 
 [IMPORTANT]
 ====
-Status as of 2026-10-05, branch `feat/render-core-variants-vars`. "Works"
+Status as of 2026-10-06, `main`. "Works"
 below means implemented **and** covered by the automated suite
 (`bun test`, under happy-dom). The demo page has also passed an axe-core
 audit in headless Chromium (`just a11y`); nothing has been checked with a
@@ -54,8 +54,11 @@ generic labels — no platform detection. Tests: `variant switching` group.
 |Blocks sharing a group switch together, page-local by default. With
 `persist` the reader's choice is stored in `localStorage` and restored on
 the next page load (`DEBT.adoc` C15, cleared 2026-10-05); blocked storage
-degrades to page-local sync; other open tabs follow. Tests: `remembering the
-reader's variant` group.
+degrades to page-local sync; other open tabs follow. A change that switches
+other blocks writes one message to the block's `role="status"` live region
+(RELEASE-CRITERIA A2); that a screen reader speaks it is not yet verified (A1). Tests:
+`remembering the reader's variant` and `a variant change made by group sync is
+announced` groups.
 
 |`{{ name }}` / `{{ name = default }}` substitution
 |Works
@@ -132,10 +135,10 @@ ASCII placeholder, never WebAssembly) were deleted that day. Template
 variables are a regex in `tokenize()`.
 
 |K9 / Nickel validation
-|Absent / stub
-|`validateNickel()` fakes a 50 ms `setTimeout` then unconditionally
-returns `{valid: true, errors: []}`; `executeJustTask()` logs and
-returns `true`. Nothing imports `src/k9-validator.js`.
+|Removed
+|The unused `src/k9-validator.js` stub, which always reported "valid", and
+the self-describing `contracts.ncl` were deleted on 2026-10-06. ProgBlocks
+makes no validation claim.
 
 |Preview toggle (code view vs. live preview view)
 |Absent

@@ -126,8 +126,8 @@
   (neurosym
     :version "0.1.0"
     :last-updated "2026-10-05"
-    ; No formal proof claims: contracts.ncl is a Nickel self-description, package.k9
-    ; is consumed by nothing, and k9-validator.js is imported by nothing.
+    ; No formal proof claims. contracts.ncl and k9-validator.js, which only looked like
+    ; validation, and package.k9, which nothing consumed, were deleted on 2026-10-06.
     :formal-proof-claims #f
     (hypatia :scan-enabled #t :scan-depth standard :report-format "logtalk")
     (evidence :kind test :tool "bun test (happy-dom)" :location "tests/" :notes "Unit and behaviour tests; also tools/a11y-audit.mjs (axe-core in Chromium), run in CI.")
@@ -158,7 +158,6 @@
     :purpose ("Define canonical semantics and policy boundaries for this repository." "Provide a stable golden path and invariant contract for release readiness." "Say plainly which source wins when documentation and the code disagree.")
     :owns ("What the component actually does: src/prog-block.js and src/prog-block.css, read directly, are authoritative, not any feature list" "What is and isn't verified about this repo (EXPLAINME.adoc, AUDIT.adoc)")
     (supersedes :lower "README.md feature list" :higher "src/ as read, with EXPLAINME.adoc as its evidence map" :note "Resolve drift by fixing the document, never by weakening the facts.")
-    (supersedes :lower "contracts.ncl / package.k9 declarations" :higher "actual runtime behaviour" :note "Neither file is consumed by any tool in this tree.")
     (supersedes :lower "progblocks-launcher.sh (generated)" :higher "progblocks.launcher_praxis.deed (its input)" :note "The generated script is what is broken, not its input.")
     (implementation-policy
       :allowed ("JavaScript (ESM, no bundler)" "CSS (Shadow DOM)" "HTML" "Shell" "Nickel" "DEED" "KYAML" "AsciiDoc" "Markdown")

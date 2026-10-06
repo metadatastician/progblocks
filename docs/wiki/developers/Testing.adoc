@@ -5,7 +5,7 @@
 :page-audience: Developers
 :page-maturity: VERIFIED
 :page-owner: Documentation workstream
-:page-last-reviewed: 2026-10-05
+:page-last-reviewed: 2026-10-06
 :page-next-review: 2026-11-07
 
 include::../_Status-Panel.adoc[]
@@ -38,7 +38,7 @@ runs the same command.
 
 == What the suite covers
 
-Five test files, 49 tests, all passing as of 2026-10-05. The DOM comes
+Seven test files, 86 tests, all passing as of 2026-10-06. The DOM comes
 from happy-dom, registered once by `tests/helpers/dom.js` with a page URL
 of `/docs/deep/page.html` so that path-resolution bugs show up.
 
@@ -46,7 +46,7 @@ of `/docs/deep/page.html` so that path-resolution bugs show up.
   sample reproduced exactly, UTF-16 member ordering, ECMAScript number
   output, and rejection of I-JSON violations (duplicate names, lone
   surrogates, out-of-range numbers, trailing content).
-* `tests/component.test.js` (32 tests) — the component's behaviour:
+* `tests/component.test.js` (53 tests) — the component's behaviour:
 ** *untrusted content is never rendered as markup* — escaped and
    unescaped markup in templates, markup typed into a variable input,
    markup in a tab label;
@@ -66,16 +66,32 @@ of `/docs/deep/page.html` so that path-resolution bugs show up.
    block lacks falls back to the first variant; a throwing
    `localStorage` leaves switching working; another tab's `storage`
    event is followed without echo, and unrelated keys are ignored;
+** *a variant change made by group sync is announced* — one
+   announcement in the block the reader used, none when no other block
+   changed, none for programmatic or restored changes, and one for a
+   change followed from another tab;
 ** *authored content that changes after render* — replacing templates
    re-renders while keeping the variant and reader values; plain-text
    edits are picked up; `refresh()` picks up edits inside
    `template.content`; a burst of mutations triggers one rebuild;
 ** *pure helpers* — `dedent()` and `tokenize()`.
+* `tests/property.test.js` (4 tests) — seeded property tests (mulberry32,
+  fixed seed, 500 generated sources each, mixing variables, near-miss
+  braces, markup, control, bidi and astral characters): `tokenize()`
+  segments reproduce the source; text segments are never empty or
+  adjacent and names are well formed; the rendered code panel shows
+  exactly the substituted text and the shadow tree holds only the
+  elements the component builds, with no element inside a variable span; and
+  a single variable placed between brace-free text is recognised with the
+  name and default the generator wrote, and rendered as that value — an
+  oracle independent of `tokenize()`. A failure names the seed and case.
 * `tests/registration.test.js` (1 test) — imports `src/prog-block.js` and
   asserts `customElements.get('prog-block')` is defined and that a
   constructed `<prog-block>` is a real `HTMLElement` instance.
 * `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2)
   — guard the CI and Dependabot configuration, not the component.
+* `tests/publish-wiki.test.js` (12) — `tools/publish-wiki.mjs`, the wiki
+  publisher.
 
 `tests/prog-block.test.js` (smart-paste parsing) was deleted on
 2026-10-05 together with `src/modules/smart-paste.js`.
@@ -110,9 +126,6 @@ specifically to catch this class of regression. Since 2026-10-05
   copy-failure path, and attribute changes after first render
   (`attributeChangedCallback()`).
 * Coverage is not measured.
-* `k9-validator.js`'s stub methods — the module is not imported by the
-  component. (The A2ML parser stub, `src/a2ml-parser.js`, was deleted on
-  2026-10-05.)
 
 A passing `bun test` means the component registers and that the
 behaviours listed above hold under happy-dom — nothing more.

@@ -63,9 +63,6 @@ These bind this repository and every sibling:
 | No document claims WCAG AAA
 | The same script greps the wiki for the claim and fails if it reappears. This is the repository's honesty tripwire (see `DEBT.adoc` H2 for its current over-sensitivity).
 
-| The Nickel contract type-checks
-| `just check` runs `nickel export contracts.ncl` and fails honestly if Nickel is absent or the contract is invalid. Note what this does *not* establish — see below.
-
 | The contractile probes are executable and non-vacuous
 | `just probes` (`tools/run-probes.sh`) evaluates all 36 `run` probes declared in the Nickel contractiles `.machine_readable/contractiles/<verb>/<verb>.ncl` (read via `nickel export` + `jq`); all pass. Non-vacuity was demonstrated per probe class by planting violations — a fake credential in `src/`, a `.pem` at the root, and an `.a2ml` file missing its SPDX header — and observing the corresponding probe fail, then clear on removal. That was done in 2026-08, against the then `.a2ml` contractiles; since the 2026-10-05 conversion the SPDX probe checks `.deed` and contractile `.ncl` files and that no `.a2ml` file is tracked, and its planted-violation check has not been repeated. `just probes-strict` exits non-zero on a failing `critical` probe; until 2026-10-05 the runner gave each probe the *previous* item's severity, so this count was wrong, and that is now fixed.
 |===
@@ -103,11 +100,7 @@ Recorded so that nothing later mistakes silence for modesty.
 
 * **No security review.** gitleaks proves no *secrets* are committed. It says nothing about the component's behaviour. The known injection surface (C1) was closed on 2026-10-05 and has regression tests, but no independent review has been made.
 
-* **`contracts.ncl` does not validate the repository.** It type-checks a 20-line self-description. It does not verify that the files it names exist, and one of its own assertions (`accessibility_standard = "WCAG_AAA"`) is false.
-
-* **`package.k9` is not consumed by anything.** Its declarations are documentary. One of its `JUST` targets names a recipe that no longer exists.
-
-* **`k9-validator.js` validates nothing.** Two of its three methods return success unconditionally without inspecting anything, and none of the three is called. Since 2026-10-05 the component does not import it; the equally unimported `a2ml-parser.js` stub was deleted the same day. See `DEBT.adoc` C10.
+* **Nothing pretends to validate.** The always-"valid" `src/k9-validator.js` stub and the self-describing `contracts.ncl` were deleted on 2026-10-06 (RELEASE-CRITERIA T2; `DEBT.adoc` C10 and T4). `package.k9`, a manifest nothing consumed, was deleted the same day (`DEBT.adoc` D4).
 
 == Provenance of this audit
 

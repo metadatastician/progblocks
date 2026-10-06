@@ -115,7 +115,7 @@
     },
     {
       title = "No verification ledger to check",
-      text = ["", "This repo has no VERIFICATION.md and no src/verify*.mjs scripts, and makes", "no formal proof claims — see the repo deed's (neurosym …) clause. contracts.ncl", "and package.k9 describe intent; nothing in this tree consumes them."],
+      text = ["", "This repo has no VERIFICATION.md and no src/verify*.mjs scripts, and makes", "no formal proof claims — see the repo deed's (neurosym …) clause."],
       items = [
       ],
     },

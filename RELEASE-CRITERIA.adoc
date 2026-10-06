@@ -39,7 +39,7 @@ require BerryWiki or any other consumer.
 | S3 | Rendering time grows linearly with input size. | `VAR_PATTERN` rewritten without overlapping quantifiers. A scaling test over generated adversarial inputs (including `{{a=` followed by spaces and no closing braces, deep nesting of braces, and many variables) at 16 KiB and 64 KiB: the 64 KiB case takes no more than _(proposed)_ 6× the 16 KiB case (linear growth allows about 4×), and every input up to 64 KiB renders within _(proposed)_ 250 ms in CI. | ✅ new `VAR_PATTERN`; four scaling tests in `tests/component.test.js` ("rendering time grows linearly"). Planted negative: with the old pattern restored the same tests did not finish in 200 s. The 250 ms bound applies when `CI` is set; locally it is 2500 ms, because a loaded workstation swings timings 3×
 | S4 | Downloaded filenames cannot spoof. | Sanitisation of control and bidi characters (for example U+202E), leading dots, reserved names (such as `CON`) and length, each with a test. | ✅ `safeFilename()`; one test per class under "downloaded filenames cannot spoof". Planted negatives: removing each control fails its test
 | S5 | A hostile same-origin `storage` event cannot inject state. | Tests for hostile `group` and `persist` values arriving through the event. | ✅ tests under "a hostile storage event cannot inject state": hostile names, group keys, `sessionStorage` events, and a hostile remembered value. Planted negative: dropping the `storageArea` check fails
-| S6 | Parsing and rendering are property-tested. | Generated inputs over `tokenize` and rendering, asserting round-trip text and no element creation. | ❌
+| S6 | Parsing and rendering are property-tested. | Generated inputs over `tokenize` and rendering, asserting round-trip text and no element creation. | ✅ `tests/property.test.js`: a seeded mulberry32 generator (seed `0x5eed0006`, 500 cases per property; 431 contain a variable, 118 a `<script>` fragment) checks that segments reproduce the source, that text segments are never empty or adjacent, and that the code panel shows exactly the substituted text with no element outside the component's own set and none inside a variable span; a fourth property checks, against the generator's own record, that one variable between brace-free text is recognised and rendered as its value. Planted negatives: rendering text segments through `innerHTML` fails the render property; dropping the trailing-text segment in `tokenize` fails the round-trip property; a tokenizer that finds no variables passes the first three and fails the fourth; an empty `<span>` appended inside each variable span fails only the nested-element assertion
 |===
 
 == T: tests and gates that can fail
@@ -49,7 +49,7 @@ require BerryWiki or any other consumer.
 | ID | Criterion | Evidence that satisfies it | Now
 
 | T1 | Every gate has a planted negative in CI. | The axe audit, `run-probes.sh` (run with `--strict`), the JCS check and the pins check each shown to reject a known-bad input. | ❌
-| T2 | Nothing pretends to validate. | `src/k9-validator.js` (DEBT C10, always "valid") is implemented or deleted, and `contracts.ncl` (T4) validates something outside itself or is removed. | ❌
+| T2 | Nothing pretends to validate. | `src/k9-validator.js` (DEBT C10, always "valid") is implemented or deleted, and `contracts.ncl` (T4) validates something outside itself or is removed. | ✅ both deleted on 2026-10-06, with the `just check` recipe and the `package.k9` reference; the dust probe `fake-validator-methods` now runs `test ! -e src/k9-validator.js`
 | T3 | The suite catches real defects. | Mutation testing with a tool that runs under Bun (choice open), with a caught rate of at least _(proposed)_ 85%; surviving mutants are killed or justified. | ❌
 |===
 
@@ -60,7 +60,7 @@ require BerryWiki or any other consumer.
 | ID | Criterion | Evidence that satisfies it | Now
 
 | A1 | The screen-reader script has been run by a person. | The NVDA and VoiceOver script in `docs/wiki/developers/Accessibility.adoc`, executed with results recorded (DEBT T3). *Owner-only.* | 🟡 Owner ran it on 2026-10-06 and reported "it works, on read and write at least": reading the code and editing a variable pass. Copy, download, group sync and high contrast, and which reader and browser were used, are not yet recorded
-| A2 | A change of variant made by group sync is announced. | A live-region announcement plus a test (DEBT T3 detail). | ❌
+| A2 | A change of variant made by group sync is announced. | A live-region announcement plus a test (DEBT T3 detail). | ✅ the block the reader used announces "Also switched N other examples to <variant>"; a change followed from another tab is announced once. Tests under "a variant change made by group sync is announced": one announcement per selection, silence when nothing else changed, silence for programmatic and restored changes, cross-tab. Planted negatives: announcing in every peer, `_select` always reporting a change, dropping the no-change guard, announcing in every followed block, no announcement, and speaking the raw storage value each fail a test. Under happy-dom: whether a screen reader speaks it is A1
 | A3 | Accessibility is checked in interactive states, not only at rest. | axe runs after switching tabs, editing variables and syncing groups, in both colour schemes. | 🟡 resting state only
 |===
 
