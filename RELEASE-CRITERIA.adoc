@@ -59,7 +59,7 @@ require BerryWiki or any other consumer.
 |===
 | ID | Criterion | Evidence that satisfies it | Now
 
-| A1 | The screen-reader script has been run by a person. | The NVDA and VoiceOver script in `docs/wiki/developers/Accessibility.adoc`, executed with results recorded (DEBT T3). *Owner-only.* | ❌
+| A1 | The screen-reader script has been run by a person. | The NVDA and VoiceOver script in `docs/wiki/developers/Accessibility.adoc`, executed with results recorded (DEBT T3). *Owner-only.* | 🟡 Owner ran it on 2026-10-06 and reported "it works, on read and write at least": reading the code and editing a variable pass. Copy, download, group sync and high contrast, and which reader and browser were used, are not yet recorded
 | A2 | A change of variant made by group sync is announced. | A live-region announcement plus a test (DEBT T3 detail). | ❌
 | A3 | Accessibility is checked in interactive states, not only at rest. | axe runs after switching tabs, editing variables and syncing groups, in both colour schemes. | 🟡 resting state only
 |===
@@ -82,7 +82,7 @@ require BerryWiki or any other consumer.
 | ID | Criterion | Evidence that satisfies it | Now
 
 | D1 | Key decisions are recorded. | ADRs for safe rendering (`textContent` only), persistence, and the independence rule (DEBT D3). | ❌
-| D2 | No document outruns the code. | AUDIT's version-drift line corrected (stale since the 0.3.0 alignment); the GitHub wiki is no longer a stub (DEBT D2). | ❌
+| D2 | No document outruns the code. | AUDIT's version-drift line corrected (stale since the 0.3.0 alignment); the GitHub wiki is no longer a stub (DEBT D2). | 🟡 The wiki is now a generated mirror of `docs/wiki/` (`tools/publish-wiki.mjs`, DEBT D2 cleared); the AUDIT line is still open
 | D3 | Required governance checks are achievable. | Each required check either passes or is removed by owner ruling (DEBT G2, G3, CI1b). | ❌
 |===
 
@@ -96,5 +96,6 @@ Syntax highlighting (out of scope by ruling), AAA conformance, an A2ML parser.
 . The bar is adopted as written, including the _(proposed)_ threshold.
 . Release route (P1): both a package registry *and* git tags.
 
-Still with the owner, and no agent can close it: run the screen-reader script
-(A1).
+Still with the owner, and no agent can close it: finish recording the
+screen-reader script (A1). The owner's first run on 2026-10-06 covered
+reading and variable editing.

@@ -13,10 +13,11 @@ include::_Status-Panel.adoc[]
 
 == Canonical-source rule
 
-`docs/wiki/` is canonical. The GitHub wiki for this repository currently
-holds a single 32-byte stub `Home.md` — it is at most a future mirror of
-this tree and must never be treated as an independent source of truth.
-If the two ever disagree, `docs/wiki/` wins.
+`docs/wiki/` is canonical. The GitHub wiki for this repository is a
+generated mirror of this tree, built by `bun tools/publish-wiki.mjs
+<wiki-clone>` and pushed by hand; each mirrored page names the commit it
+was built from. Never edit the GitHub wiki directly: the next publish
+overwrites it. If the two ever disagree, `docs/wiki/` wins.
 
 == Current state — read this first
 

@@ -61,8 +61,10 @@ numbers hidden, the status message after copy) are asserted by
 
 == What is not verified
 
-* **No screen-reader testing.** No session with NVDA, JAWS, VoiceOver,
-  TalkBack or Orca has been run against the component.
+* **Screen-reader testing is partial.** The owner ran the script below on
+  2026-10-06 and reported "it works, on read and write at least": reading
+  the code and editing a variable pass. The other steps, and which reader
+  and browser were used, are not yet recorded.
 * **Automated audit, local and in CI.** `just a11y` (`tools/a11y-audit.mjs`,
   `CHROMIUM_PATH` required) runs axe-core with WCAG 2.0/2.1/2.2 A+AA and
   best-practice rules on `index.html` in headless Chromium, dark and
@@ -94,7 +96,9 @@ link:Architecture.adoc[Architecture]).
 
 == Screen-reader test script
 
-Nothing below has been run yet. It is written so that one person with a
+First run 2026-10-06 by the owner: steps 4 and 5 (edit a value, hear the
+substituted code) and reading the code pass; the rest are unrecorded. It
+is written so that one person with a
 screen reader can run it in about 15 minutes and record a result. Use the
 demo page (`index.html`, served over HTTP from the repository root) and
 run it with at least *NVDA + Firefox or Chrome on Windows* and
