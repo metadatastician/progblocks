@@ -76,7 +76,13 @@ of `.machine_readable/descriptiles/progblocks_chora.deed` (a `(deviation …)` e
 Clearing it: convert to `README.adoc`, or leave as-is with the deviation logged (current
 choice). Do not carry both.
 
-=== D2 — The GitHub wiki is a 32-byte stub that contradicts the canonical wiki *(OPEN)*
+=== D2 — The GitHub wiki is a 32-byte stub that contradicts the canonical wiki *(CLEARED 2026-10-06 — the wiki is a generated mirror)*
+
+*Update 2026-10-06.* The wiki had since been overwritten with 16 BerryWiki-generated `.md`
+pages of placeholder text. `tools/publish-wiki.mjs` now builds the wiki from `docs/wiki/`
+(flattened, includes inlined, links rewritten, `_Navigation` as `_Sidebar`, a source note on
+every page), tested in `tests/publish-wiki.test.js`; its output replaced every old page. The
+wiki is a mirror: `docs/wiki/` stays canonical.
 
 `docs/wiki/` is canonical per estate convention. The repository's GitHub wiki contains a
 single `Home.md` reading "Welcome to the progblocks wiki!" — a reader who finds it first
@@ -503,6 +509,11 @@ first. The registration test is the model: it is 19 lines and it is the only tes
 would have caught the bug that made the entire component inert.
 
 === T3 — No accessibility testing of any kind *(OPEN — gaps fixed, verification still missing)*
+
+*Update 2026-10-06.* The owner ran the screen-reader script in
+`docs/wiki/developers/Accessibility.adoc` and reported "it works, on read and write at least":
+reading the code and editing a variable pass. Copy, download, group sync and high contrast,
+and the reader and browser used, are not yet recorded, so RELEASE-CRITERIA A1 is 🟡.
 
 *Update 2026-10-05.* The specific gaps listed below were fixed in the render-core rewrite:
 the tablist follows the WAI-ARIA tabs pattern (`role` tab/tablist/tabpanel,
