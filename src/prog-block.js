@@ -6,7 +6,12 @@
 // through `textContent` — never `innerHTML` — so a code example cannot inject
 // markup, and an <input> is never destroyed while someone is typing into it.
 
-const VAR_PATTERN = /\{\{\s*([\w:-]+)\s*(?:=\s*([^}]*?)\s*)?\}\}/g;
+// No two quantifiers here can claim the same character: the name run stops at
+// whitespace, and a default stops at the next brace (and is trimmed in
+// `tokenize`), so matching is linear in the input (RELEASE-CRITERIA S3). The
+// previous pattern, `=\s*([^}]*?)\s*`, was cubic on `{{a=` plus spaces.
+// A default therefore cannot contain `{` or `}`.
+const VAR_PATTERN = /\{\{\s*([\w:-]+)\s*(?:=([^{}]*))?\}\}/g;
 const STYLESHEET_URL = new URL('./prog-block.css', import.meta.url).href;
 
 /** Blocks sharing a `group` attribute switch variant together. */
@@ -74,7 +79,7 @@ export function tokenize(source) {
   let last = 0;
   for (const match of source.matchAll(VAR_PATTERN)) {
     if (match.index > last) segments.push({ text: source.slice(last, match.index) });
-    segments.push({ name: match[1], fallback: match[2] ?? null, raw: match[0] });
+    segments.push({ name: match[1], fallback: match[2]?.trim() ?? null, raw: match[0] });
     last = match.index + match[0].length;
   }
   if (last < source.length) segments.push({ text: source.slice(last) });
