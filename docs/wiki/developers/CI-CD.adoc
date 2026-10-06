@@ -20,7 +20,7 @@ include::../_Status-Panel.adoc[]
 |`build` job: checkout → `oven-sh/setup-bun` (Bun 1.3.14) →
 `bun install --frozen-lockfile` → `bun run test`. A second `pins` job
 checks that every action pin and `actions.lock` entry resolves. Does not
-run `just check` or `just build` — see the note below.
+run `just build` — see the note below.
 
 |`.github/workflows/codeql.yml`
 |Matrix CodeQL scan over `actions` (the workflow files themselves) and

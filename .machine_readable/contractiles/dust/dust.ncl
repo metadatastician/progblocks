@@ -9,7 +9,7 @@
   verb = "dust",
   header = ["# SPDX-License-Identifier: MPL-2.0", "# Dustfile — Cleanup and hygiene contract for progblocks", "# Author: Jonathan D.A. Jewell (hyperpolymath)", "#", "# What should be cleaned up (exnovated) or clearly re-labelled. Housekeeping,", "# not blockers — see ../bust/bust.ncl for what's actually broken.", ""],
   post_abstract = [""],
-  abstract = ["Cleanup and hygiene items for progblocks. view-manager.js, the largest", "dead-code item, was deleted on 2026-10-05 (with exporter.js and", "smart-paste.js). What remains are the unimported stubs a2ml-parser.js and", "k9-validator.js and the tree-sitter-a2ml.wasm placeholder (not real", "WebAssembly). None is a runtime bug on its own — all are exnovation", "candidates that mislead a reader of the source tree into thinking more is", "wired up than actually is."],
+  abstract = ["Cleanup and hygiene items for progblocks. view-manager.js, the largest", "dead-code item, was deleted on 2026-10-05 (with exporter.js and", "smart-paste.js). The unimported stubs a2ml-parser.js and", "k9-validator.js and the tree-sitter-a2ml.wasm placeholder (not real", "WebAssembly) were deleted on 2026-10-05 and 2026-10-06. They had misled a", "reader of the source tree into thinking more was wired up than actually was;", "their entries below are kept as regression guards."],
   sections = [
     {
       title = "Dead Code",
@@ -35,8 +35,8 @@
         },
         {
           level = 3,
-          heading = "fake-validator-methods",
-          fields = [{ key = "description", value = "k9-validator.js's validateNickel() fakes a 50ms setTimeout then unconditionally returns {valid:true, errors:[]}; executeJustTask() console.logs and returns true. Neither is called by anything, and since 2026-10-05 nothing imports the module." }, { key = "run", value = "grep -q 'setTimeout' src/k9-validator.js" }, { key = "severity", value = "warning" }, { key = "enforced-by", value = "not yet automated (documentary)" }],
+          heading = "fake-validator-methods (RESOLVED 2026-10-06 — src/k9-validator.js deleted; RELEASE-CRITERIA T2)",
+          fields = [{ key = "description", value = "k9-validator.js's validateNickel() fakes a 50ms setTimeout then unconditionally returns {valid:true, errors:[]}; executeJustTask() console.logs and returns true. Neither is called by anything, and since 2026-10-05 nothing imports the module." }, { key = "run", value = "test ! -e src/k9-validator.js" }, { key = "severity", value = "warning" }, { key = "enforced-by", value = "not yet automated (documentary)" }],
           text = [""],
         },
       ],
@@ -48,7 +48,7 @@
         {
           level = 3,
           heading = "version-string-disagreement (RESOLVED 2026-10-05 — all fields aligned on 0.3.0)",
-          fields = [{ key = "description", value = "package.k9 and contracts.ncl said 1.0.0; progblocks.launcher.a2ml (now progblocks.launcher_praxis.deed) and progblocks-launcher.sh said 0.1.0; package.json said 0.3.0. The run line now detects a regression: it matches only if a field has drifted off 0.3.0 again" }, { key = "run", value = "! grep -qE '\"(1\\.0\\.0|0\\.1\\.0)\"' contracts.ncl package.k9 progblocks-launcher.sh && grep -q ':version \"0.3.0\"' progblocks.launcher_praxis.deed" }, { key = "severity", value = "warning" }, { key = "enforced-by", value = "not yet automated (documentary)" }, { key = "notes", value = "Resolve to one version before any tag is cut — see the repo deed's (playbook (release-process …)) clause." }],
+          fields = [{ key = "description", value = "package.k9 and contracts.ncl (deleted 2026-10-06) said 1.0.0; progblocks.launcher.a2ml (now progblocks.launcher_praxis.deed) and progblocks-launcher.sh said 0.1.0; package.json said 0.3.0. The run line now detects a regression: it matches only if a field has drifted off 0.3.0 again" }, { key = "run", value = "! grep -qE '\"(1\\.0\\.0|0\\.1\\.0)\"' package.k9 progblocks-launcher.sh && grep -q ':version \"0.3.0\"' progblocks.launcher_praxis.deed" }, { key = "severity", value = "warning" }, { key = "enforced-by", value = "not yet automated (documentary)" }, { key = "notes", value = "Resolve to one version before any tag is cut — see the repo deed's (playbook (release-process …)) clause." }],
           text = [""],
         },
       ],

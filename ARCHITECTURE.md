@@ -21,7 +21,6 @@ is limited to one opt-in item: with `persist` (and `group`), the reader's varian
 |---|---|
 | `src/prog-block.js` | The `<prog-block>` element, plus the pure helpers `dedent()` and `tokenize()` (exported for tests). |
 | `src/prog-block.css` | Shadow-DOM styles, all colours as `--pb-*` custom properties. |
-| `src/k9-validator.js` | **Not imported** by the component. Estate K9 manifest tooling. |
 | `index.html` | Demo page. |
 
 ## Render model: build once, patch in place

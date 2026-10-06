@@ -37,22 +37,10 @@ via a `<link>` whose URL is resolved against the module
 (`new URL('./prog-block.css', import.meta.url)`), so it works at any
 host-page depth.
 
-|`src/k9-validator.js`
-|54
-|**Unused.** `K9Validator` class + a `defaultValidator` instance.
-`validateNickel()` and `executeJustTask()` return success
-unconditionally. Nothing imports the module (since 2026-10-05; it used to
-be imported by `prog-block.js` but never called).
-
 |`index.html`
 |56
 |Demo page with several `<prog-block>` elements, including a `group`
 pair and an inline `glyph-mode` example.
-
-|`contracts.ncl`
-|20
-|Nickel self-description (5 fields). Not consumed by any build or CI
-step beyond an optional `just check`.
 
 |`package.k9`
 |20
@@ -135,6 +123,6 @@ swap kept the variant and typed value. It has not been profiled.
 
 == Unused code
 
-All of `src/k9-validator.js` is never imported by the component.
-(`src/a2ml-parser.js`, likewise unimported, was deleted on 2026-10-05.)
+None in `src/`. The unimported stubs `src/a2ml-parser.js` and `src/k9-validator.js` were deleted
+on 2026-10-05 and 2026-10-06, and `contracts.ncl` with them on 2026-10-06.
 The variable syntax the component actually supports is defined by `tokenize()` in `src/prog-block.js`.

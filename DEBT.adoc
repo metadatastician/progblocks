@@ -42,7 +42,7 @@ chose `0.3.0`, and every one of those fields now says it. Nothing has been relea
 `0.3.0` is a pre-release number. On 2026-10-05 `progblocks.launcher.a2ml` was replaced by
 `progblocks.launcher_praxis.deed` (A2ML retired), which carries `:version "0.3.0"`.
 
-Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" package.k9 contracts.ncl progblocks.launcher_praxis.deed package.json`
+Evidence: `grep -rn "1\.0\.0\|0\.1\.0\|0\.3\.0" package.k9 progblocks.launcher_praxis.deed package.json`
 (the deed's `:schema-version "1.0.0"` is the deed format's version, not the package's).
 
 === L2 — The launcher descriptor's licence was changed without upstream coordination *(FLAG-ONLY)*
@@ -112,7 +112,7 @@ substitution of template variables is the design, not a stand-in.
 === D4 — `package.k9` documents an interface nothing consumes *(OPEN)*
 
 The manifest declares `MUST require: browser_environment / custom_elements`, points `JUST`
-targets at `just build` / `just test`, and points `NICKEL` at `contracts.ncl`. No code,
+targets at `just build` / `just test`, and until 2026-10-06 pointed `NICKEL` at `contracts.ncl`. No code,
 script, or workflow reads it — and its `just build` target now names a recipe that was
 deleted as unbuildable.
 
@@ -304,7 +304,12 @@ Clearing it: delete the module (the estate rule is remove-don't-wire for aspirat
 code), and remove the fake linter string from the render. If the linter is ever wanted,
 it returns as a real change with tests.
 
-=== C10 — `k9-validator.js` contains two methods that fake success *(OPEN)*
+=== C10 — `k9-validator.js` contains two methods that fake success *(CLEARED 2026-10-06)*
+
+*Cleared.* `src/k9-validator.js` was deleted (RELEASE-CRITERIA T2). Evidence: `test ! -e src/k9-validator.js`,
+which is also the run line of the `fake-validator-methods` dust probe.
+
+The original finding, kept for the record:
 
 `validateNickel()` fakes a 50 ms `setTimeout` "WASM call" and then returns
 `{valid: true, errors: []}` unconditionally; `executeJustTask()` logs and returns `true`.
@@ -319,7 +324,7 @@ validator, because it launders unverified claims into apparent verification.
 === C11 — `defaultValidator` is imported but never used *(CLEARED 2026-10-05)*
 
 *Cleared.* `src/prog-block.js` no longer imports anything; the dead import is gone.
-`src/k9-validator.js` itself is unchanged and still carries the fake methods in C10.
+`src/k9-validator.js` itself was deleted on 2026-10-06 (C10).
 Evidence: `grep -n "^import" src/prog-block.js` → nothing.
 
 The original finding, kept for the record:
@@ -487,9 +492,8 @@ line numbers, the opt-in `persist` storage, authored content that changes after 
 the `dedent`/`tokenize` helpers), `tests/registration.test.js` (1),
 `tests/ci-config.test.js` (4) and `tests/dependabot-config.test.js` (2). The smart-paste
 tests (`tests/prog-block.test.js`) were deleted with the module. Coverage has not been
-measured, and every test runs under happy-dom, not a real browser. Still untested:
-`src/k9-validator.js` (not imported by the component; the unimported `src/a2ml-parser.js`
-stub was deleted on 2026-10-05),
+measured, and every test runs under happy-dom, not a real browser. Since 2026-10-06 `tests/property.test.js` adds
+four seeded property tests over `tokenize` and rendering (RELEASE-CRITERIA S6). Still untested:
 `glyph-mode` rendering and the copy-failure path.
 
 The original finding, kept for the record:
@@ -549,7 +553,13 @@ Evidence: `grep -rn "aria-\|role=" src/prog-block.js` shows the attributes prese
 Clearing it: add an automated accessibility check (done 2026-10-05 as `just a11y`, run in CI), and test with at least one real screen reader. The tablist keyboard model was fixed
 on 2026-10-05.
 
-=== T4 — `contracts.ncl` validates a self-description, not the repository *(OPEN, partially cleared)*
+=== T4 — `contracts.ncl` validates a self-description, not the repository *(CLEARED 2026-10-06)*
+
+*Cleared* by retirement: `contracts.ncl` and the `just check` recipe that exported it were deleted
+(RELEASE-CRITERIA T2), and `package.k9` no longer names it. Evidence: `test ! -e contracts.ncl`;
+`grep -n check Justfile` finds no recipe.
+
+The original finding, kept for the record:
 
 `just check` runs `nickel export contracts.ncl`, which type-checks a 20-line record. It
 does not check that the files it names exist, so it cannot fail for any reason that would
