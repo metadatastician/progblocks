@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { buildWiki, pageName, writeWiki } from '../tools/publish-wiki.mjs';
+import { buildWiki, PAGE_EXT, pageName, writeWiki } from '../tools/publish-wiki.mjs';
 
 const WIKI = resolve(import.meta.dir, '../docs/wiki');
 const LINK = /link:([^\[\s]+)\[/g;
@@ -24,30 +24,30 @@ describe('the wiki built from docs/wiki/', () => {
   const pages = buildWiki(WIKI, { source: 'test' });
 
   test('publishes every page, with _Navigation as the sidebar', () => {
-    assert.ok(pages.has('Home.adoc'));
-    assert.ok(pages.has('_Sidebar.adoc'));
-    assert.ok(!pages.has('_Navigation.adoc'));
+    assert.ok(pages.has('Home' + PAGE_EXT));
+    assert.ok(pages.has('_Sidebar' + PAGE_EXT));
+    assert.ok(!pages.has('_Navigation' + PAGE_EXT));
     assert.ok(pages.size >= 11, `only ${pages.size} pages`);
   });
 
   test('leaves no include:: for GitHub to drop, and inlines the status panel', () => {
     for (const [name, text] of pages) assert.ok(!text.includes('include::'), name);
-    assert.match(pages.get('Home.adoc'), /\|Page ID \|\{page-id\}/);
-    assert.ok(!pages.has('Status-Panel.adoc'), 'a titleless fragment is not a page');
+    assert.match(pages.get('Home' + PAGE_EXT), /\|Page ID \|\{page-id\}/);
+    assert.ok(!pages.has('Status-Panel' + PAGE_EXT), 'a titleless fragment is not a page');
   });
 
   test('every relative link names a published page', () => {
     for (const [name, text] of pages) {
       for (const [, target] of text.matchAll(LINK)) {
         if (/^https:\/\//.test(target) || target.startsWith('#')) continue;
-        assert.ok(pages.has(`${target.split('#')[0]}.adoc`), `${name} links to ${target}`);
+        assert.ok(pages.has(target.split('#')[0] + PAGE_EXT), `${name} links to ${target}`);
       }
     }
   });
 
   test('every page but the sidebar names its canonical source', () => {
     for (const [name, text] of pages) {
-      if (name === '_Sidebar.adoc') continue;
+      if (name === '_Sidebar' + PAGE_EXT) continue;
       assert.match(text, /NOTE: Generated from link:https:\/\/github\.com\/metadatastician\/progblocks\/blob\/main\/docs\/wiki\//, name);
     }
   });
@@ -83,11 +83,11 @@ describe('link rewriting', () => {
       'README.md': '# r\n',
     });
     const pages = buildWiki(join(root, 'docs/wiki'));
-    const home = pages.get('Home.adoc');
+    const home = pages.get('Home' + PAGE_EXT);
     assert.match(home, /link:Guide#start\[guide\]/);
     assert.match(home, /link:https:\/\/github\.com\/metadatastician\/progblocks\/blob\/main\/README\.md\[readme\]/);
     assert.match(home, /link:https:\/\/x\.test\/\[x\]/);
-    assert.match(pages.get('Guide.adoc'), /link:Home\[home\]/);
+    assert.match(pages.get('Guide' + PAGE_EXT), /link:Home\[home\]/);
   });
 
   test('page names drop a leading underscore, except _Navigation', () => {
@@ -98,11 +98,16 @@ describe('link rewriting', () => {
 });
 
 describe('writing into a wiki clone', () => {
+  test('publishes pages with the extension the GitHub wiki lists', () => {
+    assert.equal(PAGE_EXT, '.asciidoc');
+  });
+
   test('replaces stale pages and leaves everything else alone', () => {
-    const out = fixture({ 'Old.md': 'stale', '.git/HEAD': 'ref', 'notes.txt': 'keep' });
-    writeWiki(out, new Map([['Home.adoc', '= Home\n']]));
+    const out = fixture({ 'Old.md': 'stale', 'Old.adoc': 'stale', '.git/HEAD': 'ref', 'notes.txt': 'keep' });
+    writeWiki(out, new Map([['Home' + PAGE_EXT, '= Home\n']]));
     assert.ok(!existsSync(join(out, 'Old.md')));
-    assert.ok(existsSync(join(out, 'Home.adoc')));
+    assert.ok(!existsSync(join(out, 'Old.adoc')));
+    assert.ok(existsSync(join(out, 'Home' + PAGE_EXT)));
     assert.ok(existsSync(join(out, '.git/HEAD')));
     assert.ok(existsSync(join(out, 'notes.txt')));
   });
