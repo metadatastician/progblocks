@@ -37,6 +37,8 @@ function recall(group) {
   }
 }
 
+// Whether `listenAcrossTabs` has already installed its `storage` listener.
+let listeningAcrossTabs = false;
 /**
  * Follows variant choices persisted by other tabs of the same site: a
  * `storage` event for `progblocks:variant:<group>` switches every `persist`
@@ -44,7 +46,6 @@ function recall(group) {
  * switched block's live region. The announcement names the block's own
  * variant, never the raw storage value. Installed once, on the first persisted block.
  */
-let listeningAcrossTabs = false;
 function listenAcrossTabs() {
   if (listeningAcrossTabs || typeof window === 'undefined') return;
   listeningAcrossTabs = true;
