@@ -326,3 +326,53 @@ describe('pure helpers', () => {
     ]);
   });
 });
+
+describe('rendering time grows linearly with input size (RELEASE-CRITERIA S3)', () => {
+  const KIB = 1024;
+  /** Adversarial sources from the criterion, each built to exactly `n` characters. */
+  const ADVERSARIAL = {
+    'unclosed default followed by spaces': (n) => '{{a=' + ' '.repeat(n - 4),
+    'repeated unclosed openers': (n) => '{{a='.repeat(n / 4),
+    'deeply nested braces': (n) => '{'.repeat(n / 2) + '}'.repeat(n / 2),
+    'many variables': (n) => '{{ v = x }} '.repeat(Math.floor(n / 12)).padEnd(n),
+  };
+
+  /** Returns the fastest of three runs of `fn`, in milliseconds. */
+  function fastest(fn) {
+    let best = Infinity;
+    for (let i = 0; i < 3; i++) {
+      const start = performance.now();
+      fn();
+      best = Math.min(best, performance.now() - start);
+    }
+    return best;
+  }
+
+  /** Mounts `source` as a block's text, as an author would write it. */
+  function renderSource(source) {
+    const block = document.createElement('prog-block');
+    block.textContent = source;
+    document.body.append(block);
+    block.remove();
+  }
+
+  for (const [label, make] of Object.entries(ADVERSARIAL)) {
+    test(`${label}: 64 KiB costs at most 6x 16 KiB and renders within 250 ms`, () => {
+      const small = make(16 * KIB);
+      const large = make(64 * KIB);
+      assert.equal(large.length, 64 * KIB);
+      // A 1 ms floor keeps timer jitter on a fast small case from failing the ratio.
+      const ratio = fastest(() => tokenize(large)) / Math.max(fastest(() => tokenize(small)), 1);
+      assert.ok(ratio <= 6, `tokenize grew ${ratio.toFixed(1)}x for 4x the input`);
+      const renderMs = fastest(() => renderSource(large));
+      assert.ok(renderMs <= 250, `64 KiB rendered in ${renderMs.toFixed(0)} ms`);
+    });
+  }
+
+  test('a default is trimmed and stops at a brace', () => {
+    assert.deepEqual(tokenize('{{ a =   spaced out  }}'), [
+      { name: 'a', fallback: 'spaced out', raw: '{{ a =   spaced out  }}' },
+    ]);
+    assert.deepEqual(tokenize('{{ a = {b} }}'), [{ text: '{{ a = {b} }}' }]);
+  });
+});

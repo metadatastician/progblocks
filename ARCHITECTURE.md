@@ -79,6 +79,23 @@ in every `persist` block of that group without notifying or writing back, so tab
 The stylesheet `<link>` href is `new URL('./prog-block.css', import.meta.url)`, which resolves against
 the module rather than the hosting page. That makes it work at any page depth and from a CDN.
 
+## Threat model
+
+The attacker controls whatever an author can be tricked into embedding (a pasted example, a
+generated page) and anything another script on the same origin can write to `localStorage`. The
+reader's own typed values are trusted only to be shown back to that reader. ProgBlocks defends the
+host page's DOM, the reader's main thread and the file the reader saves; it does not defend against a
+host that is already running hostile script.
+
+| Surface | Threat | Control | Status |
+|---|---|---|---|
+| Authored template text and the block's own text | Markup or script injection into the shadow root | Read through `template.content.textContent` and written only through `textContent`; `src/` contains no `innerHTML`, `insertAdjacentHTML`, `eval` or `Function` | Controlled; tested under "untrusted content is never rendered as markup" |
+| `{{ name = default }}` substitution | Injection through a name, default or reader value; catastrophic regex backtracking freezing the page | Values go in through `textContent` and `input.value`. `VAR_PATTERN` has no two quantifiers able to claim the same character, so matching is linear. The previous pattern took 15 s on 4 KiB of `{{a=` plus spaces | Controlled; S3 scaling tests at 16 and 64 KiB |
+| Attributes (`variant`, `group`, `language`, `label`, `filename`) | Markup through an attribute value | Copied only through `setAttribute` and `textContent`. An unknown `variant` is ignored | Controlled |
+| `localStorage` and the `storage` event | A same-origin script writes a hostile variant name or group key | Only a name that exactly matches an existing variant is ever selected, and an unknown name is ignored. Read and write failures are swallowed | Partly controlled; hostile-value tests are RELEASE-CRITERIA S5 |
+| Download filename (`filename` attribute) | A spoofed name: bidi overrides (U+202E), control characters, leading dots, reserved names such as `CON`, excessive length | Path separators and `\:*?"<>\|` are replaced with `_` | **Open**: RELEASE-CRITERIA S4 |
+| Download content | Executable content saved under a trusted-looking name | Always a `text/plain;charset=utf-8` Blob of the rendered example | Controlled |
+
 ## Known limitations
 
 - ~~Light-DOM changes after first connect are not observed.~~ Observed since 2026-10-05; edits to a
