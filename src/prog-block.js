@@ -87,6 +87,16 @@ const RESERVED_FILENAMES = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\.|$)/i;
 const MAX_FILENAME_LENGTH = 120;
 
 /**
+ * Removes trailing dots and whitespace. A loop, because an end-anchored `[\s.]+`
+ * backtracks quadratically on a long run of dots.
+ */
+function trimTrailingDots(name) {
+  let end = name.length;
+  while (end > 0 && (name[end - 1] === '.' || /\s/.test(name[end - 1]))) end--;
+  return name.slice(0, end);
+}
+
+/**
  * Turns an author-supplied `filename` attribute into a name that cannot spoof or escape:
  * no control or bidi characters, no path separators or reserved punctuation, no leading
  * or trailing dots, no Windows device names, and at most 120 characters with a short
@@ -97,17 +107,14 @@ export function safeFilename(requested) {
     .replace(INVISIBLE_IN_FILENAMES, '')
     .replace(/[\\/:*?"<>|]/g, '_')
     .replace(/^[\s.]+/, '');
-  // Trailing dots and spaces are trimmed by hand: an end-anchored `[\s.]+` backtracks quadratically.
-  let end = name.length;
-  while (end > 0 && (name[end - 1] === '.' || /\s/.test(name[end - 1]))) end--;
-  name = name.slice(0, end);
+  name = trimTrailingDots(name);
   if (RESERVED_FILENAMES.test(name)) name = '_' + name;
   const chars = [...name];
   if (chars.length > MAX_FILENAME_LENGTH) {
     const dot = name.lastIndexOf('.');
     const ext = dot > 0 ? [...name.slice(dot)] : [];
     const keep = ext.length <= 16 ? ext : [];
-    name = chars.slice(0, MAX_FILENAME_LENGTH - keep.length).join('') + keep.join('');
+    name = trimTrailingDots(chars.slice(0, MAX_FILENAME_LENGTH - keep.length).join('') + keep.join(''));
   }
   return name || 'example.txt';
 }

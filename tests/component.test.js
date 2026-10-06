@@ -351,19 +351,17 @@ describe('rendering time grows linearly with input size (RELEASE-CRITERIA S3)', 
   }
 
   /**
-   * Returns the best large/small time ratio over up to five interleaved pairs, so a load
-   * spike hits both sizes alike. Stops at the first pair that meets `limit`. A 1 ms floor
+   * Returns the lowest large/small time ratio over up to five interleaved pairs, each pair
+   * measured back to back so a load spike hits both sizes alike. Stops at the first pair that meets `limit`. A 1 ms floor
    * keeps timer jitter on a fast small case from inflating the ratio.
    */
   function bestRatio(small, large, limit) {
-    let bestSmall = Infinity;
-    let bestLarge = Infinity;
-    for (let i = 0; i < TRIES; i++) {
-      bestSmall = Math.min(bestSmall, time(small));
-      bestLarge = Math.min(bestLarge, time(large));
-      if (bestLarge / Math.max(bestSmall, 1) <= limit) break;
+    let best = Infinity;
+    for (let i = 0; i < TRIES && best > limit; i++) {
+      const smallMs = time(small);
+      best = Math.min(best, time(large) / Math.max(smallMs, 1));
     }
-    return bestLarge / Math.max(bestSmall, 1);
+    return best;
   }
 
   /** Returns the fastest of up to five runs of `fn`, stopping at the first within `bound`. */
@@ -433,6 +431,8 @@ describe('downloaded filenames cannot spoof (RELEASE-CRITERIA S4)', () => {
     assert.equal([...long].length, 120);
     assert.ok(long.endsWith('.sh'));
     assert.equal([...safeFilename('😀'.repeat(200))].length, 120, 'counted in characters, not code units');
+    const cutAtDot = safeFilename('a'.repeat(119) + '.' + 'b'.repeat(20));
+    assert.equal(cutAtDot, 'a'.repeat(119), 'a dot left at the cut is trimmed');
   });
 
   test('nothing usable falls back to example.txt', () => {
