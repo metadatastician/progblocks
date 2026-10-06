@@ -19,6 +19,15 @@ const groups = new Map();
 let instanceCount = 0;
 const STORAGE_PREFIX = 'progblocks:variant:';
 
+/** Returns `localStorage`, or null when the browser blocks it. */
+function localStore() {
+  try {
+    return globalThis.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Reads a remembered variant for a group; null when storage is unavailable or empty. */
 function recall(group) {
   try {
@@ -38,7 +47,8 @@ function listenAcrossTabs() {
   if (listeningAcrossTabs || typeof window === 'undefined') return;
   listeningAcrossTabs = true;
   window.addEventListener('storage', (event) => {
-    if (!event.key?.startsWith(STORAGE_PREFIX) || event.newValue === null) return;
+    if (!event.key?.startsWith(STORAGE_PREFIX) || typeof event.newValue !== 'string') return;
+    if (event.storageArea && event.storageArea !== localStore()) return;
     const group = event.key.slice(STORAGE_PREFIX.length);
     for (const block of groups.get(group) ?? []) {
       if (block.hasAttribute('persist')) block._selectByName(event.newValue, { notify: false });
@@ -68,6 +78,38 @@ export function dedent(text) {
     .map((line) => line.match(/^[ \t]*/)[0].length);
   const common = indents.length ? Math.min(...indents) : 0;
   return lines.map((line) => line.slice(common)).join('\n');
+}
+
+// C0 and C1 controls, DEL, and the invisible format and bidi controls (U+061C, U+200B-U+200F,
+// U+202A-U+202E, U+2060-U+2069, U+FEFF) that can disguise a file's real extension.
+const INVISIBLE_IN_FILENAMES = /[\u0000-\u001f\u007f-\u009f\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g;
+const RESERVED_FILENAMES = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\.|$)/i;
+const MAX_FILENAME_LENGTH = 120;
+
+/**
+ * Turns an author-supplied `filename` attribute into a name that cannot spoof or escape:
+ * no control or bidi characters, no path separators or reserved punctuation, no leading
+ * or trailing dots, no Windows device names, and at most 120 characters with a short
+ * extension kept. Falls back to `example.txt` when nothing usable remains.
+ */
+export function safeFilename(requested) {
+  let name = String(requested ?? '')
+    .replace(INVISIBLE_IN_FILENAMES, '')
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/^[\s.]+/, '');
+  // Trailing dots and spaces are trimmed by hand: an end-anchored `[\s.]+` backtracks quadratically.
+  let end = name.length;
+  while (end > 0 && (name[end - 1] === '.' || /\s/.test(name[end - 1]))) end--;
+  name = name.slice(0, end);
+  if (RESERVED_FILENAMES.test(name)) name = '_' + name;
+  const chars = [...name];
+  if (chars.length > MAX_FILENAME_LENGTH) {
+    const dot = name.lastIndexOf('.');
+    const ext = dot > 0 ? [...name.slice(dot)] : [];
+    const keep = ext.length <= 16 ? ext : [];
+    name = chars.slice(0, MAX_FILENAME_LENGTH - keep.length).join('') + keep.join('');
+  }
+  return name || 'example.txt';
 }
 
 /**
@@ -417,7 +459,7 @@ export class ProgBlock extends HTMLElement {
 
   /** Saves the personalised example as a plain-text file named by the `filename` attribute. */
   _download() {
-    const name = (this.getAttribute('filename') || 'example.txt').replace(/[\\/:*?"<>|]/g, '_');
+    const name = safeFilename(this.getAttribute('filename'));
     const url = URL.createObjectURL(new Blob([this.text], { type: 'text/plain;charset=utf-8' }));
     const link = el('a', { href: url, download: name });
     link.hidden = true;
